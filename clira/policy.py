@@ -11,7 +11,7 @@ class Policy:
 
     def channel(self, channel_id):
         channel = self.store.channel(channel_id)
-        if channel["mode"] != self.config.mode:
+        if channel["mode"] not in {self.config.mode, "draft"}:
             raise CliraError(
                 "MODE_MISMATCH", "Channel belongs to another execution mode. Switch mode explicitly."
             )
@@ -19,6 +19,11 @@ class Policy:
 
     def write_gate(self, channel_id):
         channel = self.channel(channel_id)
+        if channel["mode"] == "draft":
+            raise CliraError(
+                "DRAFT_ONLY",
+                "Local launch workspaces cannot perform account actions. Connect a real channel first.",
+            )
         if self.store.setting("paused", False):
             raise CliraError("WRITES_PAUSED", "All external writes are paused.")
         if channel["mode"] == "live" and not self.config.enable_writes:

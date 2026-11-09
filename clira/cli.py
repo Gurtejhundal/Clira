@@ -10,11 +10,12 @@ from .agent import Agent
 from .config import CliraError, Config
 from .service import Service
 from .storage import encode
+from .text import terminal_text
 from .youtube import connect
 
 
 def show(value):
-    print(json.dumps(value, indent=2, ensure_ascii=False))
+    print(terminal_text(json.dumps(value, indent=2, ensure_ascii=False)))
 
 
 def doctor(service):
@@ -53,7 +54,11 @@ def main():
     )
     parser.add_argument("--mode", choices=["demo", "live"])
     parser.add_argument("--data-dir", type=Path)
-    sub = parser.add_subparsers(dest="command", required=True)
+    parser.add_argument("--version", action="version", version=__import__("clira").__version__)
+    parser.add_argument("--channel")
+    parser.add_argument("--resume")
+    parser.add_argument("--no-logo", action="store_true")
+    sub = parser.add_subparsers(dest="command")
     sub.add_parser("doctor")
     sub.add_parser("channels")
     serve = sub.add_parser("serve")
@@ -63,7 +68,9 @@ def main():
     auth.add_argument("--client-file")
     chat = sub.add_parser("chat")
     chat.add_argument("message", nargs="?")
-    chat.add_argument("--channel", required=True)
+    chat.add_argument("--channel")
+    chat.add_argument("--json", action="store_true")
+    chat.add_argument("--resume")
     tool = sub.add_parser("tool")
     tool.add_argument("name")
     tool.add_argument("--channel", required=True)
@@ -96,6 +103,10 @@ def main():
     kwargs = {k: v for k, v in [("mode", args.mode), ("data_dir", args.data_dir)] if v is not None}
     try:
         service = Service(Config(**kwargs))
+        if args.command is None:
+            from .tui.app import Terminal
+
+            return Terminal(service, args.channel, args.resume, args.no_logo).run()
         if args.command == "doctor":
             show(doctor(service))
         elif args.command == "channels":
@@ -115,21 +126,26 @@ def main():
                 )
             show(connect(service.config, service.store, service.secrets, args.capability, args.client_file))
         elif args.command == "chat":
-            agent, conversation = Agent(service), None
+            args.channel = args.channel or service.store.setting("active_workspace:" + service.config.mode)
+            if not args.channel:
+                raise CliraError(
+                    "CHANNEL_REQUIRED", "Select a workspace with bare clira or pass --channel ID."
+                )
+            if not args.message and not sys.stdin.isatty():
+                args.message = sys.stdin.read(12001).strip()
+                if not args.message or len(args.message) > 12000:
+                    raise CliraError("MESSAGE_REQUIRED", "Provide a message of 1–12000 characters.")
             if args.message:
-                result = agent.chat(args.channel, args.message)
-                show(result)
+                result = Agent(service).chat(args.channel, args.message, args.resume)
+                if args.json:
+                    show(result)
+                else:
+                    print(terminal_text(result["message"]))
+                    print("Session: " + result["conversation_id"])
             else:
-                print("Type /quit to exit. Receipts are persisted locally.")
-                while True:
-                    message = input("You > ").strip()
-                    if message == "/quit":
-                        break
-                    if not message:
-                        continue
-                    result = agent.chat(args.channel, message, conversation)
-                    conversation = result["conversation_id"]
-                    print(service.config.display_name + " > " + result["message"])
+                from .tui.app import Terminal
+
+                return Terminal(service, args.channel, args.resume, args.no_logo).run()
         elif args.command == "tool":
             raw = Path(args.json[1:]).read_text() if args.json.startswith("@") else args.json
             result = service.tool(args.channel, args.name, json.loads(raw))

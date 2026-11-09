@@ -35,7 +35,7 @@ def main():
                 "-f",
                 "lavfi",
                 "-i",
-                "color=c=green:s=160x90:d=1",
+                "color=c=green:s=160x90:d=8",
                 "-c:v",
                 "mpeg4",
                 "-y",
@@ -78,7 +78,26 @@ def main():
                 page = browser.new_page(viewport={"width": 1440, "height": 1050}, reduced_motion="reduce")
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
-                page.goto(url, wait_until="networkidle")
+                terminal_result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "clira",
+                        "chat",
+                        "--channel",
+                        "DEMO_CHANNEL_TECH",
+                        "Show my latest videos",
+                        "--json",
+                    ],
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                shared_id = json.loads(terminal_result.stdout)["conversation_id"]
+                page.goto(url + "/?channel=DEMO_CHANNEL_TECH&session=" + shared_id, wait_until="networkidle")
+                page.locator("#terminalResume", has_text=shared_id).wait_for()
+                assert "Latest uploads" in page.locator("#messages").inner_text()
                 page.get_by_text("33,400", exact=True).wait_for()
                 assert not page.evaluate("document.documentElement.scrollWidth > innerWidth")
                 page.screenshot(path=str(args.output / "clira-desktop.png"), full_page=True)
@@ -114,7 +133,45 @@ def main():
                 assert "private" in page.locator("#approvals").inner_text()
                 page.get_by_role("button", name="Review & approve exact action").click()
                 assert "DEMO_CHANNEL_TECH" in page.locator("#dialogChannel").inner_text()
+                approval_state = httpx.get(url + "/api/state/DEMO_CHANNEL_TECH").json()
+                pending = next(a for a in approval_state["approvals"] if a["status"] == "PENDING")
+                cli_approval = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "clira",
+                        "approval",
+                        "show",
+                        pending["id"],
+                        "--channel",
+                        "DEMO_CHANNEL_TECH",
+                    ],
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                assert json.loads(cli_approval.stdout)["id"] == pending["id"]
+                page.keyboard.press("Tab")
+                assert page.locator("#approvalDialog").evaluate(
+                    "dialog=>dialog.contains(document.activeElement)"
+                )
+                page.keyboard.press("Escape")
+                page.locator("#approvalDialog").wait_for(state="hidden")
+                assert page.evaluate(
+                    "document.activeElement.textContent.includes('Review & approve exact action')"
+                )
+                assert (
+                    next(
+                        a
+                        for a in httpx.get(url + "/api/state/DEMO_CHANNEL_TECH").json()["approvals"]
+                        if a["id"] == pending["id"]
+                    )["status"]
+                    == "PENDING"
+                )
+                page.get_by_role("button", name="Review & approve exact action").click()
                 page.locator("#confirmApproval").check()
+                page.locator("#approvalText").fill("APPROVE")
                 page.get_by_role("button", name="Approve exact action", exact=True).click()
                 page.get_by_role("button", name="Run simulation", exact=True).click()
                 page.get_by_text(
@@ -132,7 +189,45 @@ def main():
                 page.get_by_text("Reply saved locally. Posting requires approval.", exact=True).wait_for()
                 page.locator("nav button[data-view=approvals]").click()
                 page.get_by_role("button", name="Review & approve exact action").click()
+                approval_state = httpx.get(url + "/api/state/DEMO_CHANNEL_TECH").json()
+                pending = next(a for a in approval_state["approvals"] if a["status"] == "PENDING")
+                cli_approval = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "clira",
+                        "approval",
+                        "show",
+                        pending["id"],
+                        "--channel",
+                        "DEMO_CHANNEL_TECH",
+                    ],
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                assert json.loads(cli_approval.stdout)["id"] == pending["id"]
+                page.keyboard.press("Tab")
+                assert page.locator("#approvalDialog").evaluate(
+                    "dialog=>dialog.contains(document.activeElement)"
+                )
+                page.keyboard.press("Escape")
+                page.locator("#approvalDialog").wait_for(state="hidden")
+                assert page.evaluate(
+                    "document.activeElement.textContent.includes('Review & approve exact action')"
+                )
+                assert (
+                    next(
+                        a
+                        for a in httpx.get(url + "/api/state/DEMO_CHANNEL_TECH").json()["approvals"]
+                        if a["id"] == pending["id"]
+                    )["status"]
+                    == "PENDING"
+                )
+                page.get_by_role("button", name="Review & approve exact action").click()
                 page.locator("#confirmApproval").check()
+                page.locator("#approvalText").fill("APPROVE")
                 page.get_by_role("button", name="Approve exact action", exact=True).click()
                 page.get_by_role("button", name="Run simulation", exact=True).click()
                 page.get_by_text(
@@ -147,6 +242,82 @@ def main():
                 page.locator("#toast").wait_for(state="hidden", timeout=10000)
                 assert not page.evaluate("document.documentElement.scrollWidth > innerWidth")
                 page.screenshot(path=str(args.output / "clira-mobile.png"), full_page=True)
+                # Shared session search/resume and cross-surface content survive a browser reload.
+                page.locator("#sessionPanel summary").click()
+                page.locator("#sessionList button", has_text=shared_id).click()
+                page.locator("#message").fill("Show my latest videos again")
+                page.locator("#message").press("Enter")
+                page.locator("#sendButton", has_text="Send message").wait_for()
+                page.wait_for_function("document.querySelectorAll('#messages .assistant').length >= 3")
+                page.reload(wait_until="networkidle")
+                assert shared_id in page.locator("#terminalResume").inner_text()
+                shared = httpx.get(url + "/api/conversations/DEMO_CHANNEL_TECH/" + shared_id).json()
+                assert any(m["text"] == "Show my latest videos again" for m in shared["messages"])
+                (args.output / "shared-session.json").write_text(json.dumps(shared, indent=2))
+                # Actual packaging UI, not a concept masquerading as an image.
+                page.locator("nav button[data-view=production]").click()
+                page.locator("#templateForm [name=text]").fill("An original fixture")
+                page.locator("#templateForm button").click()
+                page.locator("#packageAssets img").wait_for()
+                assert page.locator("#packageAssets img").evaluate(
+                    "img=>img.complete && img.naturalWidth===1280"
+                )
+                caption_path = imports / "original.srt"
+                caption_path.write_text("1\n00:00:00,000 --> 00:00:07,500\nOriginal silent test fixture.\n")
+                form = page.locator("#packageAssetForm")
+                form.locator("[name=type]").select_option("captions")
+                form.locator("[name=path]").fill(str(caption_path))
+                video_assets = httpx.get(url + "/api/state/DEMO_CHANNEL_TECH").json()["records"]["asset"]
+                form.locator("[name=asset_id]").select_option(video_assets[0]["id"])
+                form.locator("[name=rights]").select_option("original")
+                form.locator("[name=rights_evidence]").fill("Original typed test words")
+                form.locator("[name=creative_reviewed]").check()
+                form.locator("button").click()
+                page.locator("#packageAssets pre", has_text="Original silent test fixture").first.wait_for()
+                # All eight views at every required width, both palettes, keyboard focus.
+                for width in [1440, 1280, 768, 390, 320]:
+                    page.set_viewport_size({"width": width, "height": 950})
+                    for view in [
+                        "chat",
+                        "library",
+                        "ideas",
+                        "production",
+                        "approvals",
+                        "community",
+                        "operations",
+                        "settings",
+                    ]:
+                        page.locator("nav button[data-view=" + view + "]").click()
+                        assert page.locator("#view-" + view).is_visible()
+                        assert not page.evaluate("document.documentElement.scrollWidth > innerWidth"), (
+                            width,
+                            view,
+                        )
+                    page.locator("#themeSelect").select_option("dark")
+                    assert page.locator("html").get_attribute("data-theme") == "dark"
+                    page.locator("#themeSelect").select_option("light")
+                    page.locator("nav button[data-view=chat]").click()
+                    page.locator("#toast").wait_for(state="hidden", timeout=10000)
+                    page.locator("#message").focus()
+                    page.evaluate("window.scrollTo(0,0)")
+                    page.screenshot(path=str(args.output / f"clira-chat-{width}.png"), full_page=True)
+                page.keyboard.press("Tab")
+                assert page.evaluate("document.activeElement !== document.body")
+                # Five-step launch path without Google account creation.
+                page.locator("#startLaunch").click()
+                for answer in ["Batteries", "curious beginners", "English", "4 hours", "short"]:
+                    page.locator("#launchAnswer").fill(answer)
+                    page.locator("#launchNext").click()
+                page.locator("#modeBadge", has_text="LOCAL DRAFT").wait_for()
+                assert page.locator("#channelSelect").input_value().startswith("workspace_")
+                page.locator("nav button[data-view=ideas]").click()
+                assert page.locator("#ideas .card").count() == 3
+                assert page.locator("#messages").inner_text() == ""
+                page.locator("nav button[data-view=chat]").click()
+                page.locator("#message").fill("Plan my first channel")
+                page.locator("#message").press("Enter")
+                page.locator("#messages", has_text="LOCAL DRAFT").wait_for()
+                page.screenshot(path=str(args.output / "clira-launch-320.png"), full_page=True)
                 assert not errors, errors
                 browser.close()
                 print(
@@ -155,7 +326,7 @@ def main():
                             "passed": True,
                             "mode": "isolated_synthetic_demo",
                             "views": 8,
-                            "viewport_widths": [1440, 390],
+                            "viewport_widths": [1440, 1280, 768, 390, 320],
                             "flows": [
                                 "ideas",
                                 "MP4 QC",
@@ -164,6 +335,10 @@ def main():
                                 "private upload simulation",
                                 "comment draft and simulation",
                                 "mobile pause/resume",
+                                "CLI/web shared session and approval IDs",
+                                "actual PNG and timed SRT UI",
+                                "five-step local launch",
+                                "eight views at five widths; light/dark; keyboard",
                             ],
                             "browser_errors": errors,
                             "screenshots": str(args.output.resolve()),

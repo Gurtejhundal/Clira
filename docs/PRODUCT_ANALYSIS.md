@@ -150,7 +150,7 @@ publication handlers into modules while retaining one deterministic policy/execu
 | M2 OAuth and reads | Adapters implemented; mock refresh/identity/read tests pass; live grant still required |
 | M3 content intelligence | Ideas, scripts, packaging lint, research and calendar implemented; quality needs actual model/channel review |
 | M4 private upload | Actual local media QC and approval simulation pass; interrupted-upload transport tests pass; real upload not performed |
-| M5 publication/community | Approved metadata/schedule/publish/reply paths implemented; thumbnail upload remains future work; live mutations unverified |
+| M5 publication/community | Approved metadata/schedule/publish/reply paths implemented; thumbnail/caption adapters and local packaging are now implemented in the v1 candidate; live mutations unverified |
 | M6 durable jobs | Transactional claims, backoff, recovery and pause tested; timer examples remain disabled/uninstalled |
 | M7 production | Manual provider and interface implemented; external Lemo execution intentionally unconfigured |
 | M8 interface | Eight views checked in browser at desktop/mobile sizes; full account gate still outstanding |
@@ -166,7 +166,7 @@ verified private test upload. No completion percentage replaces that proof.
 3. Review one original, rights-cleared MP4 and authorize exactly one private test upload.
 4. Verify its remote metadata, visibility, disclosures, interrupted recovery and audit receipt.
 5. Validate separately approved scheduling/comment changes only if the owner requests them.
-6. Add thumbnail upload, richer retention/cohort reporting, source verification and complete-history
+6. Verify thumbnail/caption upload on the approved private fixture; add richer retention/cohort reporting, source verification and complete-history
    pagination when the real workflow demonstrates their requirements.
 
 ## Official integration references rechecked

@@ -10,7 +10,17 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .agent import Agent
 from .config import CliraError
-from .contracts import ApprovalDecision, ChatRequest, ExecuteJob, Profile, ToolRequest, tool_contracts
+from .contracts import (
+    ApprovalDecision,
+    ChatRequest,
+    CopyWorkspace,
+    ExecuteJob,
+    LaunchRequest,
+    Profile,
+    SessionRequest,
+    ToolRequest,
+    tool_contracts,
+)
 from .service import Service
 from .storage import encode, now
 
@@ -18,6 +28,9 @@ from .storage import encode, now
 def create_app(service=None):
     service = service or Service()
     app = FastAPI(title=service.config.display_name, docs_url=None, redoc_url=None)
+    from .connections import Connections
+
+    app.state.connections = Connections(service)
     app.state.service = service
     app.state.csrf = secrets.token_urlsafe(32)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]", "testserver"])
@@ -36,9 +49,13 @@ def create_app(service=None):
                 return JSONResponse(
                     {"error": {"code": "CSRF", "message": "Reload the local dashboard."}}, status_code=403
                 )
-            if int(request.headers.get("content-length", "0")) > 1024 * 1024:
+            if len(await request.body()) > 1024 * 1024:
                 return JSONResponse(
                     {"error": {"code": "BODY_LIMIT", "message": "Request too large."}}, status_code=413
+                )
+            if request.headers.get("content-type", "").split(";")[0] != "application/json":
+                return JSONResponse(
+                    {"error": {"code": "CONTENT_TYPE", "message": "Use application/json."}}, status_code=415
                 )
         response = await call_next(request)
         response.headers["Content-Security-Policy"] = (
@@ -89,6 +106,8 @@ def create_app(service=None):
                     "reply",
                     "uploaded_video",
                     "video_cache",
+                    "package_asset",
+                    "launch",
                 ]
             },
             "approvals": approvals,
@@ -97,6 +116,18 @@ def create_app(service=None):
                 "SELECT * FROM audit_events WHERE channel_id=? ORDER BY seq DESC LIMIT 100", (channel_id,)
             ),
         }
+
+    @app.post("/api/connect/start")
+    def start_connection():
+        return app.state.connections.start()
+
+    @app.get("/api/connect/status")
+    def connection_status():
+        return app.state.connections.status()
+
+    @app.post("/api/connect/{connection_id}/confirm")
+    def confirm_connection(connection_id: str, body: ExecuteJob):
+        return app.state.connections.confirm(connection_id, body.channel_id)
 
     @app.get("/api/tools")
     def contracts():
@@ -152,17 +183,57 @@ def create_app(service=None):
     @app.get("/api/conversations/{channel_id}")
     def conversations(channel_id: str):
         service.policy.channel(channel_id)
-        return [
-            {"id": c["id"], "messages": json.loads(c["messages"]), "updated_at": c["updated_at"]}
-            for c in service.store.rows(
-                "SELECT * FROM conversations WHERE channel_id=? ORDER BY updated_at DESC LIMIT 20",
-                (channel_id,),
-            )
-        ]
+        return service.store.sessions(channel_id)
+
+    @app.post("/api/conversations")
+    def new_conversation(body: SessionRequest):
+        service.policy.channel(body.channel_id)
+        return service.store.new_session(body.channel_id, body.title)
+
+    @app.get("/api/conversations/{channel_id}/{conversation_id}")
+    def conversation(channel_id: str, conversation_id: str):
+        service.policy.channel(channel_id)
+        return service.store.session(channel_id, conversation_id)
+
+    @app.put("/api/conversations/{conversation_id}")
+    def title_conversation(conversation_id: str, body: SessionRequest):
+        service.policy.channel(body.channel_id)
+        return service.store.title_session(body.channel_id, conversation_id, body.title)
+
+    @app.post("/api/workspaces")
+    def launch_workspace(body: LaunchRequest):
+        from .workspaces import launch
+
+        result = launch(service, **body.model_dump())
+        # Never return credential-bearing channel rows.
+        return {
+            "workspace": next(c for c in service.channels() if c["id"] == result["workspace"]["id"]),
+            "plan": result["plan"],
+        }
+
+    @app.post("/api/workspaces/copy")
+    def copy_workspace(body: CopyWorkspace):
+        from .workspaces import copy_drafts
+
+        return copy_drafts(service, body.workspace_id, body.channel_id, body.confirmation)
+
+    @app.get("/api/preview/{channel_id}/{asset_id}")
+    def preview(channel_id: str, asset_id: str):
+        from .packaging import verify_package_asset
+
+        service.policy.channel(channel_id)
+        record = service.store.get(channel_id, asset_id, "package_asset")
+        path = verify_package_asset(service, channel_id, record, reviewed=False)
+        return FileResponse(path, media_type=record["mime"], headers={"Content-Disposition": "inline"})
 
     @app.get("/health")
     def health():
-        return {"ok": True, "mode": service.config.mode, "at": now()}
+        return {
+            "ok": True,
+            "mode": service.config.mode,
+            "at": now(),
+            "store_id": service.store.setting("store_id"),
+        }
 
     web = Path(__file__).parent / "web"
     app.mount("/static", StaticFiles(directory=web), name="static")

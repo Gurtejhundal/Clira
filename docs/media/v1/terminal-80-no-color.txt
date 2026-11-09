@@ -1,0 +1,27 @@
+ACTUAL PTY CAPTURE · DEMO/SYNTHETIC · 80 columns · NO_COLOR=1
+Cursor-control sequences removed for this text transcript.
+
+Clira 1.0.0rc1 · DEMO · SYNTHETIC
+Inside the everyday · Demo
+DEMO_CHANNEL_TECH
+Model: offline · owner approves account actions
+Scopes: none
+❯❯ /new
+New session: chat_ca145327b7524b2a9c163180516e539a
+❯❯ /title Candidate prototype
+Session title saved.
+❯❯ Show my latest videos
+⠋ Working on this request…
+SYNTHETIC DEMO · Latest uploads — lifetime views:
+• Why your phone gets slower: 12,400 views
+• What deleting a file really does: 8,200 views
+• Inside a password manager: 6,100 views
+• The hidden cost of notifications: 3,800 views
+• How maps find the fastest route: 2,900 views
+Sources: list_videos · mock
+1 tool receipts · /details · session chat_ca145327b7524b2a9c163180516e539a
+❯❯ /approvals
+No approvals in this workspace.
+❯❯ /quit
+Goodbye. No background worker is started by this terminal.
+Session saved. Goodbye.

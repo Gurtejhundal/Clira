@@ -51,3 +51,27 @@ To disconnect locally: `./run.sh --mode live disconnect --channel UC_ACTUAL_ID`.
 To revoke at Google: [account permissions](https://myaccount.google.com/permissions).
 Remove or change any existing scheduled publication in YouTube Studio; local pause/disconnect does
 not cancel a schedule that Google has already accepted.
+
+
+## v1 candidate: terminal and website share one workspace
+
+Run `uv run clira` to open the interactive terminal, or `uv run clira serve` for the local website.
+Use an absolute `CLIRA_DATA_DIR` in every shell to share data across working directories. First run
+lets you start a local launch workspace, connect an existing channel, or explore synthetic demo data.
+Five launch decisions produce starter drafts without Google sign-in. These are offline templates;
+open-ended writing needs an explicitly enabled model.
+
+In live website Settings, **Start read-only Google sign-in** opens the existing Desktop OAuth flow.
+Configure the client JSON privately before starting the server. After Google authorization, review
+actual channel name/ID and type the exact ID; credentials are saved only after that confirmation.
+Demo refuses this flow. A missing client produces a helpful error, never a token-entry form.
+The current flow expires if authorization/confirmation is not completed; retry from Settings.
+
+Use Saved conversations to resume/rename/search. The website shows the implemented terminal resume
+command. `/web` in the terminal checks the matching store's loopback server before opening its session.
+`/clear` clears display only. Ctrl+J inserts a newline; Enter sends. NO_COLOR and --no-logo are supported.
+No terminal history file containing secrets is created; saved conversational text stays in SQLite.
+
+For real packaging files and separate upload approvals see [Packaging](PACKAGING.md).
+Before upgrading/restoring, follow [Migration and rollback](MIGRATIONS.md).
+Stable release is blocked until the live gates in [candidate verification](VERIFICATION_V1_RC.md) pass.

@@ -39,7 +39,7 @@ function button(text, handler, cls) {
   b.addEventListener('click', async () => {
     b.disabled = true;
     try { await handler(); } catch (error) { toast(error.message, true); }
-    finally { b.disabled = false; }
+    finally { b.disabled = false; if(b.isConnected && document.activeElement===document.body)b.focus(); }
   });
   return b;
 }
@@ -75,12 +75,15 @@ async function sendMessage(text) {
   $('sendButton').disabled = true;
   $('channelSelect').disabled = true;
   $('newChat').disabled = true;
+  $('renameSession').disabled=true;$('sessionSearch').disabled=true;
+  document.querySelectorAll('#sessionList button').forEach(b=>b.disabled=true);
   $('sendButton').textContent = 'Working…';
   addMessage('user', text);
   $('message').value = '';
   try {
     const result = await api('/api/chat', {channel_id: channelId, message: text, conversation_id: conversationId});
     conversationId = result.conversation_id;
+    updateSessionContext(); await loadSessions();
     addMessage('assistant', result.message, result.receipts);
     await refresh();
   } catch (error) {
@@ -88,6 +91,8 @@ async function sendMessage(text) {
     toast(error.message, true);
   } finally {
     busy = false;
+    $('renameSession').disabled=false;$('sessionSearch').disabled=false;
+    document.querySelectorAll('#sessionList button').forEach(b=>b.disabled=false);
     $('sendButton').disabled = false;
     $('channelSelect').disabled = false;
     $('newChat').disabled = false;
@@ -150,6 +155,7 @@ function renderIdeas() {
   if (!briefs.children.length) empty(briefs,'Scripts saved by the agent appear here. Source claims remain marked for review.');
 }
 function renderProduction() {
+  renderPackageAssets();
   const assets = clear('assets');
   for (const asset of state.records.asset) {const c=card(asset.filename,asset.rights,`${asset.qc.width} × ${asset.qc.height} · ${asset.qc.duration_seconds.toFixed(1)} seconds · ${asset.qc.codec}`); c.append(details('Technical QC, rights & SHA-256',asset)); assets.append(c);}
   if (!assets.children.length) empty(assets,'No imported MP4s. Technical validation runs before an upload request can be created.');
@@ -160,13 +166,14 @@ function renderProduction() {
 async function approve(approval) {
   const dialog = $('approvalDialog');
   $('confirmApproval').checked = false;
+  $('approvalText').value = '';
   $('dialogTitle').textContent = 'Approve ' + approval.operation.replaceAll('_',' ');
   $('dialogChannel').textContent = `${state.channel.name} · ${channelId} · ${session.mode.toUpperCase()}`;
   $('dialogPayload').textContent = JSON.stringify(approval.payload,null,2);
   const answer = await new Promise(resolve => {dialog.addEventListener('close',()=>resolve(dialog.returnValue),{once:true}); dialog.showModal();});
-  if (answer !== 'approve') return;
+  if (answer !== 'approve' || $('approvalText').value !== 'APPROVE') return;
   await api('/api/approvals/'+approval.id,{channel_id:channelId,approve:true});
-  await refresh(); toast('Approved exact payload. Run the job when ready.');
+  await refresh(); $('approvals').querySelector('button')?.focus(); toast('Approved exact payload. Run the job when ready.');
 }
 function renderApprovals() {
   const container = clear('approvals');
@@ -229,23 +236,38 @@ function renderOperations() {
   for(const event of state.audit){const row=el('div','audit-row');row.append(el('time','',dateLabel(event.at)),el('span','',event.action),el('span','',event.decision));audit.append(row);}
 }
 function renderSettings() {
+  for(const [id,mode] of [['copySource','draft'],['copyTarget','live']]){
+    clear(id);for(const c of session.channels.filter(c=>c.mode===mode&&(mode!=='live'||c.connected))){const o=el('option','',c.name+' · '+c.id);o.value=c.id;$(id).append(o);}
+  }
   for(const [key,value] of Object.entries(state.channel.profile)){const input=$('profileForm').elements.namedItem(key);if(input) input.value=value;}
 }
 async function refresh() {
   if(!channelId) return;
-  state=await api('/api/state/'+encodeURIComponent(channelId));
+  const target=channelId; const loaded=await api('/api/state/'+encodeURIComponent(target));if(target!==channelId)return;state=loaded;
+  $('onboarding').open=!session.channels.some(c=>c.mode==='live');
+  $('notice').textContent=state.channel.mode==='draft'?'LOCAL DRAFT · No YouTube account connected. Plans remain local.':session.mode==='demo'?'DEMO · SYNTHETIC · No real channel operations occur.':`Live mode · ${session.writes_enabled?'Approved writes enabled':'Account writes disabled'}`;
+  if(state.records.launch.length){const plan=state.records.launch[0];$('launchResult').textContent=plan.positioning+'\n\nName ideas: '+plan.name_suggestions.join(' · ')+'\n\nDescription: '+plan.description+'\n\nBrand direction: '+plan.brand_direction+'\n\n'+plan.evidence_status+'\n'+plan.channel_creation;}else $('launchResult').textContent='';
   renderMetrics(); renderVideos(); renderIdeas(); renderProduction(); renderApprovals(); renderCommunity(); renderOperations(); renderSettings();
 }
 async function changeChannel() {
+  $('channelSelect').disabled=true;
+  try {
   channelId=$('channelSelect').value || null;
   $('channelId').textContent=channelId || 'No connected channels';
   conversationId=null; clear('messages');
   if(channelId){
     await refresh();
     const history=await api('/api/conversations/'+encodeURIComponent(channelId));
-    if(history.length){conversationId=history[0].id;for(const m of history[0].messages)addMessage(m.role==='user'?'user':'assistant',m.text);}
+    const requested = new URLSearchParams(location.search).get('session');
+    const selected = history.find(s=>s.id===requested) || history[0];
+    if(selected) await resumeSession(selected.id);
+    else updateSessionContext();
+    await loadSessions();
   }
+  if(state?.channel?.mode==='draft') $('modeBadge').textContent='LOCAL DRAFT · NOT CONNECTED';
+  else $('modeBadge').textContent=session.mode==='demo'?'DEMO · SYNTHETIC':'LIVE · OWNER ACCOUNT';
   showView(activeView);
+  } finally {$('channelSelect').disabled=busy;}
 }
 function bindForm(id, handler) {
   $(id).addEventListener('submit',async event=>{
@@ -264,12 +286,16 @@ async function init() {
   $('importDir').textContent=session.import_dir;
   $('settingsStatus').textContent=`Mode: ${session.mode}. Model: ${session.model}. Live writes: ${session.writes_enabled?'enabled with approval':'disabled'}.`;
   if(session.paused){$('pauseAll').textContent='Resume approved writes';$('pauseTop').textContent='Resume writes';}
+  initV1();
   for(const c of session.channels){const option=el('option','',c.name);option.value=c.id;$('channelSelect').append(option);}
   if(!session.channels.length){const option=el('option','','No channels connected');option.value='';$('channelSelect').append(option);}
   document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
   $('channelSelect').addEventListener('change',()=>changeChannel().catch(e=>toast(e.message,true)));
-  $('newChat').addEventListener('click',()=>{conversationId=null;clear('messages');$('message').focus();});
+  $('newChat').addEventListener('click',async()=>{try{
+    const result=await api('/api/conversations',{channel_id:channelId});conversationId=result.id;clear('messages');updateSessionContext(result);await loadSessions();$('message').focus();
+  }catch(e){toast(e.message,true);}});
   $('chatForm').addEventListener('submit',event=>{event.preventDefault();const text=$('message').value.trim();if(text)sendMessage(text);});
+  $('message').addEventListener('input',()=>{$('message').style.height='auto';$('message').style.height=Math.min($('message').scrollHeight,320)+'px';});
   $('message').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();$('chatForm').requestSubmit();}});
   document.querySelectorAll('[data-prompt]').forEach(b=>b.addEventListener('click',()=>sendMessage(b.dataset.prompt)));
   $('suggestIdeas').addEventListener('click',()=>{showView('chat');sendMessage('Suggest three new topic ideas for this channel.');});
@@ -283,10 +309,138 @@ async function init() {
   bindForm('profileForm',async values=>{await api('/api/profile/'+encodeURIComponent(channelId),values,'PUT');toast('Channel memory saved.');await refresh();});
   bindForm('productionForm',async (values,form)=>{
     const asset=await tool('import_video',{path:values.path,rights:values.rights,rights_evidence:values.rights_evidence,creative_reviewed:form.elements.creative_reviewed.checked});
-    const metadata=await tool('package_video',{title:values.title,description:values.description,tags:values.tags.split(',').map(t=>t.trim()).filter(Boolean),thumbnail_text:values.thumbnail_text,made_for_kids:values.made_for_kids==='true',synthetic_media:values.synthetic_media==='true',category_id:'22'});
+    const metadata=await tool('package_video',{title:values.title,description:values.description,tags:values.tags.split(',').map(t=>t.trim()).filter(Boolean),thumbnail_text:values.thumbnail_text,made_for_kids:values.made_for_kids==='true',synthetic_media:values.synthetic_media==='true',category_id:'22',
+      hashtags:values.hashtags.split(/\s+/).filter(Boolean), chapters:parseChapters(values.chapters), asset_id:asset.id,
+      thumbnail_id:values.thumbnail_id||null,captions_id:values.captions_id||null});
     await tool('prepare_upload',{asset_id:asset.id,metadata_id:metadata.id});showView('approvals');toast('Private-upload request ready for your exact review.');
   });
+  const requestedChannel=new URLSearchParams(location.search).get('channel');
+  if(session.channels.some(c=>c.id===requestedChannel)) $('channelSelect').value=requestedChannel;
   await changeChannel();
   if(channelId && session.mode==='demo' && !state.records.analytics.length){await tool('channel_report',{days:28});await tool('list_videos',{count:5});}
 }
 init().catch(error=>{toast(error.message,true);$('notice').textContent='The local workspace could not load. '+error.message;});
+
+
+function updateSessionContext(record) {
+  const url=new URL(location.href);if(channelId)url.searchParams.set('channel',channelId);
+  if(conversationId)url.searchParams.set('session',conversationId);else url.searchParams.delete('session');
+  history.replaceState(null,'',url);
+  $('sessionTitle').textContent=record?.title||conversationId||'New conversation';
+  $('renameSession').disabled=busy||!conversationId;
+  $('terminalResume').textContent=conversationId?`clira --mode ${session.mode} --channel ${channelId} --resume ${conversationId}`:'';
+}
+async function resumeSession(id) {
+  if(busy)return;
+  const record=await api(`/api/conversations/${encodeURIComponent(channelId)}/${encodeURIComponent(id)}`);
+  conversationId=record.id;clear('messages');
+  for(const m of record.messages)addMessage(m.role==='user'?'user':'assistant',m.text,m.receipts);
+  updateSessionContext(record);
+}
+async function loadSessions() {
+  if(!channelId)return;
+  const current=channelId;
+  const records=await api('/api/conversations/'+encodeURIComponent(current));
+  if(current!==channelId)return;
+  const search=$('sessionSearch').value.toLocaleLowerCase();const list=clear('sessionList');
+  for(const r of records.filter(r=>(r.title||'').toLocaleLowerCase().includes(search))) {
+    const b=button(`${r.title||'Untitled'} · ${dateLabel(r.updated_at)} · ${r.id}`,async()=>{await resumeSession(r.id);showView('chat');},'secondary');b.disabled=busy;list.append(b);
+  }
+  if(!list.children.length)empty(list,'No matching conversations.');
+}
+function parseChapters(text) {
+  if(!text.trim())return [];
+  return text.trim().split('\n').map(line=>{
+    const match=line.match(/^(\d{1,2}:)?(\d{2}):(\d{2})\s+(.+)$/);
+    if(!match||Number(match[2])>59||Number(match[3])>59)throw new Error('Use MM:SS Title or HH:MM:SS Title for chapters.');
+    return {seconds:(match[1]?Number(match[1].slice(0,-1))*3600:0)+Number(match[2])*60+Number(match[3]),title:match[4]};
+  });
+}
+function renderPackageAssets() {
+  for(const id of ['packageThumbnail','packageCaptions','captionVideo']){
+    const selected=$(id).value;clear(id);const none=el('option','','None');none.value='';$(id).append(none);
+    const records=id==='captionVideo'?state.records.asset:state.records.package_asset.filter(a=>a.type===(id==='packageThumbnail'?'thumbnail':'captions'));
+    for(const a of records){const o=el('option','',`${a.filename} · ${a.id}`);o.value=a.id;$(id).append(o);}
+    if(records.some(a=>a.id===selected))$(id).value=selected;
+  }
+  const container=clear('packageAssets');
+  for(const record of state.records.package_asset){
+    const c=card(record.filename,record.type,`${record.size} bytes · ${record.sha256}`);
+    if(record.type==='thumbnail'){
+      const img=el('img','package-preview');img.src=`/api/preview/${encodeURIComponent(channelId)}/${encodeURIComponent(record.id)}`;img.alt='Actual local thumbnail preview';c.append(img);
+    }else{
+      c.append(el('pre','',record.text));const edit=el('textarea','package-editor',record.text);edit.setAttribute('aria-label','Edit timed captions '+record.id);
+      c.append(edit,button('Save edited captions as new unreviewed file',async()=>{await tool('edit_captions',{package_asset_id:record.id,text:edit.value});}));
+    }
+    c.append(el('p','',`Rights: ${record.rights} · Creative review: ${record.creative_reviewed?'owner reviewed':'required'}`));
+    const evidence=el('input');evidence.placeholder='Rights evidence for this exact file';evidence.setAttribute('aria-label','Rights evidence '+record.id);
+    const rights=el('select');rights.setAttribute('aria-label','Rights '+record.id);
+    for(const val of ['original','licensed']){const o=el('option','',val);o.value=val;rights.append(o);}
+    c.append(evidence,rights,button('Attest rights & creative review',async()=>{
+      if(!evidence.value.trim())throw new Error('Document rights evidence first.');
+      if(!window.confirm('I reviewed this exact image/caption file and its rights.'))return;
+      await tool('review_package_asset',{package_asset_id:record.id,rights:rights.value,rights_evidence:evidence.value,creative_reviewed:true});
+    },'secondary'));
+    const trackName=el('input');trackName.value='Manual captions';trackName.setAttribute('aria-label','Caption track name '+record.id);
+    const draftLabel=el('label','checkbox');const draft=el('input');draft.type='checkbox';draft.checked=true;draftLabel.append(draft,document.createTextNode('Keep caption track as draft (owner reviews in Studio)'));
+    if(record.type==='captions')c.append(trackName,draftLabel);
+    const target=el('input');target.placeholder='Exact owned YouTube video ID';target.setAttribute('aria-label','Attachment target '+record.id);
+    c.append(target,button('Prepare separate upload approval',async()=>{
+      if(!target.value.trim())throw new Error('Enter the exact owned private video ID after upload.');
+      await tool('prepare_attachment',{video_id:target.value.trim(),package_asset_id:record.id,name:trackName.value,is_draft:draft.checked});showView('approvals');
+    },'secondary'),details('Exact file facts',record));container.append(c);
+  }
+  if(!container.children.length)empty(container,'No thumbnail or caption files imported. Concepts are not images.');
+}
+function initV1() {
+  $('connectOAuth').addEventListener('click',async()=>{
+    const button=$('connectOAuth');button.disabled=true;
+    try{
+      let current=await api('/api/connect/start',{});
+      while(['authorizing','awaiting_confirmation','saving'].includes(current.state)){
+        $('connectState').textContent=current.notice+' State: '+current.state;
+        if(current.state==='awaiting_confirmation'){
+          const confirmed=window.prompt(`Connect ${current.name}? Type exact channel ID ${current.channel_id}. Read-only scopes: ${current.scopes.join(', ')}`);
+          if(confirmed!==current.channel_id)throw new Error('Channel not confirmed. No credentials saved. Sign-in expires after five minutes.');
+          current=await api('/api/connect/'+current.id+'/confirm',{channel_id:confirmed});
+        }
+        await new Promise(resolve=>setTimeout(resolve,1000));
+        current=await api('/api/connect/status');
+      }
+      $('connectState').textContent=current.state+' · '+(current.notice||'');
+      if(current.state==='connected')location.reload();
+    }catch(e){$('connectState').textContent=e.message;toast(e.message,true);}finally{button.disabled=false;}
+  });
+  $('titleOptions').addEventListener('click',async()=>{try{
+    const input=$('productionForm').elements.title;if(!input.value.trim())throw new Error('Enter the factual subject first (up to 65 characters).');
+    const result=await tool('title_options',{subject:input.value.trim()});const choices=clear('titleChoices');
+    choices.append(el('small','',result.status));for(const title of result.titles)choices.append(button(title,async()=>{input.value=title;},'secondary'));
+  }catch(e){toast(e.message,true);}});
+  const media=matchMedia('(prefers-color-scheme: dark)');
+  const theme=localStorage.getItem('clira-theme')||'auto';$('themeSelect').value=theme;
+  const apply=()=>{const value=$('themeSelect').value;document.documentElement.dataset.theme=value==='auto'?(media.matches?'dark':'light'):value;};apply();media.addEventListener('change',apply);
+  $('themeSelect').addEventListener('change',()=>{localStorage.setItem('clira-theme',$('themeSelect').value);apply();});
+  $('sessionSearch').addEventListener('input',()=>loadSessions().catch(e=>toast(e.message,true)));
+  $('renameSession').addEventListener('click',async()=>{
+    if(!conversationId)return toast('Send a message or create a session first.');
+    const title=window.prompt('Conversation title');if(!title?.trim())return;
+    try{const record=await api('/api/conversations/'+encodeURIComponent(conversationId),{channel_id:channelId,title:title.trim()},'PUT');updateSessionContext(record);await loadSessions();}catch(e){toast(e.message,true);}
+  });
+  const launchQuestions=['What subject interests you?','Who is the viewer?','What language?','How much time per week?','What format: short or long?'];let step=0,answers=[];
+  const start=()=>{step=0;answers=[];$('launchForm').hidden=false;$('onboarding').open=true;$('launchLabel').firstChild.textContent='1 of 5 · '+launchQuestions[0];$('launchAnswer').value='';$('launchAnswer').focus();};
+  $('startLaunch').addEventListener('click',start);$('emptyLaunch').addEventListener('click',()=>{showView('chat');$('view-chat').hidden=false;start();});
+  $('connectGuide').addEventListener('click',()=>showView('settings'));
+  $('emptyConnect').addEventListener('click',()=>showView('settings'));
+  $('emptyDemo').addEventListener('click',()=>toast('Start clira --mode demo serve for explicitly synthetic examples.'));
+  $('exploreDemo').addEventListener('click',async()=>{if(session.mode!=='demo')return toast('Restart clira --mode demo serve to explore synthetic fixtures.');$('channelSelect').value='DEMO_CHANNEL_TECH';await changeChannel();});
+  bindForm('launchForm',async()=>{
+    answers[step]=$('launchAnswer').value.trim();step++;
+    if(step<5){$('launchLabel').firstChild.textContent=`${step+1} of 5 · ${launchQuestions[step]}`;$('launchAnswer').value='';$('launchAnswer').focus();return;}
+    const result=await api('/api/workspaces',Object.fromEntries(['interest','viewer','language','time','format'].map((key,i)=>[key,answers[i]])));
+    session.channels.push(result.workspace);const o=el('option','',result.workspace.name);o.value=result.workspace.id;$('channelSelect').append(o);$('channelSelect').value=result.workspace.id;
+    $('launchForm').hidden=true;await changeChannel();toast('Local draft workspace, three ideas and draft calendar saved. No YouTube account created.');
+  });
+  bindForm('copyWorkspaceForm',async values=>{const result=await api('/api/workspaces/copy',values);toast('Copied '+result.copied.length+' local drafts. Original workspace preserved.');await refresh();});
+  bindForm('packageAssetForm',async(values,form)=>{await tool('import_package_asset',{...values,asset_id:values.asset_id||null,creative_reviewed:form.elements.creative_reviewed.checked});toast('Actual packaging file validated and saved.');});
+  bindForm('templateForm',async values=>{await tool('thumbnail_template',values);toast('PNG generated using the local deterministic template. Review its rights and creative quality.');});
+}

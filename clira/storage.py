@@ -66,6 +66,18 @@ class Store:
         with self.connect() as db:
             db.executescript(SCHEMA)
             db.execute("INSERT OR IGNORE INTO migrations VALUES(1,?)", (now(),))
+            # Additive migration: the original conversation shape remains compatible.
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS session_meta("
+                "id TEXT PRIMARY KEY REFERENCES conversations(id), title TEXT NOT NULL, "
+                "created_at TEXT NOT NULL, accessed_at TEXT NOT NULL, activity TEXT NOT NULL)"
+            )
+            db.execute(
+                "INSERT OR IGNORE INTO session_meta SELECT id,'Untitled conversation',"
+                "updated_at,updated_at,'completed' FROM conversations"
+            )
+            db.execute("INSERT OR IGNORE INTO migrations VALUES(2,?)", (now(),))
+            db.execute("INSERT OR IGNORE INTO settings VALUES(?,?)", ("store_id", encode(uid("store"))))
 
     @contextmanager
     def connect(self):
@@ -170,6 +182,51 @@ class Store:
             "INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
             (key, encode(value)),
         )
+
+    def sessions(self, channel_id, search=""):
+        self.channel(channel_id)
+        rows = self.rows(
+            "SELECT c.*,m.title,m.created_at,m.accessed_at,m.activity FROM conversations c "
+            "LEFT JOIN session_meta m ON m.id=c.id WHERE c.channel_id=? "
+            "ORDER BY c.updated_at DESC",
+            (channel_id,),
+        )
+        return [
+            {**r, "messages": json.loads(r["messages"])}
+            for r in rows
+            if search.casefold() in (r.get("title") or "").casefold()
+        ][:100]
+
+    def session(self, channel_id, conversation_id):
+        self.channel(channel_id)
+        rows = self.rows(
+            "SELECT c.*,m.title,m.created_at,m.accessed_at,m.activity FROM conversations c "
+            "LEFT JOIN session_meta m ON m.id=c.id WHERE c.channel_id=? AND c.id=?",
+            (channel_id, conversation_id),
+        )
+        if not rows:
+            raise CliraError("NOT_FOUND", "Session not found in this workspace.")
+        self.execute(
+            "UPDATE session_meta SET accessed_at=? WHERE id=? AND activity!='running'",
+            (now(), conversation_id),
+        )
+        return {**rows[0], "messages": json.loads(rows[0]["messages"])}
+
+    def new_session(self, channel_id, title="Untitled conversation"):
+        self.channel(channel_id)
+        session_id = uid("chat")
+        with self.connect() as db:
+            db.execute("INSERT INTO conversations VALUES(?,?,?,?)", (session_id, channel_id, "[]", now()))
+            db.execute(
+                "INSERT INTO session_meta VALUES(?,?,?,?,?)",
+                (session_id, title[:120], now(), now(), "completed"),
+            )
+        return self.session(channel_id, session_id)
+
+    def title_session(self, channel_id, conversation_id, title):
+        self.session(channel_id, conversation_id)
+        self.execute("UPDATE session_meta SET title=? WHERE id=?", (title[:120], conversation_id))
+        return self.session(channel_id, conversation_id)
 
     def consume_budget(self, maximum, prefix="model_calls"):
         key = prefix + ":" + now()[:10]

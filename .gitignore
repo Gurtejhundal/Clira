@@ -1,0 +1,14 @@
+.venv/
+.clira/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+*.sqlite*
+.env
+client_secret*.json
+credentials*.json
+token*.json
+dist/
+build/
+work/

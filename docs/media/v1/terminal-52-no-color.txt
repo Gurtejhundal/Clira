@@ -9,9 +9,11 @@ Choose 1 / 2 / 3 >Choose 1 / 2 / 3 > 3
 Clira 1.0.0rc1 · DEMO · SYNTHETIC
 Inside the everyday · Demo
 DEMO_CHANNEL_TECH
-Model: offline · owner approves account actions
+Model: Offline · limited templates
+Policy: live writes disabled
+Pending approvals: 0 · Jobs: none
 ❯❯ /new
-New session: chat_606f3d4a7b5444069c032bfc7f07c7ea
+New session: chat_b7a9d690eaac4a919fa0ffc8cc37ae00
 ❯❯ /title Candidate prototype
 Session title saved.
 ❯❯ Show my latest videos
@@ -24,7 +26,7 @@ SYNTHETIC DEMO · Latest uploads — lifetime views:
 • How maps find the fastest route: 2,900 views
 Sources: list_videos · mock
 1 tool receipts · /details · session
-chat_606f3d4a7b5444069c032bfc7f07c7ea
+chat_b7a9d690eaac4a919fa0ffc8cc37ae00
 ❯❯ /approvals
 No approvals in this workspace.
 ❯❯ /quit

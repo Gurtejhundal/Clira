@@ -68,7 +68,40 @@ class Terminal:
         self.print(f"Clira {__version__} · {label.get(c['mode'], '') if c else 'No channel selected'}")
         if c:
             self.print(f"{c['name']}\n{c['id']}")
-        self.print(f"Model: {self.service.config.model} · owner approves account actions")
+        config = self.service.config
+        model = (
+            "Offline · limited templates"
+            if config.model == "offline"
+            else (
+                "Gemini · enabled"
+                if config.allow_model_calls and os.getenv("GEMINI_API_KEY")
+                else "Gemini · unavailable (enable calls and configure key privately)"
+            )
+        )
+        self.print(f"Model: {model}")
+        paused = self.service.store.setting("paused", False)
+        writes = (
+            "PAUSED"
+            if paused
+            else "owner approval required"
+            if config.enable_writes
+            else "live writes disabled"
+        )
+        self.print("Policy: " + writes)
+        if c:
+            pending = self.service.store.rows(
+                "SELECT COUNT(*) AS count FROM approvals WHERE channel_id=? AND status='PENDING'",
+                (self.channel,),
+            )[0]["count"]
+            jobs = self.service.store.rows(
+                "SELECT state,COUNT(*) AS count FROM jobs WHERE channel_id=? GROUP BY state", (self.channel,)
+            )
+            self.print(
+                f"Pending approvals: {pending} · Jobs: "
+                + (", ".join(f"{j['state']} {j['count']}" for j in jobs) or "none")
+            )
+            if c["mode"] == "live":
+                self.print("Account: " + ("connected" if c["connection"] else "Not connected"))
         if c and self.console.width >= 80:
             self.print(f"Scopes: {', '.join(c['connection'].get('scopes', [])) or 'none'}")
         if self.conversation:

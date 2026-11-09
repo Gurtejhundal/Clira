@@ -45,8 +45,8 @@ uv run --locked --extra dev python scripts/verify_artifacts.py --artifacts dist/
 
 Fresh Python suite: **96 passed** (61 baseline tests preserved + 35 new tests). Python lint and
 formatting pass; JavaScript and shell syntax pass. One upstream Starlette/httpx TestClient deprecation
-warning remains. Python 3.12.16, SQLite 3.53.1, ffmpeg/ffprobe, uv 0.13.6, installed Chromium headless
-shell revision 1243 were used. Browser executable can be overridden through CLIRA_BROWSER; CI installs
+warning remains. Python 3.12.16, SQLite 3.53.1, ffmpeg/ffprobe, uv 0.13.6, Chromium headless
+shell revisions 1243 and 1248 were used. The final local run uses 1248, matching CI. Browser executable can be overridden through CLIRA_BROWSER; CI installs
 its matching Chromium revision.
 
 Browser checks exercise all eight views at **1440/1280/768/390/320px**, without horizontal page
@@ -69,6 +69,13 @@ read-only mocked website OAuth, package hash/right changes, real image decoding,
 parsing/edit invalidation, chapters and UTF-8 description limits, official multipart caption and raw
 thumbnail requests, sanitized auth/quota/rate/server errors and unknown-outcome recovery. The existing
 lost-upload-response/same-session/no-duplicate tests still pass.
+
+The first GitHub CI attempt exposed a Chromium 1248 dialog-close timing difference after Escape.
+The owner dialog now explicitly restores focus to its trigger; the test waits for that observable
+focus result instead of assuming the hidden state and close-event handler finish simultaneously.
+The newer browser also enforces CSP for string-evaluating test predicates, so waits now use function
+predicates. CSP was kept strict. Local checks were repeated with matching Chromium 1248 before
+updating the RC branch.
 
 ## Artifact gate
 

@@ -4,10 +4,12 @@ Cursor-control sequences removed for this text transcript.
 Clira 1.0.0rc1 · DEMO · SYNTHETIC
 Inside the everyday · Demo
 DEMO_CHANNEL_TECH
-Model: offline · owner approves account actions
+Model: Offline · limited templates
+Policy: live writes disabled
+Pending approvals: 0 · Jobs: none
 Scopes: none
 ❯❯ /new
-New session: chat_ca145327b7524b2a9c163180516e539a
+New session: chat_4f7cbcb66aee41bbb344d697944fcf8e
 ❯❯ /title Candidate prototype
 Session title saved.
 ❯❯ Show my latest videos
@@ -19,7 +21,7 @@ SYNTHETIC DEMO · Latest uploads — lifetime views:
 • The hidden cost of notifications: 3,800 views
 • How maps find the fastest route: 2,900 views
 Sources: list_videos · mock
-1 tool receipts · /details · session chat_ca145327b7524b2a9c163180516e539a
+1 tool receipts · /details · session chat_4f7cbcb66aee41bbb344d697944fcf8e
 ❯❯ /approvals
 No approvals in this workspace.
 ❯❯ /quit

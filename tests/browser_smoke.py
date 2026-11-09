@@ -158,8 +158,8 @@ def main():
                 )
                 page.keyboard.press("Escape")
                 page.locator("#approvalDialog").wait_for(state="hidden")
-                assert page.evaluate(
-                    "document.activeElement.textContent.includes('Review & approve exact action')"
+                page.wait_for_function(
+                    "() => document.activeElement.textContent.includes('Review & approve exact action')"
                 )
                 assert (
                     next(
@@ -214,8 +214,8 @@ def main():
                 )
                 page.keyboard.press("Escape")
                 page.locator("#approvalDialog").wait_for(state="hidden")
-                assert page.evaluate(
-                    "document.activeElement.textContent.includes('Review & approve exact action')"
+                page.wait_for_function(
+                    "() => document.activeElement.textContent.includes('Review & approve exact action')"
                 )
                 assert (
                     next(
@@ -248,7 +248,7 @@ def main():
                 page.locator("#message").fill("Show my latest videos again")
                 page.locator("#message").press("Enter")
                 page.locator("#sendButton", has_text="Send message").wait_for()
-                page.wait_for_function("document.querySelectorAll('#messages .assistant').length >= 3")
+                page.wait_for_function("() => document.querySelectorAll('#messages .assistant').length >= 3")
                 page.reload(wait_until="networkidle")
                 assert shared_id in page.locator("#terminalResume").inner_text()
                 shared = httpx.get(url + "/api/conversations/DEMO_CHANNEL_TECH/" + shared_id).json()

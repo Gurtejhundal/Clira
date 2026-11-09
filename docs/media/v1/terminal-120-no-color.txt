@@ -28,10 +28,12 @@ End of single-file Clira v1.0.0 design and implementation contract.
 Clira 1.0.0rc1 · DEMO · SYNTHETIC
 Inside the everyday · Demo
 DEMO_CHANNEL_TECH
-Model: offline · owner approves account actions
+Model: Offline · limited templates
+Policy: live writes disabled
+Pending approvals: 0 · Jobs: none
 Scopes: none
 ❯❯ /new
-New session: chat_620dc3645904430897c3e374ec7bbb4c
+New session: chat_ad04f2f763004cb3be292b279fdf191d
 ❯❯ /title Candidate prototype
 Session title saved.
 ❯❯ Show my latest videos
@@ -43,7 +45,7 @@ SYNTHETIC DEMO · Latest uploads — lifetime views:
 • The hidden cost of notifications: 3,800 views
 • How maps find the fastest route: 2,900 views
 Sources: list_videos · mock
-1 tool receipts · /details · session chat_620dc3645904430897c3e374ec7bbb4c
+1 tool receipts · /details · session chat_ad04f2f763004cb3be292b279fdf191d
 ❯❯ /approvals
 No approvals in this workspace.
 ❯❯ /quit

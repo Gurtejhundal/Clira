@@ -9,9 +9,11 @@ Choose 1 / 2 / 3 >Choose 1 / 2 / 3 > 3
 Clira 1.0.0rc1 · DEMO · SYNTHETIC
 Inside the everyday · Demo
 DEMO_CHANNEL_TECH
-Model: offline · owner approves account actions
+Model: Offline · limited templates
+Policy: live writes disabled
+Pending approvals: 0 · Jobs: none
 ❯❯ /new
-New session: chat_606f3d4a7b5444069c032bfc7f07c7ea
+New session: chat_b7a9d690eaac4a919fa0ffc8cc37ae00
 ❯❯ /title Candidate prototype
 Session title saved.
 ❯❯ Show my latest videos
@@ -24,7 +26,7 @@ SYNTHETIC DEMO · Latest uploads — lifetime views:
 • How maps find the fastest route: 2,900 views
 Sources: list_videos · mock
 1 tool receipts · /details · session
-chat_606f3d4a7b5444069c032bfc7f07c7ea
+chat_b7a9d690eaac4a919fa0ffc8cc37ae00
 ❯❯ /approvals
 No approvals in this workspace.
 ❯❯ /quit
@@ -39,10 +41,12 @@ Cursor-control sequences removed for this text transcript.
 Clira 1.0.0rc1 · DEMO · SYNTHETIC
 Inside the everyday · Demo
 DEMO_CHANNEL_TECH
-Model: offline · owner approves account actions
+Model: Offline · limited templates
+Policy: live writes disabled
+Pending approvals: 0 · Jobs: none
 Scopes: none
 ❯❯ /new
-New session: chat_ca145327b7524b2a9c163180516e539a
+New session: chat_4f7cbcb66aee41bbb344d697944fcf8e
 ❯❯ /title Candidate prototype
 Session title saved.
 ❯❯ Show my latest videos
@@ -54,7 +58,7 @@ SYNTHETIC DEMO · Latest uploads — lifetime views:
 • The hidden cost of notifications: 3,800 views
 • How maps find the fastest route: 2,900 views
 Sources: list_videos · mock
-1 tool receipts · /details · session chat_ca145327b7524b2a9c163180516e539a
+1 tool receipts · /details · session chat_4f7cbcb66aee41bbb344d697944fcf8e
 ❯❯ /approvals
 No approvals in this workspace.
 ❯❯ /quit
@@ -92,10 +96,12 @@ End of single-file Clira v1.0.0 design and implementation contract.
 Clira 1.0.0rc1 · DEMO · SYNTHETIC
 Inside the everyday · Demo
 DEMO_CHANNEL_TECH
-Model: offline · owner approves account actions
+Model: Offline · limited templates
+Policy: live writes disabled
+Pending approvals: 0 · Jobs: none
 Scopes: none
 ❯❯ /new
-New session: chat_620dc3645904430897c3e374ec7bbb4c
+New session: chat_ad04f2f763004cb3be292b279fdf191d
 ❯❯ /title Candidate prototype
 Session title saved.
 ❯❯ Show my latest videos
@@ -107,7 +113,7 @@ SYNTHETIC DEMO · Latest uploads — lifetime views:
 • The hidden cost of notifications: 3,800 views
 • How maps find the fastest route: 2,900 views
 Sources: list_videos · mock
-1 tool receipts · /details · session chat_620dc3645904430897c3e374ec7bbb4c
+1 tool receipts · /details · session chat_ad04f2f763004cb3be292b279fdf191d
 ❯❯ /approvals
 No approvals in this workspace.
 ❯❯ /quit

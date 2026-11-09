@@ -38,7 +38,7 @@ function button(text, handler, cls) {
   const b = el('button', cls, text); b.type = 'button';
   b.addEventListener('click', async () => {
     b.disabled = true;
-    try { await handler(); } catch (error) { toast(error.message, true); }
+    try { await handler(b); } catch (error) { toast(error.message, true); }
     finally { b.disabled = false; if(b.isConnected && document.activeElement===document.body)b.focus(); }
   });
   return b;
@@ -163,15 +163,16 @@ function renderProduction() {
   for (const draft of state.records.metadata) { const c = card(draft.title,'Metadata draft',draft.description); c.append(details('Disclosures & editorial lint', draft)); metadata.append(c); }
   if (!metadata.children.length) empty(metadata,'Metadata drafts stay local until an exact action is approved.');
 }
-async function approve(approval) {
+async function approve(approval, trigger) {
   const dialog = $('approvalDialog');
+  dialog.returnValue='cancel';
   $('confirmApproval').checked = false;
   $('approvalText').value = '';
   $('dialogTitle').textContent = 'Approve ' + approval.operation.replaceAll('_',' ');
   $('dialogChannel').textContent = `${state.channel.name} · ${channelId} · ${session.mode.toUpperCase()}`;
   $('dialogPayload').textContent = JSON.stringify(approval.payload,null,2);
   const answer = await new Promise(resolve => {dialog.addEventListener('close',()=>resolve(dialog.returnValue),{once:true}); dialog.showModal();});
-  if (answer !== 'approve' || $('approvalText').value !== 'APPROVE') return;
+  if (answer !== 'approve' || $('approvalText').value !== 'APPROVE') {if(trigger?.isConnected){trigger.disabled=false;trigger.focus();}return;}
   await api('/api/approvals/'+approval.id,{channel_id:channelId,approve:true});
   await refresh(); $('approvals').querySelector('button')?.focus(); toast('Approved exact payload. Run the job when ready.');
 }
@@ -187,7 +188,7 @@ function renderApprovals() {
     c.append(el('pre','',JSON.stringify(approval.payload,null,2)));
     const actions = el('div','actions');
     if (approval.status==='PENDING' && !expired) {
-      actions.append(button('Review & approve exact action',()=>approve(approval)),button('Reject',async()=>{await api('/api/approvals/'+approval.id,{channel_id:channelId,approve:false}); await refresh();},'secondary'));
+      actions.append(button('Review & approve exact action',trigger=>approve(approval,trigger)),button('Reject',async()=>{await api('/api/approvals/'+approval.id,{channel_id:channelId,approve:false}); await refresh();},'secondary'));
     }
     if (expired && job && ['AWAITING_APPROVAL','QUEUED','FAILED_RETRYABLE','PAUSED'].includes(job.state)) {
       actions.append(button('Request fresh approval for this job',async()=>{await api('/api/approvals/'+approval.id+'/renew',{channel_id:channelId});await refresh();toast('Fresh consent requested. The same job and saved session are preserved.');},'secondary'));

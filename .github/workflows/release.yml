@@ -1,0 +1,83 @@
+name: Verify and release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLIRA_MODE: demo
+      CLIRA_MODEL: offline
+      CLIRA_ALLOW_MODEL_CALLS: '0'
+      CLIRA_ENABLE_WRITES: '0'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.6'
+          python-version: '3.12'
+          enable-cache: true
+      - name: Install media validator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+      - name: Install locked dependencies
+        run: uv sync --locked --extra dev
+      - name: Lint, syntax and backend tests
+        run: |
+          uv run --locked ruff check clira tests scripts
+          uv run --locked ruff format --check clira tests scripts
+          node --check clira/web/app.js
+          bash -n run.sh
+          uv run --locked pytest -q
+      - name: Verify browser workflows in isolated demo mode
+        run: |
+          uv run --locked playwright install --with-deps chromium
+          uv run --locked python tests/browser_smoke.py --output work/ci-browser
+
+  publish:
+    needs: verify
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.6'
+          python-version: '3.12'
+      - name: Build installable and source packages
+        run: |
+          uv sync --locked
+          uv run --locked python scripts/build_release.py
+      - name: Publish a new version once
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          VERSION=$(uv run --locked python -c 'import clira; print(clira.__version__)')
+          TAG="v$VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; existing artifacts remain unchanged."
+          else
+            gh release create "$TAG" dist/* \
+              --target "$RELEASE_COMMIT" \
+              --title "Clira $TAG · Your Creative Intelligence" \
+              --notes-file "docs/releases/$TAG.md" \
+              --prerelease
+          fi

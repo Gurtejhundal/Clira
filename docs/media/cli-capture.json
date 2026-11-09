@@ -1,0 +1,14 @@
+[
+  {
+    "command": "./run.sh doctor",
+    "stdout_excerpt": "{\n  \"python\": \"3.12.16\",\n  \"mode\": \"demo\",\n  \"migration_version\": 1,\n  \"ffprobe\": \"/usr/bin/ffprobe\",\n  \"model\": \"offline\",\n  \"model_key_present\": false,\n  \"oauth_client_configured\": false,\n  \"writes_enabled\": false\n}"
+  },
+  {
+    "command": "./run.sh chat --channel DEMO_CHANNEL_TECH 'Show my latest five uploads'",
+    "stdout_excerpt": "SYNTHETIC DEMO \u00b7 Latest uploads \u2014 lifetime views:\n\u2022 Why your phone gets slower: 12,400 views\n\u2022 What deleting a file really does: 8,200 views\n\u2022 Inside a password manager: 6,100 views\n\u2022 The hidden cost of notifications: 3,800 views\n\u2022 How maps find the fastest route: 2,900 views"
+  },
+  {
+    "command": "./run.sh ideas --channel DEMO_CHANNEL_TECH",
+    "stdout_excerpt": "SYNTHETIC DEMO \u00b7 Three editorial hypotheses saved for review:\n\u2022 everyday technology explained: one common misconception\n\u2022 everyday technology explained: a practical beginner experiment\n\u2022 everyday technology explained: one decision explained\nThe offline router uses templates. Connect Gemini for original scripts and open-ended conversation."
+  }
+]

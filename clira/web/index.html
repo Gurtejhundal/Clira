@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#222720"><title>Clira · Your Creative Intelligence</title>
+  <link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<aside id="sidebar">
+  <a class="brand" href="/" aria-label="Clira home"><span class="emblem">c<span>✦</span></span><span id="brandName">Clira<small>YOUR CREATIVE INTELLIGENCE</small></span></a>
+  <label class="channel-label" for="channelSelect">WORKSPACE</label>
+  <select id="channelSelect" aria-label="Active channel"></select><code id="channelId"></code>
+  <nav aria-label="Main navigation">
+    <button data-view="chat" class="active"><span>✧</span> Talk to Clira</button>
+    <button data-view="library"><span>▤</span> Video library</button>
+    <button data-view="ideas"><span>◈</span> Ideas & calendar</button>
+    <button data-view="production"><span>↗</span> Production inbox</button>
+    <button data-view="approvals"><span>✓</span> Approvals <i id="approvalCount">0</i></button>
+    <button data-view="community"><span>☷</span> Community</button>
+    <button data-view="operations"><span>◷</span> Operations</button>
+    <button data-view="settings"><span>⚙</span> Settings</button>
+  </nav>
+  <div class="sidebar-foot"><span class="status-dot"></span> Local workspace<button id="pauseAll" class="quiet">Pause all writes</button></div>
+</aside>
+<div class="shell">
+  <header><div><span class="eyebrow">CREATOR WORKSPACE</span><p id="viewCrumb">Your channel, in good hands.</p></div><div class="top-status"><span id="modeBadge" class="badge">Loading</span><span id="modelBadge" class="badge neutral">Offline</span><button id="pauseTop" class="quiet">Pause writes</button></div></header>
+  <div id="notice" role="status"></div>
+  <main id="main" tabindex="-1">
+    <section id="view-chat" class="view">
+      <div class="page-heading"><div><span class="eyebrow">A LITTLE CLARITY. A LOT OF POSSIBILITY.</span><h1>Make room for<br><em>your next great idea.</em></h1><p>One creative partner for the work behind your channel.</p></div><div class="orbit" aria-hidden="true"><span>✦</span><i></i><b>c</b></div></div>
+      <div class="metrics" id="metrics"><article><span>Channel performance</span><strong>—</strong><small>Refresh to read dated metrics</small></article></div>
+      <div class="chat-heading"><h2>What are we working on?</h2><button id="newChat" class="quiet">New conversation ↗</button></div>
+      <div class="suggestions"><button data-prompt="How did my channel perform over the last 28 days?">Read my performance <span>↗</span></button><button data-prompt="Suggest three new topic ideas based on my recent uploads and channel profile.">Find my next three ideas <span>↗</span></button><button data-prompt="Show my latest five uploads and their lifetime views.">Review recent uploads <span>↗</span></button></div>
+      <div id="messages" aria-live="polite" aria-label="Conversation"></div>
+      <form id="chatForm" class="composer"><label class="sr-only" for="message">Message to Clira</label><textarea id="message" rows="2" placeholder="Ask about your channel, or start with an idea…" required maxlength="12000"></textarea><div><span id="composerHint">Draft freely. You approve account actions.</span><button type="submit" id="sendButton">Send message ↗</button></div></form>
+      <p class="fineprint" id="modeExplanation"></p>
+    </section>
+    <section id="view-library" class="view" hidden><div class="section-heading"><div><span class="eyebrow">THE WORK YOU'VE PUT OUT</span><h1>Video library</h1></div><button id="refreshVideos">Refresh from source ↻</button></div><div id="videos" class="cards"></div><h2>Private upload receipts</h2><div id="uploadedVideos" class="cards"></div></section>
+    <section id="view-ideas" class="view" hidden><div class="section-heading"><div><span class="eyebrow">FROM WHAT IF TO WHAT'S NEXT</span><h1>Ideas & calendar</h1></div><button id="suggestIdeas">Suggest three ideas ✧</button></div><div id="ideas" class="cards"></div><details class="panel"><summary>Add your own idea</summary><form id="ideaForm" class="form-grid"><label>Working title<input name="title" required maxlength="150"></label><label>Audience promise<textarea name="premise" required></textarea></label><label>Format<select name="format"><option value="short">Short</option><option value="long">Long form</option><option value="music">Music</option></select></label><button>Save idea</button></form></details><div class="panel"><h2>Editorial calendar</h2><p class="muted">Planning dates only. Public scheduling requires its own approval.</p><div id="calendar"></div><form id="calendarForm" class="form-grid"><label>Idea<select id="calendarIdea" name="idea_id" required></select></label><label>Planning time (your device timezone)<input name="at" type="datetime-local" required></label><button>Add to calendar</button></form></div><h2>Script briefs</h2><div id="briefs" class="cards"></div></section>
+    <section id="view-production" class="view" hidden><div class="section-heading"><div><span class="eyebrow">BRING THE STORY TO LIFE</span><h1>Production inbox</h1><p>Import a finished video. Review its package. Prepare a private upload.</p></div><span class="badge neutral">Manual provider</span></div><div class="panel"><h2>Prepare a video</h2><p class="muted">Copy your MP4 to <code id="importDir"></code>. Rendering happens in your preferred production tool.</p><form id="productionForm" class="form-grid"><label>Full MP4 path<input name="path" required placeholder="/absolute/path/to/imports/video.mp4"></label><label>Video title<input name="title" required maxlength="100"></label><label class="full">Description<textarea name="description" maxlength="5000"></textarea></label><label>Tags (comma separated)<input name="tags"></label><label>Thumbnail concept text<input name="thumbnail_text" maxlength="150"></label><label>Rights review<select name="rights" required><option value="unreviewed">Not reviewed</option><option value="original">I own all video and audio</option><option value="licensed">I have licenses for all third-party assets</option><option value="unlicensed">Rights not cleared</option></select></label><label>Rights evidence<input name="rights_evidence" placeholder="Ownership details or license reference"></label><label>Is this video made for kids?<select name="made_for_kids" required><option value="">Choose…</option><option value="false">No</option><option value="true">Yes</option></select></label><label>Realistic altered or synthetic media?<select name="synthetic_media" required><option value="">Choose…</option><option value="false">No</option><option value="true">Yes</option></select></label><label class="checkbox full"><input name="creative_reviewed" type="checkbox" required>I watched the final video and reviewed its creative quality, disclosures, and rights.</label><button type="submit">Validate & prepare private upload ↗</button></form><p class="fineprint">This creates a request for review. You approve and run it from Approvals.</p></div><h2>Imported assets</h2><div id="assets" class="cards"></div><h2>Metadata drafts</h2><div id="metadata" class="cards"></div></section>
+    <section id="view-approvals" class="view" hidden><div class="section-heading"><div><span class="eyebrow">YOUR CHANNEL. YOUR FINAL SAY.</span><h1>Approvals</h1><p>Every request is bound to an exact channel and payload. Approval and execution are separate actions.</p></div></div><div id="approvals"></div></section>
+    <section id="view-community" class="view" hidden><div class="section-heading"><div><span class="eyebrow">KEEP THE CONVERSATION GOING</span><h1>Community</h1><p>Thoughtful replies, with a human final review.</p></div><button id="refreshComments">Read recent comments ↻</button></div><div id="comments" class="cards"></div><h2>Reply drafts</h2><div id="replies" class="cards"></div></section>
+    <section id="view-operations" class="view" hidden><div class="section-heading"><div><span class="eyebrow">EVERY ACTION, ACCOUNTED FOR</span><h1>Operations</h1><p>Durable jobs, retry states, and an append-only action history.</p></div><button id="refreshState">Refresh ↻</button></div><div id="jobs" class="cards"></div><h2>Action history</h2><div id="audit" class="audit-list"></div><div class="panel"><h2>Automations are off</h2><p>Run <code>clira worker</code> to process already approved jobs once. Optional systemd templates are included in the repository; none are installed or enabled.</p></div></section>
+    <section id="view-settings" class="view" hidden><div class="section-heading"><div><span class="eyebrow">BUILD A PARTNER THAT KNOWS YOUR CHANNEL</span><h1>Workspace settings</h1></div></div><div class="panel"><h2>Channel memory</h2><form id="profileForm" class="form-grid"><label>Channel niche<input name="niche" required></label><label>Voice<input name="voice"></label><label>Language<input name="language"></label><label>Timezone<input name="timezone" required placeholder="Asia/Kolkata"></label><label class="full">Content rules<textarea name="rules"></textarea></label><button>Save channel profile</button></form></div><div class="panel"><h2>Connect your real YouTube channel</h2><p>Enable YouTube Data API and YouTube Analytics API in your Google Cloud project. Create a Desktop OAuth client, then run this from the project terminal:</p><pre>export CLIRA_GOOGLE_CLIENT_FILE=/path/to/client.json
+clira --mode live connect
+clira --mode live serve</pre><p>Google sign-in happens in your browser. The terminal asks you to confirm the exact channel ID. Read access is requested first.</p><p class="fineprint">Never paste credentials into this chat or the dashboard.</p></div><div class="panel"><h2>Model & account actions</h2><p id="settingsStatus"></p><p>The offline router handles a few fixed requests. To authorize Gemini calls with your own account, set these in your terminal and restart the app:</p><pre>export CLIRA_MODEL=gemini
+export GEMINI_API_KEY=…
+export CLIRA_ALLOW_MODEL_CALLS=1
+export CLIRA_MAX_MODEL_CALLS_DAY=50</pre><p>A request cap is enforced; it is not a currency budget. Live writes remain disabled until <code>CLIRA_ENABLE_WRITES=1</code>, suitable OAuth scopes, and per-action approval.</p></div></section>
+    <section id="emptyWorkspace" hidden class="panel"><h1>Meet your channel's new partner.</h1><p>Connect Google from your terminal to begin. Use Settings for the exact setup commands, or restart with <code>clira --mode demo serve</code> to explore synthetic fixtures.</p></section>
+  </main>
+  <footer>Made for the work behind the story.<span>Local-first · One agent · Your final say</span></footer>
+</div>
+<div id="toast" role="alert" hidden></div>
+<dialog id="approvalDialog"><form method="dialog"><h2 id="dialogTitle">Review action</h2><p id="dialogChannel"></p><pre id="dialogPayload"></pre><label class="checkbox"><input id="confirmApproval" type="checkbox" required>I approve exactly this channel, content, and account action.</label><div class="dialog-actions"><button value="cancel" formnovalidate class="secondary">Cancel</button><button id="confirmButton" value="approve">Approve exact action</button></div></form></dialog>
+</body>
+</html>

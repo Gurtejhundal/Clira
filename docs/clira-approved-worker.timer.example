@@ -1,0 +1,11 @@
+# EXAMPLE ONLY. No timer is installed/enabled by the application or build.
+[Unit]
+Description=Check Clira already-approved jobs every ten minutes
+
+[Timer]
+OnCalendar=*:0/10
+Persistent=true
+Unit=clira-approved-worker.service
+
+[Install]
+WantedBy=timers.target

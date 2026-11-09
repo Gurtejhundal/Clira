@@ -1,0 +1,13 @@
+# EXAMPLE ONLY. Replace paths, review, then install explicitly if desired.
+[Unit]
+Description=Clira already-approved job worker
+
+[Service]
+Type=oneshot
+WorkingDirectory=/ABSOLUTE/PATH/TO/Clira
+Environment=CLIRA_MODE=live
+Environment=CLIRA_ENABLE_WRITES=1
+# Optional owner-only EnvironmentFile supplies CLIRA_DATA_DIR and other settings.
+ExecStart=/ABSOLUTE/PATH/TO/Clira/.venv/bin/clira worker
+TimeoutStartSec=2h
+UMask=0077

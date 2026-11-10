@@ -9,14 +9,14 @@ started before this change, then reload the browser to load the new code.
 
 - Near-black background, warm ivory text, muted secondary text and antique-gold frames.
 - The existing CLIRA block wordmark and interactive layered character are centered together. The
-  complete borderless Braille portrait remains the fallback. The tagline is **Intelligence Behind
+  approved original PNG remains the website fallback; the terminal keeps its Braille portrait. The tagline is **Intelligence Behind
   Creation**. No startup version badge. See [LIVE_CHARACTER.md](LIVE_CHARACTER.md).
 - Monospace typography throughout, square controls, quiet source/state labels and gold focus rings.
 - All eight navigation controls sit directly under the portrait: chat, videos, ideas, production,
   approvals, community, operations and settings. On narrow screens the navigation wraps into two
   columns rather than hiding controls in a horizontally scrolling strip.
 - Desktop conversation scrolls inside its frame. On mobile the document scrolls naturally, with no
-  input overlay covering the upload review. Portrait sizes change without cropping its characters.
+  input overlay covering the upload review. Portrait sizes change without cropping the artwork.
 - The welcome and starter prompts appear for an empty conversation. Replies and resumed conversations
   do not reprint them. Channel snapshot, setup and session details remain available as disclosures.
 - Dark is the first-use theme; explicit light/system preferences remain available in Settings.

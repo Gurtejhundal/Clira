@@ -2,6 +2,12 @@
 
 ## 1.0.0rc1 · unreleased local candidate
 
+- Replace the simplified live-character drawing with faithful portrait textures, eight restrained
+  expressions and a dedicated blink. Clip facial changes over a shared silhouette, with subtle head,
+  breathing and iris motion. Keep the existing event controller, motion controls and agent backend.
+  Load expressions on demand; retain the approved PNG on artwork failure and the terminal's Braille.
+  Add reproducible identity/expression previews, prompt provenance and texture-failure browser checks.
+
 - Make timezone setup accept case/spacing variants and unambiguous city names. Support skip/unknown
   with an explicit UTC fallback, show the saved timezone, and preserve progress after invalid input.
 

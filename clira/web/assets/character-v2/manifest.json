@@ -1,0 +1,65 @@
+{
+  "neutral": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 647642,
+    "sha256": "e6da13483e5db59977e96c043bb020847b052ea8fc8cd0efadd60a8daadbd55d",
+    "format": "lossless WebP RGBA"
+  },
+  "curious": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 674096,
+    "sha256": "ad2814f63b0f9e0f68d8982624c6da7f403fe82f3db8311ccc90cf0d44a0a196",
+    "format": "lossless WebP RGBA"
+  },
+  "happy": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 686478,
+    "sha256": "5eefd5a8de12f95979f84a88444e76e6a10286536d427102edbbaacb5d681ab8",
+    "format": "lossless WebP RGBA"
+  },
+  "surprised": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 680588,
+    "sha256": "116d28701240c95826b4ed6f9ec01fad5addc70def117552f72b04397b15ef63",
+    "format": "lossless WebP RGBA"
+  },
+  "thinking": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 674882,
+    "sha256": "007b6cef2d7e9c8f358ccfcbe75a24676355bb989506d7c0ab8fe9b5c60da03e",
+    "format": "lossless WebP RGBA"
+  },
+  "dizzy": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 670688,
+    "sha256": "23301c479e597933cbba7ddb88ed1772e103c37602fd5330e3f08a5213914cbc",
+    "format": "lossless WebP RGBA"
+  },
+  "concerned": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 669078,
+    "sha256": "84c96d12d957c97f3b5034b04f13a1d6336e725a2854c0b22e82656c0300a830",
+    "format": "lossless WebP RGBA"
+  },
+  "celebrating": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 674310,
+    "sha256": "8e5519b622c0bd202bd905fbd1b7da0c52bf5030b0473e643dfd43f7bd96fa4d",
+    "format": "lossless WebP RGBA"
+  },
+  "blink": {
+    "width": 1254,
+    "height": 1254,
+    "bytes": 680660,
+    "sha256": "58a741262d5b64288d493f545657c6b7514c0ea662f999738ebb53195d750bbd",
+    "format": "lossless WebP RGBA"
+  }
+}

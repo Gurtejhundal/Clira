@@ -14,6 +14,12 @@
   const priorities = {idle:0, hover:5, happy:10, delighted:11, dizzy:12, greeting:13,
     typing:20, attached:30, reply:35, preview:55, approval:50, thinking:70,
     uploading:75, demo:80, celebrate:85, error:90};
+  const expressions = {idle:'neutral', hover:'curious', typing:'curious', approval:'curious',
+    thinking:'thinking', uploading:'thinking', attached:'surprised', preview:'happy', reply:'happy',
+    happy:'happy', delighted:'celebrating', dizzy:'dizzy', celebrate:'celebrating',
+    demo:'happy', error:'concerned', greeting:'happy'};
+  const faces=new Map(), imageLoads=new Set();
+  let artwork=null, wantedExpression='neutral';
   const duration = {happy:1300, delighted:1700, dizzy:1800, greeting:1500,
     attached:1800, reply:1300, preview:2200, demo:2200, celebrate:2200, error:3600};
   const button = document.getElementById('characterInteract');
@@ -42,11 +48,41 @@
     if(temporary && priorities[temporary]>=priorities[next])next=temporary;
     return next;
   }
+  // Only the canonical neutral is critical. Expression textures are fetched on demand.
+  function loadFace(name) {
+    if(faces.has(name))return faces.get(name);
+    const promise=new Promise(resolve=>{
+      const image=new Image();imageLoads.add(image);
+      const finish=ok=>{imageLoads.delete(image);resolve(ok);};
+      on(image,'load',()=>finish(true));on(image,'error',()=>finish(false));
+      image.src='/static/assets/character-v2/'+name+'.webp';
+    }).then(ok=>{
+      if(ok&&!destroyed&&artwork){
+        const layer=artwork.querySelector('[data-face="'+name+'"]');
+        if(layer)layer.setAttribute('href',layer.dataset.src);
+        if(name==='blink')root.dataset.blinkReady='true';
+      }
+      return ok;
+    });
+    faces.set(name,promise);return promise;
+  }
+  function displayExpression(name) {
+    wantedExpression=name;
+    if(!artwork||root.dataset.ready!=='true')return;
+    if(name==='neutral'){root.dataset.expression='neutral';artwork.querySelector('[data-gaze-face]').setAttribute('href','/static/assets/character-v2/neutral.webp');return;}
+    loadFace(name).then(ok=>{
+      if(!destroyed&&wantedExpression===name){
+        root.dataset.expression=ok?name:'neutral';
+        artwork.querySelector('[data-gaze-face]').setAttribute('href','/static/assets/character-v2/'+(ok?name:'neutral')+'.webp');
+      }
+    });
+  }
   function render() {
     const next=choose();state=next;
     root.dataset.state=mode()==='off'?'idle':next;
     root.dataset.motion=mode();root.dataset.paused=String(hidden);
     status.textContent=labels[next];
+    displayExpression(mode()==='off'?'neutral':expressions[next]);
     if(mode()!=='full') {lookX=0;lookY=0;root.style.setProperty('--look-x','0px');root.style.setProperty('--look-y','0px');}
   }
   function react(next) {
@@ -61,7 +97,7 @@
   }
   function blinkCycle() {
     later('blink',()=>{
-      if(!['delighted','celebrate','dizzy'].includes(state))root.classList.add('is-blinking');
+      if(root.dataset.ready==='true'&&!['delighted','celebrate','dizzy'].includes(state)){loadFace('blink');root.classList.add('is-blinking');}
       later('unblink',()=>{root.classList.remove('is-blinking');blinkCycle();},150);
     },3500+Math.random()*2800);
   }
@@ -167,9 +203,9 @@
   on(window,'focus',()=>{if(!document.hidden&&Date.now()-lastActive>30000)react('greeting');lastActive=Date.now();});
   function destroy() {
     if(destroyed)return;destroyed=true;abort.abort();for(const id of timers.values())clearTimeout(id);
-    timers.clear();pending.clear();approvalSources.clear();points=[];cancelAnimationFrame(raf);raf=0;root.classList.remove('is-blinking','is-tilting');root.dataset.motion='off';root.style.setProperty('--look-x','0px');root.style.setProperty('--look-y','0px');
+    timers.clear();pending.clear();approvalSources.clear();for(const image of imageLoads)image.removeAttribute('src');imageLoads.clear();faces.clear();points=[];cancelAnimationFrame(raf);raf=0;root.classList.remove('is-blinking','is-tilting');root.dataset.motion='off';root.style.setProperty('--look-x','0px');root.style.setProperty('--look-y','0px');
   }
-  window.cliraCharacter=Object.freeze({emit,destroy,get state(){return state;},get motion(){return mode();},
+  window.cliraCharacter=Object.freeze({emit,destroy,get state(){return state;},get motion(){return mode();},get expression(){return root.dataset.expression||'neutral';},
     get diagnostics(){return {pending:pending.size,timers:timers.size,points:points.length,destroyed};}});
   render();idleTimers();
   fetch('/static/assets/clira-live.svg',{signal:abort.signal}).then(response=>{
@@ -178,7 +214,12 @@
     if(destroyed)return;
     const svg=new DOMParser().parseFromString(text,'image/svg+xml').documentElement;
     if(svg.localName!=='svg'||svg.querySelector('script,foreignObject'))throw new Error('Invalid artwork');
-    document.getElementById('characterArtwork').replaceChildren(document.importNode(svg,true));
-    document.getElementById('characterFallback').hidden=true;root.dataset.ready='true';
+    artwork=document.importNode(svg,true);
+    document.getElementById('characterArtwork').replaceChildren(artwork);
+    return loadFace('neutral').then(ok=>{
+      if(destroyed)return;
+      if(!ok)throw new Error('Canonical portrait unavailable');
+      document.getElementById('characterFallback').hidden=true;root.dataset.ready='true';render();
+    });
   }).catch(error=>{if(error.name!=='AbortError'){artworkFailed=true;root.dataset.ready='false';idleTimers();render();status.textContent='Clira · portrait fallback';}});
 })();

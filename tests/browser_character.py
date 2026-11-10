@@ -64,14 +64,28 @@ def main():
                 page = context.new_page()
                 errors = []
                 page.on("pageerror", lambda e: errors.append(str(e)))
+                asset_requests = []
+                page.on(
+                    "request",
+                    lambda request: (
+                        asset_requests.append(request.url) if "/character-v2/" in request.url else None
+                    ),
+                )
                 page.goto(url)
-                page.locator("#characterArtwork svg").wait_for()
+                page.wait_for_function(
+                    "() => document.querySelector('#cliraCharacter').dataset.ready==='true'"
+                )
+                assert {url.rsplit("/", 1)[-1] for url in asset_requests} == {"neutral.webp"}
+                assert page.evaluate("cliraCharacter.expression") == "neutral"
+                page.screenshot(path=str(output / "neutral.png"))
                 page.wait_for_function("() => !busy && !!channelId")
                 assert page.locator("#characterFallback").is_hidden()
                 assert page.evaluate("cliraCharacter.motion") == "full"
                 character = page.locator("#characterInteract")
                 character.hover()
                 assert page.evaluate("cliraCharacter.state") == "hover"
+                page.wait_for_function("() => cliraCharacter.expression==='curious'")
+                page.screenshot(path=str(output / "curious.png"))
                 box = character.bounding_box()
                 cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
                 for i in range(24):
@@ -88,6 +102,7 @@ def main():
                 page.wait_for_timeout(180)
                 assert page.evaluate("cliraCharacter.state") == "hover"
                 page.wait_for_function("() => cliraCharacter.state==='happy'")
+                page.wait_for_function("() => cliraCharacter.expression==='happy'")
                 page.screenshot(path=str(output / "single-click.png"))
                 page.wait_for_timeout(1400)
                 page.evaluate("transitions.length=0")
@@ -95,6 +110,7 @@ def main():
                 page.wait_for_function("() => cliraCharacter.state==='delighted'")
                 page.wait_for_timeout(400)
                 assert "happy" not in page.evaluate("transitions")
+                page.wait_for_function("() => cliraCharacter.expression==='celebrating'")
                 page.screenshot(path=str(output / "double-click.png"))
                 page.wait_for_timeout(1400)
                 box = character.bounding_box()
@@ -107,7 +123,14 @@ def main():
                     angle = i * 2 * math.pi / 48
                     page.mouse.move(cx + radius * math.cos(angle), cy + radius * math.sin(angle))
                 page.wait_for_function("() => cliraCharacter.state==='dizzy'")
+                page.wait_for_function("() => cliraCharacter.expression==='dizzy'")
                 page.screenshot(path=str(output / "circle.png"))
+                # Reverse travel must be recognized too, after the existing cooldown.
+                page.wait_for_timeout(6100)
+                for i in range(49):
+                    angle = -i * 2 * math.pi / 48
+                    page.mouse.move(cx + radius * math.cos(angle), cy + radius * math.sin(angle))
+                page.wait_for_function("() => cliraCharacter.state==='dizzy'")
                 page.wait_for_timeout(1900)
                 page.mouse.move(1100, 150)
                 character.evaluate("n=>n.blur()")
@@ -116,6 +139,10 @@ def main():
                 character.press("Space")
                 page.wait_for_function("() => cliraCharacter.state==='happy'")
                 page.wait_for_timeout(1400)
+                page.evaluate("cliraCharacter.emit('attached')")
+                page.wait_for_function("() => cliraCharacter.expression==='surprised'")
+                page.screenshot(path=str(output / "surprised.png"))
+                page.wait_for_timeout(1900)
                 page.locator("#message").fill("Show my latest videos")
                 assert page.evaluate("cliraCharacter.state") == "typing"
                 held = []
@@ -125,6 +152,8 @@ def main():
                 character.dblclick(delay=50)
                 assert page.evaluate("cliraCharacter.state") == "thinking"
                 assert page.evaluate("cliraCharacter.diagnostics.pending") == 1
+                page.wait_for_function("() => cliraCharacter.expression==='thinking'")
+                page.screenshot(path=str(output / "thinking.png"))
                 held.pop().continue_()
                 page.wait_for_function("() => !busy && cliraCharacter.diagnostics.pending===0")
                 page.unroute("**/api/chat")
@@ -142,6 +171,7 @@ def main():
                 page.locator("#message").press("Enter")
                 page.wait_for_function("() => !busy && cliraCharacter.state==='error'")
                 assert page.evaluate("cliraCharacter.diagnostics.pending") == 0
+                page.wait_for_function("() => cliraCharacter.expression==='concerned'")
                 page.screenshot(path=str(output / "error.png"))
                 page.unroute("**/api/chat")
                 # These mocked result envelopes exercise the real API-to-character adapter only.
@@ -168,7 +198,9 @@ def main():
                 page.wait_for_timeout(450)
                 assert page.locator("#cliraCharacter").get_attribute("data-state") == "idle"
                 page.reload()
-                page.locator("#characterArtwork svg").wait_for()
+                page.wait_for_function(
+                    "() => document.querySelector('#cliraCharacter').dataset.ready==='true'"
+                )
                 assert page.evaluate("cliraCharacter.motion") == "off"
                 page.locator("nav button[data-view=settings]").click()
                 page.locator("#characterMotion").select_option("full")
@@ -231,7 +263,9 @@ def main():
                 )
                 mobile = touch.new_page()
                 mobile.goto(url)
-                mobile.locator("#characterArtwork svg").wait_for()
+                mobile.wait_for_function(
+                    "() => document.querySelector('#cliraCharacter').dataset.ready==='true'"
+                )
                 mobile.locator("#characterInteract").tap()
                 mobile.wait_for_function("() => cliraCharacter.state==='happy'")
                 mobile.wait_for_timeout(1400)
@@ -249,6 +283,53 @@ def main():
                 assert fallback_page.locator("#characterFallback").is_visible()
                 assert fallback_page.evaluate("cliraCharacter.diagnostics.timers") == 0
                 fallback.close()
+                # Optional texture failure keeps the canonical face, while real status still updates.
+                degraded = browser.new_context()
+                degraded.route("**/character-v2/happy.webp", lambda route: route.abort())
+                degraded_page = degraded.new_page()
+                degraded_page.goto(url)
+                degraded_page.wait_for_function(
+                    "() => document.querySelector('#cliraCharacter').dataset.ready==='true'"
+                )
+                degraded_page.locator("#characterInteract").click()
+                degraded_page.wait_for_function("() => cliraCharacter.state==='happy'")
+                degraded_page.wait_for_function("() => cliraCharacter.expression==='neutral'")
+                assert degraded_page.locator("#characterFallback").is_hidden()
+                degraded.close()
+                # A late texture must never replace a newer, higher-priority facial reaction.
+                delayed = browser.new_context()
+                delayed_page = delayed.new_page()
+                held_texture = []
+                delayed_page.route("**/character-v2/happy.webp", lambda route: held_texture.append(route))
+                delayed_page.goto(url)
+                delayed_page.wait_for_function(
+                    "() => document.querySelector('#cliraCharacter').dataset.ready==='true'"
+                )
+                delayed_page.evaluate("cliraCharacter.emit('reply')")
+                delayed_page.wait_for_timeout(100)
+                assert len(held_texture) == 1
+                delayed_page.evaluate("cliraCharacter.emit('error')")
+                delayed_page.wait_for_function("() => cliraCharacter.expression==='concerned'")
+                held_texture.pop().continue_()
+                delayed_page.wait_for_function(
+                    "() => document.querySelector('[data-face=happy]').getAttribute('href')!==null"
+                )
+                assert delayed_page.evaluate("cliraCharacter.expression") == "concerned"
+                assert delayed_page.evaluate("cliraCharacter.state") == "error"
+                delayed.close()
+                # Missing critical texture uses the approved PNG, never a blank character.
+                missing = browser.new_context()
+                missing.route("**/character-v2/neutral.webp", lambda route: route.abort())
+                missing_page = missing.new_page()
+                missing_page.goto(url)
+                missing_page.wait_for_function(
+                    "() => document.querySelector('#cliraCharacter').dataset.ready==='false'"
+                )
+                assert missing_page.locator("#characterFallback img").evaluate(
+                    "n=>n.complete && n.naturalWidth===1254"
+                )
+                assert missing_page.evaluate("cliraCharacter.motion") == "off"
+                missing.close()
                 # Short recording of the actual application, using its real offline chat backend.
                 recording = browser.new_context(
                     viewport={"width": 1280, "height": 900},
@@ -257,7 +338,9 @@ def main():
                 )
                 demo = recording.new_page()
                 demo.goto(url)
-                demo.locator("#characterArtwork svg").wait_for()
+                demo.wait_for_function(
+                    "() => document.querySelector('#cliraCharacter').dataset.ready==='true'"
+                )
                 demo.locator("#characterInteract").hover()
                 demo.wait_for_timeout(700)
                 demo.locator("#characterInteract").click()

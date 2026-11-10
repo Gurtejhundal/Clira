@@ -146,3 +146,30 @@ suite passed with zero JavaScript errors. Ruff check/format and both JavaScript 
 The original PNG and terminal Braille files are unchanged. No paid model request or live upload was
 performed. The SVG is a simplified new interpretation, not independent facial layers recovered from
 the original PNG. See [LIVE_CHARACTER.md](LIVE_CHARACTER.md) for implementation and behavior limits.
+
+
+## 10 November 2026 — faithful character artwork V2
+
+Replaced the simplified vector face with image-backed facial textures referenced from the approved
+portrait. Reviewed the original/neutral comparison and all eight composited expressions. The original
+PNG and both terminal Braille files are byte-unchanged. The rig keeps a common silhouette; it is not
+an independently articulated hair/hand/glasses rig. See [art provenance](brand/CHARACTER_V2_ART.md).
+
+- **207 Python tests passed**, with one existing upstream Starlette/httpx deprecation warning.
+- Dedicated character browser suite: all eight expressions; clockwise/anticlockwise circle;
+  single/double click, touch, keyboard, gaze, real offline chat/pending/error events; reduced/off/OS
+  preferences; visibility/BFCache/teardown; startup lazy loading; missing SVG, critical neutral and
+  optional expression; stale texture completion cannot replace a newer reaction. Zero page errors.
+- Existing browser smoke: all eight views at 320, 390, 768, 820, 1024, 1280 and 1440 pixels,
+  light/dark, selection/copy and shared sessions. Upload-flow browser test passed attachment,
+  editable preview, owner review and simulated private upload, with no JavaScript errors.
+- Ruff check/format, JavaScript syntax checks and wheel asset-byte verification passed.
+- Lossless WebP alpha and visible RGBA bytes match the generated PNG masters; delivery checksums
+  are recorded alongside the textures. Neutral loads first; expressions are lazy and cached.
+- A browser recording captures the actual offline application. Verified account success uses a
+  mocked receipt fixture, not a new YouTube operation. No configured Google model or account call
+  was made; the built-in image-generation tool was used to create the artwork.
+
+Development artifacts are in the task workspace's `outputs/Clira-character-v2/`: identity comparison,
+expression sheet, browser screenshots/recording, and source PNGs. `scripts/preview_character.py`
+recreates the comparison and contact sheet from the packaged assets without API/account access.

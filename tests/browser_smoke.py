@@ -102,8 +102,8 @@ def main():
                 assert not page.locator("#chatWelcome").is_visible()
                 assert "Mono" in page.locator("body").evaluate("n=>getComputedStyle(n).fontFamily")
                 assert (
-                    page.locator(".portrait pre").text_content()
-                    == Path("clira/assets/clira_braille_v2_compact.txt").read_text().rstrip()
+                    page.locator("#characterFallback img").get_attribute("src")
+                    == "/static/assets/clira-portrait.png"
                 )
                 page.context.grant_permissions(["clipboard-read", "clipboard-write"])
                 page.locator("#messages .assistant .message-actions button").first.click()
@@ -395,7 +395,7 @@ def main():
                                 "five-step local launch",
                                 "eight views at seven widths; light/dark; keyboard",
                                 "clipboard copy; safe Markdown; multiline; Insert cursor; slash navigation",
-                                "exact Braille portrait without clipping; welcome per new conversation",
+                                "faithful portrait with approved PNG fallback; welcome per new conversation",
                             ],
                             "browser_errors": errors,
                             "screenshots": str(args.output.resolve()),

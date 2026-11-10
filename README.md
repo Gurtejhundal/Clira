@@ -34,11 +34,12 @@
 ## Terminal-style web workspace
 
 The browser app now carries Clira's terminal identity across **all eight views**: antique-gold
-frames, the original Braille character, CLIRA wordmark, monospace controls and a block cursor.
+frames, a faithful monochrome portrait, CLIRA wordmark, monospace controls and a block cursor.
 You can select and copy answers, use slash navigation, attach a video and review its upload in chat.
 The interactive terminal remains optional; it does not have to run alongside the website.
 
-Clira's layered SVG companion blinks, follows nearby pointer movement, distinguishes single and
+Clira's image-backed SVG companion preserves the original detailed artwork with eight expressions.
+It blinks, follows nearby pointer movement, distinguishes single and
 double clicks, reacts to circular gestures, and responds to real chat/upload/review states.
 **Character motion: Full / Reduced / Off** is available in Settings and honors reduced motion.
 The original portrait assets are preserved. [Character behavior and event hooks](docs/LIVE_CHARACTER.md).

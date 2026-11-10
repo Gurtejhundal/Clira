@@ -108,3 +108,34 @@ def test_invalid_model_turn_releases_session_lease_without_running_tools(service
     assert exc.value.code == "MODEL_SCHEMA"
     assert service.store.rows("SELECT activity FROM session_meta")[0]["activity"] == "failed"
     assert not service.store.rows("SELECT * FROM jobs")
+
+
+@pytest.mark.parametrize(
+    "failure,code",
+    [
+        (httpx.ReadTimeout, "MODEL_TIMEOUT"),
+        (httpx.ConnectError, "MODEL_CONNECTION"),
+        (httpx.RemoteProtocolError, "MODEL_NETWORK"),
+    ],
+)
+def test_model_transport_errors_are_actionable_and_redacted(service, monkeypatch, failure, code):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    service.config.allow_model_calls = True
+    calls = []
+
+    def fail(request):
+        calls.append(request)
+        raise failure("secret provider payload AQ.private", request=request)
+
+    provider = GeminiProvider(
+        service.config,
+        service.store,
+        client=httpx.Client(transport=httpx.MockTransport(fail)),
+        key="AQ.private",
+    )
+    with pytest.raises(CliraError) as exc:
+        provider.generate([], [], {"system": "test"})
+    assert exc.value.code == code
+    assert "AQ.private" not in exc.value.message
+    assert "No automatic retry" in exc.value.message
+    assert len(calls) == 1

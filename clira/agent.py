@@ -72,9 +72,27 @@ class GeminiProvider:
                     "generationConfig": {"maxOutputTokens": 4096, "temperature": 0.3},
                 },
             )
+        except httpx.TimeoutException:
+            raise CliraError(
+                "MODEL_TIMEOUT",
+                "Gemini did not respond within the request timeout. Try a shorter prompt or a model "
+                "with available quota via /connections. No automatic retry was made; "
+                "the daily request was counted conservatively.",
+                True,
+            ) from None
+        except httpx.ConnectError:
+            raise CliraError(
+                "MODEL_CONNECTION",
+                "Could not connect securely to Gemini. Check internet, VPN/proxy and system clock. "
+                "No automatic retry was made; the daily request was counted conservatively.",
+                True,
+            ) from None
         except httpx.HTTPError:
             raise CliraError(
-                "MODEL_NETWORK", "Model request interrupted; daily request counted conservatively.", True
+                "MODEL_NETWORK",
+                "The Gemini connection was interrupted before a complete response arrived. "
+                "No automatic retry was made; the daily request was counted conservatively.",
+                True,
             ) from None
         if response.status_code >= 400:
             raise CliraError(

@@ -14,6 +14,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 from rich.console import Console
 from rich.terminal_theme import TerminalTheme
+from rich.text import Text
 
 from clira.agent import Agent
 from clira.config import Config
@@ -102,6 +103,8 @@ def main():
             )
             terminal.theme = theme
             terminal.apply_theme()
+            # Each gallery case chooses its theme independently of the capture shell.
+            terminal.console.no_color = theme == "mono"
             if name.startswith("conversation"):
                 terminal.view.composer()
                 terminal.print("❯ Show my latest videos")
@@ -120,8 +123,13 @@ def main():
                     terminal.print("❯ ")
                 else:
                     terminal.print("Choose 1 / 2 / 3 > ")
-            (root / (name + ".txt")).write_text(terminal.console.export_text(clear=False))
-            svg = terminal.console.export_svg(
+            # Rich records styles before NO_COLOR is applied. Export the actual emitted
+            # ANSI instead so a monochrome preview cannot accidentally retain colors.
+            emitted = Text.from_ansi(terminal.console.file.getvalue())
+            exported = Console(file=io.StringIO(), width=width, height=height, record=True)
+            exported.print(emitted, end="")
+            (root / (name + ".txt")).write_text(exported.export_text(clear=False))
+            svg = exported.export_svg(
                 title=f"Clira · synthetic demo · {width} columns",
                 theme=LIGHT if theme == "light" else DARK,
             )

@@ -1,58 +1,71 @@
-# Terminal visual pass · 10 November 2026
+# Clira terminal design language
 
-The previous startup printed the portrait, a mistakenly included specification footer, and plain
-onboarding text vertically. The terminal now uses an original Clira wordmark, an aligned two-column
-portrait/workspace frame, restrained gold accents, clear onboarding choices and readable conversation
-sections. The approved 22-line portrait itself is unchanged. The reference informed hierarchy and
-spacing; no Hermes assets, runtime or code were reused.
+The design authority is the supplied
+[terminal/web master specification](../CLIRA_V1_TERMINAL_WEB_MASTER_SPEC_AND_CODEX_PROMPT.md),
+particularly section 2 (identity and tokens) and section 3 (terminal experience), together with the
+original [interface goals](../mds/Clira_Agent_Architecture_Build_Pack/Clira/docs/12_INTERFACE.md).
+The newer master specification controls the approved character and supersedes the older pack's
+exploratory mascot direction. No new brand asset or character is introduced.
 
-![First-run terminal render](media/terminal/welcome-120.png)
+The previous visual pass overemphasized the Hermes reference with a large block-letter banner,
+gold outer frame, a tool-catalogue panel and added slogans. This revision follows Clira's own
+restrained Ink/Ivory language: normal-case wordmark, native monospace typography, approved monochrome
+portrait, deliberate spacing, neutral hierarchy and gold reserved for interaction/owner review.
 
-[Connected workspace composition with synthetic demo data](media/terminal/workspace-120.png).
-These PNGs are generated from the real Rich renderer using system monospace fonts. They are render
-previews, not screenshots of a native terminal window. Real pseudo-terminals are exercised separately.
+![Clira first-run render](media/terminal/welcome-120.png)
 
-## Behavior
+[Returning workspace](media/terminal/workspace-120.png). These are previews of the actual Rich output
+using synthetic demo data and installed system fonts, not native-window screenshots or live-channel
+proof. The exporter uses the actual emitted ANSI, so mono previews retain no runtime color.
 
-| Terminal | Layout |
+## Contract to implementation
+
+| Supplied design rule | Terminal behavior |
 |---|---|
-| 100+ columns, 36+ rows | Wordmark, approved monochrome portrait and status/onboarding side by side |
-| 80–99 columns | Wordmark and readable single-column frame; no portrait |
-| 52–79 columns | Stacked wordmark/tagline and single-column frame |
-| Under 52 columns | Simple text, full labels and prompt; no large art or frame |
-| Short windows | Compact title and onboarding; no portrait |
-| `--no-logo` | Small text title; no large wordmark or portrait |
+| One recognizable Clira | Small `Clira` wordmark and exact “Your Creative Intelligence” tagline |
+| Preserve the approved character | Exact 22-line Braille portrait; no ornaments or replacement mascot |
+| Ink and Ivory as the main colors | Native foreground/background in auto/mono; manual light/dark text palettes |
+| Restrained Antique Gold | Prompt, numbered choices, command shortcut and explicit owner-review emphasis |
+| Calm operations cockpit | Channel ID, actual mode, model, policy and work counts precede next actions |
+| Thin dividers, few panels | Neutral input divider; status/review panels only when useful; no outer dashboard frame |
+| Lightweight conversational terminal | Ordinary scrolling REPL; no fullscreen takeover, large banner or tool wall |
+| Clear, practical voice | Short guidance tied to working commands and real state; no added promotional slogans |
 
-Output is bounded to 124 columns for readable line lengths, and reflows after terminal resizing.
-Auto uses the terminal's own ANSI palette and foreground; no terminal background is changed.
-`/theme light`, `/theme dark`, `/theme mono` and `NO_COLOR` remain supported. In mono, color is removed
-while useful bold hierarchy remains. Rendering previews use explicit light/dark palettes to
-demonstrate both; the running terminal inherits its actual background. Explicit secondary text colors
-meet 4.5:1 contrast against the documented light/dark backgrounds. Auto/mono keep the terminal
-foreground instead of applying dim styling that can become faint on light backgrounds.
+Manual light uses Ink `#252B24`, gold `#85652F` and secondary text `#62675C`. The secondary value is
+slightly darker than the suggested muted token so small text passes 4.5:1 contrast on Ivory `#F8F7F2`.
+Manual dark uses Ivory `#F3F0E8`, gold `#C5A368` and secondary `#ABB1A5`. Preview backgrounds use the
+specified Ivory/Ink tokens; the running application never changes the user's terminal background.
+Auto uses the terminal's normal foreground and ANSI accent palette. NO_COLOR and mono remove color
+while retaining bold hierarchy and complete labels. No fonts are downloaded or distributed.
 
-The input has a clear user/workspace divider, styled prompt, placeholder, slash-command completion
-and multiline continuation. Enter sends; Ctrl+J adds a newline; Ctrl+R searches history; Ctrl+D exits
-empty input. Help is grouped by task. Saved records keep complete IDs for copying. Owner review
-separately shows the target, operation, expiry, privacy/rights/file facts and complete exact payload.
-Approval still requires typed APPROVE and never executes an action automatically.
+## Responsive behavior and controls
 
-Assistant replies use readable Markdown and retain plain newline/bullet formatting. Compact receipts
-show actual tool results and sources; `/details` still exposes the full receipt. An elapsed time is
-shown only when measured around an actual completed request. No fake streaming or progress is added.
-All untrusted values remain literal/sanitized; Markdown hyperlinks do not emit terminal OSC links.
+| Terminal | Composition |
+|---|---|
+| 100+ columns, 36+ rows | Approved portrait beside the small identity block and status/onboarding |
+| 80–99 columns | Identity and readable content in one column; no portrait |
+| 52–79 columns | Compact identity, status/choices and prompt |
+| Under 52 columns or short windows | Minimal text; no large art or decorative frame |
+| `--no-logo` | Small identity text; portrait hidden |
+
+The canvas is bounded to 124 columns and reflows on resize. Enter sends, Ctrl+J adds a newline,
+Ctrl+R searches history, Tab completes slash commands and Ctrl+D exits empty input. The five launch
+questions use a small step label and practical guidance. Help is grouped by task, and saved records
+retain complete IDs. Markdown replies preserve plain line breaks and Unicode bullets. Receipts show
+actual tool sources; `/details` retains the full result. Measured elapsed time reflects actual work.
+
+Owner approval still shows channel, immutable ID, target, operation, expiry, privacy, rights, file
+hash and complete exact payload. Gold marks this deliberate review point. Typing APPROVE grants
+consent only; execution is separate. Rendering cannot alter any policy, scope or stored conversation.
 
 ## Verification
 
-Baseline: 104 passing tests. After this pass: **130 tests passed**. The additional 26 checks cover
-40/52/80/99/100/120/160-column rendering, short-height behavior, no-logo, mono, real status values,
-copyable IDs, untrusted content, preserved reply bullets and colored PTY startup/help/completion/resize.
-The complete existing PTY onboarding/session/approval suite remains intact. The portrait test now
-checks the exact 22 approved lines, excluding the prose that follows the art in the specification.
-
-The visual PTY test exposed the old slash-completion bug: a word matcher excluded `/` from the typed
-prefix. Completion now treats `/status` as one word. Visual review also caught Markdown joining plain
-bullet lines; the renderer now preserves those line breaks. Neither fix changes agent/tool authority.
+After the design-language correction, **131 tests passed**, including the existing terminal PTY,
+security, shared-session, packaging and API suites. Presentation checks cover 40/52/80/99/100/120/160
+columns, short windows, mono/no-logo, actual status values, literal untrusted text, copyable IDs,
+preserved reply bullets and secondary-text contrast. A regression checks that the invented block
+banner, decorative outer frame and catalogue slogans do not return. Colored PTY tests exercise
+startup, grouped help, completion and resizing. The approved portrait bytes are unchanged.
 
 ```bash
 uv run --locked --extra dev pytest -q
@@ -60,18 +73,14 @@ uv run --locked --extra dev ruff check clira tests scripts
 uv run --locked --extra dev ruff format --check clira tests scripts
 node --check clira/web/app.js
 bash -n run.sh
-uv run --locked --extra dev python tests/browser_smoke.py --output work/terminal-visuals/browser
-uv run --locked --extra dev python scripts/capture_terminal.py
+uv run --locked --extra dev python tests/browser_smoke.py --output work/design-language/browser
+uv run --locked --extra dev python scripts/capture_terminal.py --output work/design-language/previews
 ```
 
-Lint/format and syntax checks pass. Browser regression passes all eight existing views at
-1440/1280/768/390/320px with no page errors. The capture script produces ten actual render previews
-including welcome/workspace/conversation/help/light/mono/narrow/short layouts. It blocks external
-network requests and uses installed monospace fonts. No model, Google account or paid API is used.
+The capture script produces welcome, workspace, conversation, help, light, mono and narrow/short
+previews without external requests. Browser regression exercises all eight existing views at
+1440/1280/768/390/320px. Package checks ensure the presentation module and portrait ship in the wheel;
+clean wheel, source ZIP and sdist installation/runtime checks remain part of verification.
 
-`scripts/build_release.py` also checks that the new presentation module is present in the built wheel.
-Stable live-channel release requirements remain unchanged; this visual update makes no live API claim.
-
-Exit an already running Clira process with Ctrl+D and launch `uv run --locked clira` again to load the
-new UI. Terminal and website still share the same SQLite state; no migration or account reconnection
-is needed for this presentation update.
+Exit an existing Clira process with Ctrl+D and run `uv run --locked clira` again to load this revision.
+The same SQLite state, sessions, tools and account policies remain in use.

@@ -14,17 +14,7 @@ from rich.table import Table
 from rich.text import Text
 
 from .. import __version__
-from ..contracts import TOOLS
 from ..text import terminal_text
-
-WORDMARK = (
-    " ██████╗██╗     ██╗██████╗  █████╗ ",
-    "██╔════╝██║     ██║██╔══██╗██╔══██╗",
-    "██║     ██║     ██║██████╔╝███████║",
-    "██║     ██║     ██║██╔══██╗██╔══██║",
-    "╚██████╗███████╗██║██║  ██║██║  ██║",
-    " ╚═════╝╚══════╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝",
-)
 
 HELP = [
     ("WORKSPACE", "/channel [ID]", "Choose a channel or local workspace"),
@@ -78,7 +68,7 @@ class Presentation:
         self.console.print(renderable, width=self.width)
 
     def heading(self, label):
-        return literal(label, "bold " + self.accent)
+        return literal(label, "bold")
 
     def runtime(self):
         terminal = self.terminal
@@ -146,8 +136,7 @@ class Presentation:
         model, policy = self.runtime()
         entries.extend(
             [
-                self.heading("LOCAL BY DEFAULT"),
-                literal("Your work stays in this workspace.", self.muted),
+                literal("Local workspace · saved on this computer", self.muted),
                 Text(""),
                 literal("Model   " + model),
                 literal("Policy  " + policy),
@@ -160,51 +149,28 @@ class Presentation:
         terminal = self.terminal
         roomy = self.width >= 100 and self.console.height >= 36
         logo = not terminal.no_logo
-        self.emit(Text(""))
-        if logo and self.width >= 52 and self.console.height >= 30:
-            mark = Text("\n".join(WORDMARK), style="bold " + self.accent)
-            header = Table.grid(padding=(0, 3), expand=True)
-            header.add_column(width=43)
-            header.add_column(vertical="bottom", ratio=1)
-            header.add_row(
-                mark,
-                Group(
-                    self.heading("YOUR CREATIVE INTELLIGENCE"),
-                    literal("The work behind your YouTube channel.", self.muted),
-                    literal(f"v{__version__}  /  local workspace", self.muted),
-                ),
-            )
-            # A narrow terminal gets the tagline underneath instead of a crushed column.
-            if self.width < 80:
-                self.emit(mark)
-                self.emit(literal(f"Your Creative Intelligence · v{__version__}", self.muted))
-            else:
-                self.emit(Padding(header, (0, 2)))
-            self.emit(Text(""))
-        else:
-            self.emit(Text.assemble(("CLIRA", "bold " + self.accent), (f"  v{__version__}", self.muted)))
-            self.emit(literal("Your Creative Intelligence", self.muted))
-            self.emit(Text(""))
+        identity = Group(
+            Text.assemble(
+                (terminal_text(terminal.service.config.display_name), "bold"),
+                (f"   v{__version__} · local", self.muted),
+            ),
+            literal("Your Creative Intelligence", self.muted),
+            Text(""),
+        )
 
         if terminal.channel:
             right = Group(
-                self.heading("YOUR WORKSPACE"),
-                Text(""),
+                identity,
                 self.fact_table(self.facts()),
-                Text(""),
-                self.heading("CREATOR TOOLKIT"),
-                literal("Plan      ideas · scripts · calendar"),
-                literal("Package   titles · thumbnails · timed captions"),
-                literal("Account   reads · uploads · community"),
-                literal("Account tools require OAuth and owner policy.", self.muted),
-                Text(""),
-                literal(f"{len(TOOLS)} typed tools · /help to explore", self.muted),
                 Text(""),
                 self.heading("What should we work on?"),
                 literal("Try: Show my latest videos", self.muted),
+                literal("Or plan ideas, scripts and a video package.", self.muted),
+                Text(""),
+                literal("Account actions need your approval.", self.muted),
             )
         else:
-            right = self.choices()
+            right = Group(identity, self.choices())
 
         if logo and roomy:
             portrait = Text(
@@ -219,32 +185,14 @@ class Presentation:
             body = layout
         else:
             body = right
-        if self.width >= 52:
-            self.emit(
-                Panel(
-                    body,
-                    title=literal(" YOUTUBE WORKSPACE ", self.accent),
-                    subtitle=literal(" ONE AGENT · YOUR CHANNEL · YOUR CALL ", self.muted),
-                    title_align="left",
-                    subtitle_align="left",
-                    border_style=self.accent,
-                    box=box.ROUNDED,
-                    padding=(1, 2),
-                )
-            )
-        else:
-            self.emit(body)
-        self.emit(Text(""))
+        self.emit(Padding(body, (1, 2)) if self.width >= 52 else body)
 
     def onboarding(self):
-        if self.width >= 52:
-            self.emit(Panel(self.choices(), border_style=self.accent, padding=(1, 2), box=box.ROUNDED))
-        else:
-            self.emit(self.choices())
+        self.emit(Padding(self.choices(), (1, 2)) if self.width >= 52 else self.choices())
 
     def launch_step(self, number, hint):
         self.emit(Text(""))
-        self.emit(self.heading(f"CHANNEL LAUNCH  /  {number} OF 5"))
+        self.emit(self.heading(f"Channel plan · {number} of 5"))
         self.emit(literal(hint, self.muted))
 
     def status(self):
@@ -258,7 +206,15 @@ class Presentation:
             rows.append(("Session", terminal.conversation))
         content = self.fact_table(rows)
         if self.width >= 52:
-            self.emit(Panel(content, title=self.heading("Workspace status"), box=box.ROUNDED, padding=(1, 2)))
+            self.emit(
+                Panel(
+                    content,
+                    title=self.heading("Workspace status"),
+                    border_style=self.muted,
+                    box=box.ROUNDED,
+                    padding=(1, 2),
+                )
+            )
         else:
             self.emit(content)
 
@@ -273,7 +229,7 @@ class Presentation:
         self.emit(Text(""))
 
     def composer(self):
-        label = "YOU"
+        label = "You"
         if self.terminal.channel:
             name = self.terminal.service.store.channel(self.terminal.channel)["name"]
             label += "  /  " + name
@@ -282,7 +238,7 @@ class Presentation:
 
     def answer(self, text, receipts=None, elapsed=None):
         self.emit(Text(""))
-        self.emit(self.heading("CLIRA"))
+        self.emit(self.heading(self.terminal.service.config.display_name))
         self.emit(Text(""))
         # Markdown is presentation only; hyperlinks cannot inject OSC terminal links.
         content = Markdown(terminal_text(text), hyperlinks=False, code_theme="ansi_dark")
@@ -315,10 +271,10 @@ class Presentation:
         self.emit(Text(""))
 
     def help(self):
-        self.emit(self.heading("A little clarity. A lot of possibility."))
+        self.emit(self.heading("Work with Clira"))
         table = Table(box=None, padding=(0, 2), show_header=False, expand=True)
         if self.width >= 80:
-            table.add_column(style="bold " + self.accent, width=14)
+            table.add_column(style="bold", width=14)
             table.add_column(width=28)
             table.add_column(overflow="fold")
             for section, command, description in HELP:
@@ -351,7 +307,9 @@ class Presentation:
             self.emit(Text(""))
 
     def owner_review(self, channel, approval):
-        self.emit(Rule(self.heading("OWNER REVIEW · execution is separate"), style=self.accent))
+        self.emit(
+            Rule(literal("Owner review · execution is separate", "bold " + self.accent), style=self.muted)
+        )
         rows = [
             ("Channel", channel["name"]),
             ("ID", channel["id"]),

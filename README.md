@@ -54,12 +54,13 @@ The terminal starts no background worker. `/web` verifies the same local store b
 [Candidate verification and blockers](docs/VERIFICATION_V1_RC.md) ·
 [Packaging guide](docs/PACKAGING.md) · [Migration and rollback](docs/MIGRATIONS.md)
 
-### A proper terminal workspace
+### Clira in your terminal
 
-![Clira terminal workspace: wordmark, approved portrait, real account and model status, creator tools and prompt](docs/media/terminal/workspace-120.png)
+![Clira terminal workspace: approved portrait, quiet identity, actual channel and model status, and conversational prompt](docs/media/terminal/workspace-120.png)
 
-The terminal now has a responsive wordmark and portrait/status frame, clear first-run choices,
-five guided launch steps, grouped command help, Markdown replies and source-labelled receipts.
+The terminal follows the supplied Ink/Ivory design language: a small wordmark, the approved
+monochrome portrait, clear first-run choices and gold interaction accents. Five guided launch steps,
+grouped help, Markdown replies and source-labelled receipts keep the work readable.
 It inherits your terminal background; light/dark/mono and compact layouts remain available.
 This is an actual Rich render preview using synthetic demo data, rather than a native-window capture.
 [First-run preview](docs/media/terminal/welcome-120.png) · [Visual checks and controls](docs/TERMINAL_VISUALS.md)

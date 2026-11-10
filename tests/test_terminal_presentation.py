@@ -48,13 +48,11 @@ def test_short_terminal_keeps_onboarding_visible(service, width):
 
 
 def test_no_logo_suppresses_wordmark_and_portrait(service):
-    from clira.tui.presentation import WORDMARK
-
     app = terminal(service, no_logo=True)
     app.view.welcome()
     output = app.console.export_text()
-    assert WORDMARK[0] not in output and not re.search(r"[\u2800-\u28ff]", output)
-    assert "CLIRA" in output and "Welcome to Clira." in output
+    assert "█" not in output and not re.search(r"[\u2800-\u28ff]", output)
+    assert "Clira" in output and "Welcome to Clira." in output
 
 
 def test_status_is_real_and_all_channel_ids_remain_copyable(service):
@@ -75,7 +73,7 @@ def test_answer_renders_real_receipts_and_inert_untrusted_content(service):
     unsafe = "\n[owner](https://example.com)\x1b]52;c;clipboard-payload\x07\u202e"
     app.view.answer(result["message"] + unsafe, result["receipts"], elapsed=0.2)
     output = app.console.export_text()
-    assert "CLIRA" in output and "SYNTHETIC DEMO" in output
+    assert "Clira" in output and "SYNTHETIC DEMO" in output
     assert "list_videos" in output and "mock" in output
     assert result["conversation_id"] in output and "1 tool receipts" in output
     assert "clipboard-payload" not in output and "\u202e" not in output and "\x1b" not in output
@@ -121,3 +119,14 @@ def test_rendered_secondary_text_has_readable_contrast(service, theme, backgroun
 
     high, low = sorted([luminance(background), luminance(app.view.muted)], reverse=True)
     assert (high + 0.05) / (low + 0.05) >= 4.5
+
+
+def test_startup_follows_clira_master_design_contract(service):
+    app = terminal(service, channel=DEMO_CHANNEL)
+    app.view.welcome()
+    output = app.console.export_text()
+    assert "Clira" in output and "Your Creative Intelligence" in output
+    assert "█" not in output  # No invented block-letter brand asset.
+    assert not any(term in output for term in ["YOUTUBE WORKSPACE", "CREATOR TOOLKIT", "YOUR CALL"])
+    assert not any(char in output for char in "╭╮╰╯")  # No decorative outer dashboard frame.
+    assert DEMO_CHANNEL in output and "live writes disabled" in output

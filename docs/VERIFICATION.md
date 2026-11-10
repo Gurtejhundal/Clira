@@ -80,3 +80,49 @@ the tested layouts and interactions; it is not a human review of a real producti
 The original live-channel MVP gate is still pending. Passing mock and local-browser tests does
 not establish that the Google project is verified, that its quotas/scopes permit an operation,
 or that the model's creative output meets the creator's needs.
+
+## 10 November 2026 — chat upload workflow
+
+This newer entry supersedes the historical missing-prerequisite statements above for this local checkout.
+The owner completed an upload-capable Google grant and uploaded the Clira concept demo privately.
+A direct authenticated read verified video `rycD06XeyGY` was private on the intended channel; the only
+verification mismatch was the order of identical tags. The comparison now ignores tag order while
+retaining all other metadata checks. The existing recovery job was not restarted or replaced.
+
+The new workflow adds MP4 chat attachments (256 MiB cap), three-frame Gemini analysis under existing
+provider enablement/budgets, an editable persistent chat preview, owner rights/disclosure review,
+and one owner action that prepares, approves and executes the existing private-upload job.
+Terminal commands `/upload` and `/upload-approve` share the same workflow. No model approval tool
+was added. Captions and thumbnails still use separate exact approvals; frame samples do not
+constitute audio transcription or complete video understanding.
+
+Validation: full suite 205 passed before two additional regression cases; the final focused upload
+suite is 11 passed, including duplicate/concurrent submissions, channel isolation, CSRF, invalid
+media, preview/video bytes, stored conversations, sampled-frame provider mocks, tag-order handling,
+and invalid-package recovery. Existing browser smoke passed eight views at 1440/1280/768/390/320.
+`tests/browser_upload_flow.py` passed actual attachment → chat preview → edits → owner confirmation
+→ simulated upload, with a mobile overflow check and no JavaScript errors. Ruff, formatting and
+JavaScript syntax checks passed. Wheel build succeeded. New workflow tests used isolated demo data,
+mock model output and simulated writes, not another authenticated upload or paid model call.
+
+
+## 10 November 2026 — terminal-style web workspace
+
+The web application now uses Clira's antique-gold frames, monochrome palette, block wordmark,
+complete borderless Braille portrait and monospace controls across all eight views. The browser
+remains the main daily workspace; CLI/TUI compatibility is retained. New-conversation welcome,
+native text selection and Copy buttons, safe Markdown formatting, slash navigation, Shift+Enter,
+and a selectable block/line cursor are implemented without a framework or backend replacement.
+
+Validation after these changes: **207 Python tests passed**, with one upstream Starlette/httpx
+deprecation warning. The final focused upload suite passed 11 tests. Ruff check/format,
+JavaScript syntax, shell syntax and whitespace checks passed. Wheel build succeeded.
+The expanded browser smoke test passed all eight views at **320, 390, 768, 820, 1024, 1280 and
+1440 pixels**, both light/dark palettes, exact portrait bounds, clipboard copying, safe Markdown,
+multiline input, Insert cursor switching, slash navigation, welcome lifecycle and shared sessions.
+The separate chat-upload browser test passed actual H.264 playback, editable preview, mobile layout,
+owner review and simulated private upload. Browser errors: **zero**. Screenshots were inspected.
+
+All new model/upload execution tests used isolated demo state, mock model output and simulated
+account writes. No new real upload, paid model call, stable tag or stable release was made.
+See [WEB_WORKSPACE.md](WEB_WORKSPACE.md) and [CHAT_UPLOAD.md](CHAT_UPLOAD.md) for behavior and limits.

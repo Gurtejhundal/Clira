@@ -68,7 +68,7 @@ class GeminiProvider:
                 json={
                     "systemInstruction": {"parts": [{"text": limits["system"]}]},
                     "contents": messages,
-                    "tools": [{"functionDeclarations": tools}],
+                    **({"tools": [{"functionDeclarations": tools}]} if tools else {}),
                     "generationConfig": {"maxOutputTokens": 4096, "temperature": 0.3},
                 },
             )
@@ -277,6 +277,35 @@ class Agent:
                 "CHANNEL_MISMATCH", "Conversation belongs to another channel. Start a new conversation."
             )
         history = json.loads(existing[0]["messages"]) if existing else []
+        if message.lower().startswith(("/upload ", "upload /")):
+            from .upload_flow import UploadFlow, UploadStart
+
+            first, _, instruction = message.partition("\n")
+            path = first.split(" ", 1)[1].strip().strip('"')
+            flow = UploadFlow(self.service)
+            draft = flow.start(
+                channel_id, UploadStart(path=path, instruction=instruction or "Prepare this video.")
+            )
+            answer = flow.preview(draft)
+            receipts = [
+                {"ok": True, "tool": "prepare_video_upload", "source": draft["source"], "data": draft}
+            ]
+            history += [
+                {"role": "user", "text": message},
+                {"role": "assistant", "text": answer, "receipts": receipts},
+            ]
+            store.execute(
+                "UPDATE conversations SET messages=?,updated_at=? WHERE id=?",
+                (encode(history), now(), conversation_id),
+            )
+            return {
+                "conversation_id": conversation_id,
+                "channel_id": channel_id,
+                "message": answer,
+                "receipts": receipts,
+                "mode": self.service.config.mode,
+                "model": self.service.config.model,
+            }
         if channel["mode"] == "draft" and self.service.config.model == "offline":
             return self.launch_reply(channel, message, conversation_id, history)
         provider = self.provider or (

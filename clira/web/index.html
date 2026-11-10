@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#222720"><title>Clira · Storytelling meets strategic wisdom</title>
+  <meta name="theme-color" content="#090a09"><title>Clira · Intelligence Behind Creation</title>
   <link rel="icon" type="image/png" href="/static/assets/clira-portrait.png">
   <link rel="apple-touch-icon" href="/static/assets/clira-portrait.png">
   <link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script>
@@ -10,27 +10,57 @@
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <aside id="sidebar">
-  <a class="brand" href="/" aria-label="Clira home"><img class="brand-portrait" src="/static/assets/clira-portrait.png" alt="" width="64" height="64"><span id="brandName">Clira<small>STORYTELLING MEETS STRATEGIC WISDOM</small></span></a>
-  <label class="channel-label" for="channelSelect">WORKSPACE</label>
-  <select id="channelSelect" aria-label="Active channel"></select><code id="channelId"></code>
+  <div class="sidebar-identity">
+    <a class="brand" href="/" aria-label="Clira home"><span id="brandName" class="sr-only">Clira</span><pre class="wordmark" aria-hidden="true"> ██████╗██╗     ██╗██████╗  █████╗&#32;
+██╔════╝██║     ██║██╔══██╗██╔══██╗
+██║     ██║     ██║██████╔╝███████║
+██║     ██║     ██║██╔══██╗██╔══██║
+╚██████╗███████╗██║██║  ██║██║  ██║
+ ╚═════╝╚══════╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝</pre><small>Intelligence Behind Creation</small></a>
+    <div class="portrait" role="img" aria-label="Clira, wearing glasses and headphones"><pre aria-hidden="true">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣄⣒⠶⣦⣤⣤⢶⣔⣒⢤⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠤⢤⣴⣿⠟⠋⠀⠊⠀⠀⠀⠀⡠⠈⠃⣹⣕⣒⡲⠤⣀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠴⡿⠛⣱⣿⡿⢃⣔⣤⣆⣤⣀⠄⣠⡾⠁⢀⢀⣤⣀⡈⠉⠻⣾⣡⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⢀⢼⢫⢔⠀⣸⣿⡿⠔⠹⠛⠛⠟⠋⠀⠐⢹⠁⠀⢸⣄⢻⣽⣿⣶⠄⠸⡝⠳⣤⡀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠍⣼⡟⠁⢠⣿⢿⠃⠀⢀⠤⠒⠀⢀⣴⠔⠈⣠⢇⣼⡟⣠⣿⣿⣧⠧⠖⠀⠀⠹⡎⢳⡄⠀⠀
+⠀⠀⠀⠀⢀⡠⢒⡽⡛⠀⠀⠘⣶⡏⢀⠞⠁⠤⣖⣾⡿⠋⠀⠄⣥⣶⣶⣶⣶⣾⣿⡿⣞⡿⡆⠒⢤⠻⠀⡟⡄⠀
+⠀⠀⢀⣤⠞⢊⡟⠁⠀⢀⠄⠀⢿⡇⠈⡀⡠⠐⠒⠉⠐⢰⣿⣘⠗⠛⣩⣴⣹⣿⣣⣿⣦⣶⣄⡀⠀⢫⣜⠀⠃⠀
+⠀⢀⠎⠀⣰⣿⣠⣢⣶⡿⡄⠀⣸⢿⣴⢿⣶⣕⢤⠀⠊⡱⣲⣿⣿⣿⢿⣿⣿⣿⣿⣿⣟⣿⢹⣷⡤⠃⠙⢷⣀⡀
+⠀⠀⢂⣾⠹⣿⠿⢟⡽⢋⠀⡼⠁⠁⠉⠙⢮⣻⣷⡵⡀⠅⢙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⣿⡇⠀⣘⢸⠂⠀
+⠀⠀⠸⠁⣞⣥⠊⠁⠀⣎⠀⠱⡀⠀⠀⠀⠈⢷⢻⠃⡇⠀⢦⡱⣽⣽⣿⣿⣿⣿⣿⣿⣵⣿⣷⣾⡇⠀⠈⢷⡤⡀
+⠐⠒⣖⣿⢿⢽⢠⡇⡀⠈⠀⠀⠣⡀⠀⠀⢀⡿⡼⠀⡇⢀⡎⣿⣯⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⣷⡼⣧⢳
+⠀⠀⣿⠃⠱⡘⢧⣿⣽⣦⣄⣀⠀⠈⠙⠒⠍⠊⠠⠊⢀⣼⢧⣿⠁⠿⠿⠿⠿⠿⠿⠿⠟⠛⠛⠋⢀⠴⠋⠁⡇⠁
+⠀⠀⠘⠂⠀⠀⣠⢿⢿⣮⣉⠁⢀⠀⠀⢀⠀⠀⠤⠔⠋⢵⣿⣷⣼⣿⣶⣤⣄⡀⠀⠀⣠⢔⠤⣦⡵⠃⠀⠊⠀⠀
+⠀⠀⠀⠀⠀⠐⠊⠁⠀⠙⠩⠻⢿⡭⠓⠊⠳⢁⠄⣰⣰⣝⣿⣿⣿⣿⣿⣿⣿⣿⢀⡾⣆⠁⠜⠁⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⢀⡤⠶⣒⣠⣴⣶⣶⣶⣦⣮⣀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠪⠁⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢀⣠⣄⣮⣶⢿⠟⠋⠁⠀⣀⣭⣽⣿⣿⣿⣷⣯⣟⠿⣿⣿⣿⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢸⣿⡟⢋⡵⠁⣀⣴⣶⣿⣿⠿⣛⣋⣉⠉⠉⠙⠛⢷⣎⡙⢿⣿⠃⠒⠲⢤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠸⣿⣴⠟⣵⣿⣿⣿⣿⠿⠚⠛⠛⠛⠛⠛⠳⠦⣄⠐⢬⣻⣦⠙⠂⠀⠀⢀⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⣴⡿⠋⣾⣿⠟⠉⢀⡠⣄⣴⣾⣿⣿⣿⣿⣷⣤⡀⠀⠀⠀⢫⡻⢦⣀⣴⣿⣿⡟⣿⣦⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⣾⠏⠁⢰⠏⠁⢀⡴⣫⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⡻⣶⡀⠀⠀⣷⠀⠉⣻⠿⠖⠚⠫⣥⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠹⣇⠀⠀⠀⣰⣿⣿⣿⢫⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣌⠻⣦⠀⢹⡇⠈⠀⠀⠘⣇⠀⠀⡹⣦⡀⠀⠀⠀
+⠀⠀⠀⠀⠈⠂⢠⠾⠿⠿⠿⠃⠸⠿⠟⠛⠛⠛⠛⠛⠻⠿⠿⠿⠆⠹⠷⠀⠧⠀⠀⠀⠀⠿⠀⠀⠻⠞⠷⡄⠀⠀</pre></div>
+  </div>
+  <div class="sidebar-section">WORKSPACE COMMANDS</div>
   <nav aria-label="Main navigation">
-    <button data-view="chat" class="active"><span>✧</span> Talk to Clira</button>
-    <button data-view="library"><span>▤</span> Video library</button>
-    <button data-view="ideas"><span>◈</span> Ideas & calendar</button>
-    <button data-view="production"><span>↗</span> Production inbox</button>
-    <button data-view="approvals"><span>✓</span> Approvals <i id="approvalCount">0</i></button>
-    <button data-view="community"><span>☷</span> Community</button>
-    <button data-view="operations"><span>◷</span> Operations</button>
-    <button data-view="settings"><span>⚙</span> Settings</button>
+    <button data-view="chat" class="active"><span>/chat</span> Talk to Clira</button>
+    <button data-view="library"><span>/videos</span> Video library</button>
+    <button data-view="ideas"><span>/ideas</span> Ideas & calendar</button>
+    <button data-view="production"><span>/production</span> Production inbox</button>
+    <button data-view="approvals"><span>/approvals</span> Approvals <i id="approvalCount">0</i></button>
+    <button data-view="community"><span>/community</span> Community</button>
+    <button data-view="operations"><span>/operations</span> Operations</button>
+    <button data-view="settings"><span>/settings</span> Settings</button>
   </nav>
-  <div class="sidebar-foot"><span class="status-dot"></span> Local workspace<button id="pauseAll" class="quiet">Pause all writes</button></div>
+  <div class="channel-context"><label class="channel-label" for="channelSelect">WORKSPACE</label>
+  <select id="channelSelect" aria-label="Active channel"></select><code id="channelId"></code></div>
+  <div class="sidebar-foot">Local workspace<button id="pauseAll" class="quiet">Pause all writes</button></div>
 </aside>
 <div class="shell">
-  <header><div><span class="eyebrow">CREATOR WORKSPACE</span><p id="viewCrumb">Your channel, in good hands.</p></div><div class="top-status"><span id="modeBadge" class="badge">Loading</span><span id="modelBadge" class="badge neutral">Offline</span><button id="pauseTop" class="quiet">Pause writes</button></div></header>
+  <header><div><span class="eyebrow" id="viewLabel">CLIRA / CHAT</span><p id="viewCrumb">Your channel, in good hands.</p></div><div class="top-status"><span id="modeBadge" class="badge">Loading</span><span id="modelBadge" class="badge neutral">Offline</span><button id="pauseTop" class="quiet">Pause writes</button></div></header>
   <div id="notice" role="status"></div>
   <main id="main" tabindex="-1">
     <section id="view-chat" class="view">
-      <div class="page-heading"><div><span class="eyebrow">A LITTLE CLARITY. A LOT OF POSSIBILITY.</span><h1>What should we<br><em>work on?</em></h1><p>One creative partner for the work behind your channel.</p></div></div>
+      <div class="page-heading" id="chatWelcome"><div><span class="eyebrow">CLIRA IS READY</span><h1>What are we creating?</h1><p>Attach a video and say “upload”, or start with an idea.</p></div></div>
       <details id="onboarding" class="panel"><summary>Start a channel · Connect existing · Explore demo</summary>
         <p>Plan locally without Google sign-in, connect your verified channel, or explore synthetic examples.</p>
         <div class="actions"><button id="startLaunch" type="button">Launch a channel workspace</button><button id="connectGuide" type="button" class="secondary">Connect existing channel</button><button id="exploreDemo" type="button" class="secondary">Explore demo</button></div>
@@ -40,16 +70,16 @@
         </form>
         <p id="launchResult"></p>
       </details>
-      <div class="metrics" id="metrics"><article><span>Channel performance</span><strong>—</strong><small>Refresh to read dated metrics</small></article></div>
-      <div class="chat-heading"><h2>What are we working on?</h2><button id="newChat" class="quiet">New conversation ↗</button></div>
+      <details class="snapshot"><summary>Channel snapshot</summary><div class="metrics" id="metrics"><article><span>Channel performance</span><strong>—</strong><small>Refresh to read dated metrics</small></article></div></details>
+      <div class="chat-heading"><h2>CONVERSATION</h2><button id="newChat" class="quiet">/new · New conversation</button></div>
       <details class="panel" id="sessionPanel"><summary>Saved conversations</summary>
         <label>Search titles<input id="sessionSearch" type="search" placeholder="Find a conversation"></label>
         <div id="sessionList"></div>
       </details>
-      <div class="session-context"><span id="sessionTitle">New conversation</span><button id="renameSession" class="quiet">Rename</button><code id="terminalResume"></code></div>
+      <div class="session-context"><span id="sessionTitle">New conversation</span><button id="renameSession" class="quiet">Rename</button><details class="resume-details"><summary>Session details</summary><code id="terminalResume"></code></details></div>
       <div class="suggestions"><button data-prompt="How did my channel perform over the last 28 days?">Read my performance <span>↗</span></button><button data-prompt="Suggest three new topic ideas based on my recent uploads and channel profile.">Find my next three ideas <span>↗</span></button><button data-prompt="Show my latest five uploads and their lifetime views.">Review recent uploads <span>↗</span></button></div>
       <div id="messages" aria-live="polite" aria-label="Conversation"></div>
-      <form id="chatForm" class="composer"><label class="sr-only" for="message">Message to Clira</label><textarea id="message" rows="2" placeholder="Ask about your channel, or start with an idea…" required maxlength="12000"></textarea><div><span id="composerHint">Draft freely. You approve account actions.</span><button type="submit" id="sendButton">Send message ↗</button></div></form>
+      <form id="chatForm" class="composer"><div class="composer-title"><span>MESSAGE CLIRA</span><button id="cursorToggle" type="button" class="quiet" aria-pressed="true" title="Toggle block cursor (Insert)">Block cursor · Ins</button></div><div class="prompt-line"><span class="prompt-symbol" aria-hidden="true">❯</span><div class="input-surface"><label class="sr-only" for="message">Message to Clira</label><textarea id="message" rows="2" placeholder="Ask Clira, or attach a video…" required maxlength="12000" spellcheck="false" aria-describedby="inputHelp"></textarea><span id="blockCursor" aria-hidden="true"></span></div></div><div class="composer-actions"><span id="composerHint">Draft freely. You approve account actions.</span><label class="attach-label">Attach MP4<input id="chatVideo" type="file" accept="video/mp4,.mp4"></label><button type="submit" id="sendButton">Send message</button></div></form><div class="input-help" id="inputHelp">Enter send · Shift+Enter new line · Insert cursor style</div>
       <p class="fineprint" id="modeExplanation"></p>
     </section>
     <section id="view-library" class="view" hidden><div class="section-heading"><div><span class="eyebrow">THE WORK YOU'VE PUT OUT</span><h1>Video library</h1></div><button id="refreshVideos">Refresh from source ↻</button></div><div id="videos" class="cards"></div><h2>Private upload receipts</h2><div id="uploadedVideos" class="cards"></div></section>
@@ -74,7 +104,7 @@ export CLIRA_ALLOW_MODEL_CALLS=1
 export CLIRA_MAX_MODEL_CALLS_DAY=50</pre><p>A request cap is enforced; it is not a currency budget. Live writes remain disabled until <code>CLIRA_ENABLE_WRITES=1</code>, suitable OAuth scopes, and per-action approval.</p></div></section>
     <section id="emptyWorkspace" hidden class="panel"><h1>Meet your channel's new partner.</h1><p>Use Launch a channel to plan without signing in, Connect existing for read-only OAuth, or Explore demo for synthetic examples.</p><div class="actions"><button id="emptyLaunch">Start a local workspace</button><button id="emptyConnect">Connect existing channel</button><button id="emptyDemo">Explore demo</button></div></section>
   </main>
-  <footer>Made for the work behind the story.<span>Local-first · One agent · Your final say</span></footer>
+  <footer><span>CLIRA · Intelligence Behind Creation</span><span>Local workspace · Your final say</span></footer>
 </div>
 <div id="toast" role="alert" hidden></div>
 <dialog id="approvalDialog"><form method="dialog"><h2 id="dialogTitle">Review action</h2><p id="dialogChannel"></p><pre id="dialogPayload"></pre><label class="checkbox"><input id="confirmApproval" type="checkbox" required>I approve exactly this channel, content, and account action.</label><label>Type APPROVE<input id="approvalText" required pattern="APPROVE" autocomplete="off"></label><div class="dialog-actions"><button value="cancel" formnovalidate class="secondary">Cancel</button><button id="confirmButton" value="approve">Approve exact action</button></div></form></dialog>

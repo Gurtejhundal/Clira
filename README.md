@@ -29,14 +29,32 @@
 
 > **First public MVP preview.** Explore immediately with synthetic demo data and a limited offline
 > command router. Real AI needs your configured Gemini account; real channel operations need Google
-> OAuth and owner approval. Live-channel reads and mutations remain unverified. Rendering stays external.
+> OAuth and owner approval. New upload automation is tested with simulations; rendering stays external.
+
+## Terminal-style web workspace
+
+The browser app now carries Clira's terminal identity across **all eight views**: antique-gold
+frames, the original Braille character, CLIRA wordmark, monospace controls and a block cursor.
+You can select and copy answers, use slash navigation, attach a video and review its upload in chat.
+The interactive terminal remains optional; it does not have to run alongside the website.
+
+```bash
+./run.sh --mode live serve         # open http://127.0.0.1:8765 in your browser
+# Or explore without credentials:
+./run.sh --mode demo serve
+```
+
+![Clira terminal-style web workspace, showing synthetic demo data](docs/media/web/terminal-workspace.png)
+
+[Web workspace & keyboard controls](docs/WEB_WORKSPACE.md) · [Chat upload flow and limits](docs/CHAT_UPLOAD.md)
 
 ## v1.0.0-rc.1 · local candidate
 
 The current branch adds the interactive terminal, shared saved conversations, five-step local
 channel planning, readable light/dark website themes, real thumbnail files and timed SRT/VTT
-packaging. **Stable v1.0.0 is not released.** Google OAuth/read/private upload, live model quality
-and thumbnail/caption playback still need owner-authorized live verification.
+packaging. **Stable v1.0.0 is not released.** An owner-authorized private demo upload and authenticated
+read are recorded in [verification notes](docs/VERIFICATION.md). The new chat upload path is tested
+with simulations; live model quality and thumbnail/caption playback remain separate validation work.
 
 ```bash
 uv sync --locked --extra dev
@@ -192,6 +210,13 @@ export CLIRA_MAX_MODEL_CALLS_DAY=50
 each generateContent request conservatively, including failed requests. Output is limited to
 4,096 tokens per call and eight tool calls per turn. This is **not a currency budget**; use your
 provider's billing controls as well. No paid model calls were made during development.
+
+## Upload a finished video from chat
+
+Attach an MP4 in **Talk to Clira** and say “Upload this video.” Clira prepares an editable
+video/package preview in the conversation. Review it and approve once to upload privately.
+No manual metadata entry or switching between Production and Approvals is required.
+[Setup, terminal commands, analysis limits and recovery](docs/CHAT_UPLOAD.md).
 
 ## Private upload
 

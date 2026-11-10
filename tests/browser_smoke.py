@@ -96,12 +96,49 @@ def main():
                 )
                 shared_id = json.loads(terminal_result.stdout)["conversation_id"]
                 page.goto(url + "/?channel=DEMO_CHANNEL_TECH&session=" + shared_id, wait_until="networkidle")
-                page.locator("#terminalResume", has_text=shared_id).wait_for()
+                page.locator("#terminalResume", has_text=shared_id).wait_for(state="attached")
                 assert "Latest uploads" in page.locator("#messages").inner_text()
+                assert not page.locator("#chatWelcome").is_visible()
+                assert "Mono" in page.locator("body").evaluate("n=>getComputedStyle(n).fontFamily")
+                assert (
+                    page.locator(".portrait pre").text_content()
+                    == Path("clira/assets/clira_braille_v2_compact.txt").read_text().rstrip()
+                )
+                page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+                page.locator("#messages .assistant .message-actions button").first.click()
+                assert "Latest uploads" in page.evaluate("navigator.clipboard.readText()")
+                assert page.evaluate(r"""() => {
+                    const body=document.createElement('div');
+                    renderAnswer(body, '### Heading\n\n**Bold** and `code` <img src=x onerror=alert(1)>\n\n- One\n- Two\n\n| A | B |\n| --- | --- |\n| 1 | 2 |');
+                    return body.querySelectorAll('strong').length===1 &&
+                        body.querySelectorAll('li').length===2 &&
+                        body.querySelectorAll('table').length===1 &&
+                        !body.querySelector('img') && body.textContent.includes('<img');
+                }""")
+                page.locator("#message").fill("First line")
+                page.locator("#message").press("Shift+Enter")
+                page.locator("#message").type("Second line")
+                assert page.locator("#message").input_value() == "First line\nSecond line"
+                page.locator("#message").press("Insert")
+                assert page.locator("#cursorToggle").get_attribute("aria-pressed") == "false"
+                page.locator("#message").press("Insert")
+                assert page.locator("#cursorToggle").get_attribute("aria-pressed") == "true"
+                page.locator("#message").evaluate(
+                    "n=>{n.setSelectionRange(0,5);n.dispatchEvent(new Event('select'));}"
+                )
+                page.wait_for_function(
+                    "() => !document.querySelector('.input-surface').classList.contains('block-cursor')"
+                )
+                page.locator("#message").fill("/settings")
+                page.locator("#message").press("Enter")
+                assert page.locator("#view-settings").is_visible()
+                page.locator("nav button[data-view=chat]").click()
+                page.locator(".snapshot summary").click()
                 page.get_by_text("33,400", exact=True).wait_for()
                 assert not page.evaluate("document.documentElement.scrollWidth > innerWidth")
                 page.screenshot(path=str(args.output / "clira-desktop.png"), full_page=True)
-                page.get_by_role("button", name="Find my next three ideas").click()
+                page.locator("#message").fill("Suggest three new topic ideas for this channel.")
+                page.locator("#message").press("Enter")
                 page.get_by_text("Three editorial hypotheses saved", exact=False).wait_for()
                 for view in [
                     "library",
@@ -245,12 +282,15 @@ def main():
                 # Shared session search/resume and cross-surface content survive a browser reload.
                 page.locator("#sessionPanel summary").click()
                 page.locator("#sessionList button", has_text=shared_id).click()
+                page.wait_for_function("() => !busy")
                 page.locator("#message").fill("Show my latest videos again")
                 page.locator("#message").press("Enter")
                 page.locator("#sendButton", has_text="Send message").wait_for()
                 page.wait_for_function("() => document.querySelectorAll('#messages .assistant').length >= 3")
+                page.wait_for_function("() => !busy")
                 page.reload(wait_until="networkidle")
-                assert shared_id in page.locator("#terminalResume").inner_text()
+                page.locator("#terminalResume", has_text=shared_id).wait_for(state="attached")
+                assert shared_id in page.locator("#terminalResume").text_content()
                 shared = httpx.get(url + "/api/conversations/DEMO_CHANNEL_TECH/" + shared_id).json()
                 assert any(m["text"] == "Show my latest videos again" for m in shared["messages"])
                 (args.output / "shared-session.json").write_text(json.dumps(shared, indent=2))
@@ -275,7 +315,7 @@ def main():
                 form.locator("button").click()
                 page.locator("#packageAssets pre", has_text="Original silent test fixture").first.wait_for()
                 # All eight views at every required width, both palettes, keyboard focus.
-                for width in [1440, 1280, 768, 390, 320]:
+                for width in [1440, 1280, 1024, 820, 768, 390, 320]:
                     page.set_viewport_size({"width": width, "height": 950})
                     for view in [
                         "chat",
@@ -289,12 +329,21 @@ def main():
                     ]:
                         page.locator("nav button[data-view=" + view + "]").click()
                         assert page.locator("#view-" + view).is_visible()
+                        assert page.locator("nav button:visible").count() == 8
+                        assert page.locator(".portrait pre").evaluate(
+                            "n=>{const p=n.getBoundingClientRect(),s=document.querySelector('#sidebar').getBoundingClientRect();return p.left>=s.left && p.right<=s.right;}"
+                        )
+                        if width == 1440:
+                            page.screenshot(path=str(args.output / f"terminal-{view}.png"))
                         assert not page.evaluate("document.documentElement.scrollWidth > innerWidth"), (
                             width,
                             view,
                         )
                     page.locator("#themeSelect").select_option("dark")
                     assert page.locator("html").get_attribute("data-theme") == "dark"
+                    page.locator("nav button[data-view=chat]").click()
+                    page.screenshot(path=str(args.output / f"clira-dark-{width}.png"))
+                    page.locator("nav button[data-view=settings]").click()
                     page.locator("#themeSelect").select_option("light")
                     page.locator("nav button[data-view=chat]").click()
                     page.locator("#toast").wait_for(state="hidden", timeout=10000)
@@ -303,7 +352,12 @@ def main():
                     page.screenshot(path=str(args.output / f"clira-chat-{width}.png"), full_page=True)
                 page.keyboard.press("Tab")
                 assert page.evaluate("document.activeElement !== document.body")
+                # Welcome belongs to a new conversation, never to each reply.
+                page.locator("#newChat").click()
+                page.wait_for_function("() => document.querySelector('#messages').children.length===0")
+                assert page.locator("#chatWelcome").is_visible()
                 # Five-step launch path without Google account creation.
+                page.locator("#onboarding").evaluate("n=>n.open=true")
                 page.locator("#startLaunch").click()
                 for answer in ["Batteries", "curious beginners", "English", "4 hours", "short"]:
                     page.locator("#launchAnswer").fill(answer)
@@ -326,7 +380,7 @@ def main():
                             "passed": True,
                             "mode": "isolated_synthetic_demo",
                             "views": 8,
-                            "viewport_widths": [1440, 1280, 768, 390, 320],
+                            "viewport_widths": [1440, 1280, 1024, 820, 768, 390, 320],
                             "flows": [
                                 "ideas",
                                 "MP4 QC",
@@ -338,7 +392,9 @@ def main():
                                 "CLI/web shared session and approval IDs",
                                 "actual PNG and timed SRT UI",
                                 "five-step local launch",
-                                "eight views at five widths; light/dark; keyboard",
+                                "eight views at seven widths; light/dark; keyboard",
+                                "clipboard copy; safe Markdown; multiline; Insert cursor; slash navigation",
+                                "exact Braille portrait without clipping; welcome per new conversation",
                             ],
                             "browser_errors": errors,
                             "screenshots": str(args.output.resolve()),

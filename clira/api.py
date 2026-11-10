@@ -22,7 +22,8 @@ from .contracts import (
     tool_contracts,
 )
 from .service import Service
-from .storage import encode, now
+from .storage import encode, now, uid
+from .upload_flow import UploadFlow, UploadReview
 
 
 def create_app(service=None):
@@ -49,17 +50,19 @@ def create_app(service=None):
                 return JSONResponse(
                     {"error": {"code": "CSRF", "message": "Reload the local dashboard."}}, status_code=403
                 )
-            if len(await request.body()) > 1024 * 1024:
+            is_video = request.url.path.startswith("/api/chat-video/")
+            if not is_video and len(await request.body()) > 1024 * 1024:
                 return JSONResponse(
                     {"error": {"code": "BODY_LIMIT", "message": "Request too large."}}, status_code=413
                 )
-            if request.headers.get("content-type", "").split(";")[0] != "application/json":
+            allowed_type = "application/octet-stream" if is_video else "application/json"
+            if request.headers.get("content-type", "").split(";")[0] != allowed_type:
                 return JSONResponse(
                     {"error": {"code": "CONTENT_TYPE", "message": "Use application/json."}}, status_code=415
                 )
         response = await call_next(request)
         response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+            "default-src 'self'; media-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
         )
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Cache-Control"] = "no-store"
@@ -136,6 +139,44 @@ def create_app(service=None):
     @app.post("/api/chat")
     def chat(body: ChatRequest):
         return Agent(service).chat(body.channel_id, body.message, body.conversation_id)
+
+    @app.post("/api/chat-video/{channel_id}")
+    async def attach_video(channel_id: str, request: Request):
+        service.policy.channel(channel_id)
+        target = service.config.import_dir / (uid("chat") + ".mp4")
+        count = 0
+        try:
+            with target.open("xb") as output:
+                async for block in request.stream():
+                    count += len(block)
+                    if count > 256 * 1024 * 1024:
+                        raise CliraError("VIDEO_LIMIT", "Chat attachments are limited to 256 MiB.")
+                    output.write(block)
+            from .media import inspect_video
+
+            qc = inspect_video(target)
+        except BaseException:
+            target.unlink(missing_ok=True)
+            raise
+        return {"path": str(target), "qc": qc}
+
+    @app.get("/api/upload-drafts/{channel_id}/{draft_id}")
+    def upload_draft(channel_id: str, draft_id: str):
+        return service.store.get(channel_id, draft_id, "upload_draft")
+
+    @app.get("/api/upload-drafts/{channel_id}/{draft_id}/video")
+    def upload_preview_video(channel_id: str, draft_id: str):
+        draft = service.store.get(channel_id, draft_id, "upload_draft")
+        asset = service.store.get(channel_id, draft["asset_id"], "asset")
+        from .media import file_hash
+
+        if file_hash(Path(asset["path"])) != draft["asset_sha256"]:
+            raise CliraError("ASSET_CHANGED", "Video changed after preview.")
+        return FileResponse(asset["path"], media_type="video/mp4")
+
+    @app.post("/api/upload-drafts/{draft_id}/approve")
+    def approve_chat_upload(draft_id: str, body: UploadReview):
+        return UploadFlow(service).approve(draft_id, body)
 
     @app.post("/api/tool")
     def tool(body: ToolRequest):

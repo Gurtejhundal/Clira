@@ -27,6 +27,8 @@ WORDMARK = (
 )
 
 HELP = [
+    ("UPLOAD IN CHAT", "/upload /imports/video.mp4", "Draft a video package and show its preview"),
+    ("", "/upload-approve DRAFT_ID", "Owner review, then private upload"),
     ("YOUR CLIRA", "/setup · /profile · /project", "Your creator profile and next project"),
     ("", "/memory · /remember TEXT", "Review or explicitly save a local note"),
     ("", "/forget ID · /connections", "Remove a note or configure connections"),

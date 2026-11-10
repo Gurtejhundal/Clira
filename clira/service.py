@@ -751,7 +751,11 @@ class Service:
                     "Remote privacy is not private. Stop and inspect the video immediately.",
                 )
             if any(
-                remote["snippet"].get(k, [] if k == "tags" else "") != v
+                (
+                    sorted(remote["snippet"].get(k, [])) != sorted(v)
+                    if k == "tags"
+                    else remote["snippet"].get(k, "") != v
+                )
                 for k, v in payload["body"]["snippet"].items()
             ):
                 raise CliraError(

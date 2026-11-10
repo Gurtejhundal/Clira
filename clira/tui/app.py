@@ -27,6 +27,8 @@ from .presentation import Presentation
 COMMANDS = [
     "/help",
     "/version",
+    "/upload",
+    "/upload-approve",
     "/setup",
     "/profile",
     "/project",
@@ -231,6 +233,44 @@ class Terminal:
             from .setup import CreatorSetup
 
             CreatorSetup(self).run(edit=True)
+        elif cmd == "/upload":
+            self.print("Use /upload /absolute/path/in/imports/video.mp4 to prepare a chat preview.")
+        elif cmd == "/upload-approve":
+            from ..upload_flow import UploadFlow, UploadReview
+
+            flow = UploadFlow(self.service)
+            draft = self.service.store.get(self.channel, arg, "upload_draft")
+            self.view.answer(flow.preview(draft))
+            rights = self.ask("Video/audio rights: original or licensed > ")
+            if rights not in {"original", "licensed"}:
+                raise CliraError("RIGHTS_REVIEW", "Choose original or licensed. Nothing was uploaded.")
+            evidence = self.ask("Rights evidence, including music/fonts > ")
+            if not evidence.strip() or len(evidence) > 4000:
+                raise CliraError("RIGHTS_EVIDENCE", "Provide rights evidence of 1–4000 characters.")
+            kids = self.ask("Made specifically for kids? yes/no > ").lower()
+            synthetic = self.ask("Realistic altered/synthetic media? yes/no > ").lower()
+            if kids not in {"yes", "no"} or synthetic not in {"yes", "no"}:
+                raise CliraError("DISCLOSURES", "Answer yes or no to both disclosure questions.")
+            confirmation = self.ask(
+                "After watching the video and reviewing this exact package, type APPROVE PRIVATE UPLOAD > "
+            )
+            if confirmation != "APPROVE PRIVATE UPLOAD":
+                self.print("Not approved. Nothing uploaded.")
+                return True
+            review = UploadReview(
+                channel_id=self.channel,
+                preview_hash=draft["preview_hash"],
+                copy=draft["copy"],
+                rights=rights,
+                rights_evidence=evidence,
+                made_for_kids=kids == "yes",
+                synthetic_media=synthetic == "yes",
+                creative_reviewed=True,
+                confirmation=confirmation,
+            )
+            with self.working():
+                result = flow.approve(arg, review)
+            self.print(json.dumps(result, ensure_ascii=False, indent=2))
         elif cmd == "/connections":
             from .setup import CreatorSetup
 
@@ -497,7 +537,7 @@ class Terminal:
                     interrupted = False
                     if not line:
                         continue
-                    if line.startswith("/"):
+                    if line.startswith("/") and not line.startswith("/upload "):
                         if not self.command(line):
                             break
                     else:

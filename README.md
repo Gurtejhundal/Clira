@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="clira/web/assets/clira-portrait.png" alt="Clira — glasses, headphones, and a thoughtful creative partner" width="180">
+</p>
+
+<p align="center">
   <img src="docs/media/clira-banner.svg" alt="Clira — Your Creative Intelligence" width="100%">
 </p>
 

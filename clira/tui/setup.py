@@ -60,9 +60,11 @@ class CreatorSetup:
                     t.view.error(exc.code, exc.message)
                     continue
                 step += 1
-            t.print("REVIEW YOUR CREATOR MEMORY")
+            t.view.emit(t.view.heading("\nREVIEW YOUR CREATOR MEMORY\n"))
             for i, (key, _, question, _) in enumerate(QUESTIONS, 1):
-                t.print(f"{i}. {question}\n   {self.creator.draft()['answers'][key]}")
+                t.view.emit(t.view.heading(f"{i}. {question}"))
+                t.print("   " + self.creator.draft()["answers"][key] + "\n")
+            t.view.emit(t.view.heading("REVIEW YOUR CREATOR MEMORY · SAVE OR EDIT"))
             t.print("These preferences never authorize uploads, spending or channel changes.")
             decision = t.ask("SAVE profile / question number to edit / /back / /cancel > ")
             if decision.lower() == "save":

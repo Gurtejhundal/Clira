@@ -20,3 +20,7 @@
 header .eyebrow,header p,.message .speaker,.message details,.empty,.audit-row time,footer{color:var(--muted)}
 .badge{color:#745422}.badge.neutral{color:#426C4E}#notice{color:#745422}nav i{color:#F3F0E8}
 .composer textarea:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+
+/* Owner-supplied Clira portrait: preserve the complete framed artwork. */
+.brand{flex-wrap:wrap;gap:14px}.brand-portrait{width:72px;height:72px;object-fit:contain;border-radius:12px;flex:none;background:#000}.brand #brandName{font-size:30px}.brand small{line-height:1.5;letter-spacing:1px}
+@media(max-width:760px){.brand{flex-wrap:nowrap}.brand-portrait{width:48px;height:48px}.brand #brandName{font-size:26px}}

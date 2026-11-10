@@ -93,6 +93,14 @@ class Presentation:
     def heading(self, label):
         return literal(label, "bold " + self.accent)
 
+    def notice(self, text):
+        text = terminal_text(text)
+        heading, separator, body = text.partition(" · ")
+        if separator and heading in {"CONNECTIONS", "YOUR CHANNEL", "YOUR CREATOR MEMORY"}:
+            self.emit(Padding(Group(self.heading(heading), Text(""), literal(body)), (1, 2)))
+        else:
+            self.emit(Padding(literal(text), (0, 2)))
+
     def runtime(self):
         terminal = self.terminal
         config = terminal.service.config
@@ -226,7 +234,7 @@ class Presentation:
 
         if logo and roomy:
             portrait = Text(
-                files("clira").joinpath("assets/clira_braille_compact.txt").read_text().rstrip("\n"),
+                files("clira").joinpath("assets/clira_braille_v2_compact.txt").read_text().rstrip("\n"),
                 no_wrap=True,
                 overflow="fold",
             )
@@ -299,11 +307,12 @@ class Presentation:
             name = self.terminal.service.store.channel(self.terminal.channel)["name"]
             label += "  /  " + name
         if self.width >= 52:
-            self.emit(Rule(literal(label, self.muted), align="left", style=self.muted))
+            self.emit(Text(""))
+            self.emit(Rule(self.heading(label), align="left", style=self.muted))
 
     def answer(self, text, receipts=None, elapsed=None):
         self.emit(Text(""))
-        self.emit(self.heading("CLIRA"))
+        self.emit(Rule(self.heading("CLIRA"), align="left", style=self.accent))
         self.emit(Text(""))
         # Markdown is presentation only; hyperlinks cannot inject OSC terminal links.
         content = Markdown(terminal_text(text), hyperlinks=False, code_theme="ansi_dark")
@@ -398,6 +407,15 @@ class Presentation:
     def error(self, code, message):
         content = Text.assemble((terminal_text(code) + "\n", "bold"), terminal_text(message))
         if self.width >= 52:
-            self.emit(Panel(content, title="Request needs attention", border_style="red", box=box.ROUNDED))
+            self.emit(
+                Panel(
+                    content,
+                    title="Request needs attention",
+                    border_style="#dc8984",
+                    box=box.ROUNDED,
+                    padding=(1, 2),
+                    title_align="left",
+                )
+            )
         else:
             self.emit(content)

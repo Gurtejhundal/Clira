@@ -27,7 +27,9 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import Frame, SearchToolbar, TextArea
 from rich.cells import cell_len
 from rich.console import Console
+from rich.padding import Padding
 from rich.text import Text
+from rich.theme import Theme
 
 from .. import __version__
 from ..text import terminal_text
@@ -217,12 +219,21 @@ class SplitScreen:
                 output = io.StringIO()
                 console = Console(
                     file=output,
-                    width=width,
+                    width=min(width, 104),
                     force_terminal=True,
                     color_system="truecolor",
                     no_color=t.console.no_color,
                     style=t.console.style,
                     highlight=False,
+                    theme=Theme(
+                        {
+                            "markdown.h1": "bold " + t.view.accent,
+                            "markdown.h2": "bold " + t.view.accent,
+                            "markdown.h3": "bold " + t.view.accent,
+                            "markdown.strong": "bold",
+                            "markdown.code": t.view.accent,
+                        }
+                    ),
                 )
                 console.print(block)
                 self.lines.extend(list(split_lines(to_formatted_text(ANSI(output.getvalue()))))[:-1])
@@ -251,7 +262,7 @@ class SplitScreen:
         add(("v" + __version__).center(44), "class:muted")
         if height >= 34 and not t.no_logo:
             add("")
-            add(files("clira").joinpath("assets/clira_braille_compact.txt").read_text().rstrip())
+            add(files("clira").joinpath("assets/clira_braille_v2_compact.txt").read_text().rstrip())
         add("")
         add("YOUR CREATOR WORKSPACE", gold)
         add("/help     Commands")
@@ -298,7 +309,13 @@ class SplitScreen:
             self.waiting = False
             self.input.buffer.reset(append_to_history=not self.secret)
             self.offset = 0
-            self.emit(Text(self.prompt_label + " " + ("[hidden]" if self.secret else terminal_text(value))))
+            if value.strip() or self.secret:
+                answer = Text()
+                if self.prompt_label != "❯":
+                    answer.append(self.prompt_label + "\n", style="bold " + self.terminal.view.accent)
+                answer.append("› ", style="bold " + self.terminal.view.accent)
+                answer.append("[hidden]" if self.secret else terminal_text(value), style="bold")
+                self.emit(Padding(answer, (1, 2)))
             self.answers.put(value)
 
         @keys.add("escape", "c-h", filter=has_focus(self.input))

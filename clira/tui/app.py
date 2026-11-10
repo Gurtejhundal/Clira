@@ -14,7 +14,6 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.styles import Style
 from rich.console import Console
-from rich.text import Text
 
 from ..agent import Agent
 from ..config import CliraError
@@ -86,7 +85,7 @@ class Terminal:
     def print(self, text):
         # User/model strings are never Rich markup or terminal control instructions.
         if self.screen:
-            self.screen.emit(Text(terminal_text(text)))
+            self.view.notice(text)
         else:
             self.console.print(terminal_text(text), markup=False)
 

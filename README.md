@@ -1,333 +1,174 @@
 <p align="center">
-  <img src="clira/web/assets/clira-logo-black.png" alt="Clira — borderless monochrome character logo on black" width="140">
+  <img src="clira/web/assets/clira-logo-black.png" width="128" alt="Clira's borderless monochrome character logo on a solid black background">
+</p>
+
+<h1 align="center">Clira</h1>
+
+<p align="center"><strong>Intelligence Behind Creation</strong></p>
+
+<p align="center">
+  Your YouTube channel. One creative workspace.<br>
+  Plan the video, prepare its package, review the result, and approve the upload—in one conversation.
 </p>
 
 <p align="center">
-  <img src="docs/media/clira-banner.svg" alt="CLIRA — Intelligence Behind Creation" width="600">
+  <a href="#get-started">Get started</a> ·
+  <a href="#give-clira-a-video">Upload workflow</a> ·
+  <a href="#a-character-with-personality">Meet Clira</a> ·
+  <a href="#documentation">Documentation</a>
 </p>
+
+**Clira is a local AI workspace for YouTube creators.** It brings channel research, ideas, script
+briefs, titles, descriptions, publishing preparation, analytics and approved account actions into
+one place. Your conversations, creator preferences and channel context stay connected as you work.
+
+Its everyday interface is a web app with a terminal-inspired design: antique-gold frames, readable
+monospace text, a block cursor, and an expressive monochrome character. All eight workspace views
+remain available through the command navigation. You can select and copy replies normally.
+
+**Current development version: `1.0.0rc1`.** Install the current code from `main` using the steps below.
+This is a release candidate, not a published stable v1.0.0 release.
+
+## See the current workspace
 
 <p align="center">
-  <strong>Your channel. One creative partner.</strong><br>
-  A local AI workspace for the work behind your YouTube videos.<br>
-  Research, plan, write, review and manage approved account actions with one agent that remembers your channel.
+  <img src="docs/media/character/clira-workspace.gif" width="960" alt="Continuous recording of the current Clira web app: the faithful character reacts to pointer interactions, followed by a chat response from the offline demo backend">
 </p>
+
+*Actual browser recording with synthetic demo data. [Open the current screenshot](docs/media/web/terminal-workspace.png).*
+
+## Give Clira a video
+
+1. **Attach a finished MP4** and tell Clira: “Upload this video.”
+2. **Clira prepares the package:** file checks, a title, description, tags and a suggested outline.
+3. **Review in chat:** watch the video, edit the package, and complete rights/disclosure choices.
+4. **Approve & upload privately** when the exact preview is ready.
+5. **Get the receipt and link** after Clira runs and verifies the approved upload.
+
+The preview and approval live inside the chat. You do not have to copy the same title and description
+between separate forms. Clira uses the selected channel, preserves the approved video bytes and
+package, and records the resulting job so you can inspect what happened.
+
+With Gemini enabled, Clira analyzes **three sampled frames** to draft the package. It does not listen
+to the audio or analyze every moment of the video. The suggested script outline is an editorial draft,
+not a transcript. Offline demo mode uses clearly labeled templates instead.
+
+Uploads start **private**. Making a video public, scheduling publication, changing existing metadata,
+posting a comment, or uploading a thumbnail/caption file requires its own approval.
+
+[Connect a channel and enable uploads →](docs/CHAT_UPLOAD.md)
+
+## What Clira helps with
+
+| Work | What you can do |
+| --- | --- |
+| Plan | Develop a channel direction, brainstorm ideas, save script briefs and organize a calendar. |
+| Prepare | Draft titles, descriptions and tags; import a finished MP4; inspect local media checks. |
+| Review | Preview the video and its editable package, check disclosures, and approve the exact account action. |
+| Understand | Inspect connected-channel uploads and dated analytics, with visible sources and unavailable-data states. |
+| Operate | Track durable jobs, approvals, receipts and recovery from the same workspace. |
+| Continue | Resume saved conversations and reuse the creator preferences and notes you chose to save. |
+
+The sidebar includes **Chat, Video library, Ideas & calendar, Production inbox, Approvals, Community,
+Operations and Settings**. The browser is the main workspace; the CLI remains available for scripts
+and terminal use.
+
+## A character with personality
 
 <p align="center">
-  <a href="docs/VERIFICATION_V1_RC.md"><img src="https://img.shields.io/badge/candidate-1.0.0rc1-c4a466?style=flat-square" alt="Local candidate 1.0.0rc1; not a stable release"></a>
-  <img src="https://img.shields.io/badge/Python-3.12%2B-617851?style=flat-square" alt="Python 3.12 or later">
-  <a href="https://github.com/Gurtejhundal/Clira/actions/workflows/release.yml"><img src="https://github.com/Gurtejhundal/Clira/actions/workflows/release.yml/badge.svg" alt="Verify and release"></a>
-  <img src="https://img.shields.io/badge/Local_first-SQLite-303a2c?style=flat-square" alt="Local first with SQLite">
+  <img src="docs/media/character/clira-character.gif" width="360" alt="Clira's detailed character reacts to hover, single click, double click and circular pointer movement, then demonstrates thinking and concerned expressions">
 </p>
 
-<p align="center">
-  <a href="#run">Get started</a> ·
-  <a href="#see-clira-in-action">Watch the demos</a> ·
-  <a href="docs/SETUP.md">Connect YouTube</a> ·
-  <a href="docs/LIVE_CHARACTER.md">Meet Clira</a> ·
-  <a href="docs/PRODUCT_ANALYSIS.md">Product & architecture</a>
-</p>
+Clira keeps her messy short hair, round glasses, headphones and hoodie. Her reactions are restrained:
 
-> **Local release candidate.** Explore with synthetic demo data. Open-ended AI needs your Gemini
-> configuration; YouTube operations need OAuth and exact owner approval. Stable v1.0.0 is not released.
+- **Hover:** a curious look and a small head tilt.
+- **Single click:** a little smile. **Double click:** quiet delight.
+- **Circle the pointer:** a brief dizzy reaction.
+- **While you work:** attention during typing, thinking during requests, and distinct preview/review/error states.
 
-## Meet Clira
+Natural blinks and tiny gaze movements make her feel present. Touch and keyboard interactions work
+too. Settings offers **Full, Reduced and Off** motion; the app respects the operating system's
+reduced-motion preference. The terminal retains its Braille portrait.
 
-A quiet creative partner with a little personality. The original portrait comes alive through eight
-restrained expressions, natural blinks, subtle gaze and tiny head movements.
+The character GIF uses the shipped controller with real pointer inputs and local presentation-event
+examples. It does not show an account upload. [Static portrait](docs/media/character/character-poster.png)
+· [Interaction details](docs/LIVE_CHARACTER.md) · [Black-background logo](clira/web/assets/clira-logo-black.png).
 
-<p align="center">
-  <img src="docs/media/character/clira-character.gif" width="360" alt="Clira character animation: hover makes her curious, a single click brings a small smile, double-click brings delight, circling the pointer makes her dizzy, chat brings a thinking expression, and errors bring concern.">
-</p>
+## Get started
 
-<p align="center">
-  <strong>Hover to catch her attention. Click to say hello.</strong><br>
-  Double-click for delight. Circle the pointer for a little dizziness.<br>
-  <a href="docs/media/character/character-poster.png">Static portrait</a> ·
-  <a href="docs/LIVE_CHARACTER.md">Expressions & controls</a> ·
-  <a href="clira/web/assets/clira-logo-black.png">Black-background logo</a> ·
-  <a href="clira/web/assets/clira-logo.png">Transparent alternative</a>
-</p>
-
-The GIF runs the shipped character controller with local presentation events. It is a character
-preview, not an account operation. In the website, real chat, attachment, preview, review and error
-states drive the same reactions. Touch and keyboard work too. **Full / Reduced / Off** motion settings
-respect the operating system's reduced-motion preference. The terminal keeps its Braille portrait.
-
-## See Clira in action
-
-<p align="center">
-  <img src="docs/media/character/clira-workspace.gif" width="960" alt="Recorded Clira website: the detailed character reacts to hover, clicks and circular pointer movement, then a real offline demo chat shows synthetic latest uploads.">
-</p>
-
-A continuous browser recording of the current website, using the actual offline demo backend.
-The channel and replies are synthetic; no Google model call or YouTube write is shown.
-[Static workspace](docs/media/web/terminal-workspace.png) · [Capture details](docs/media/README.md).
-
-## Terminal-style web workspace
-
-The browser app now carries Clira's terminal identity across **all eight views**: antique-gold
-frames, a faithful monochrome portrait, CLIRA wordmark, monospace controls and a block cursor.
-You can select and copy answers, use slash navigation, attach a video and review its upload in chat.
-The interactive terminal remains optional; it does not have to run alongside the website.
-
-The gold frames, centered identity and command navigation remain consistent across desktop and
-mobile. [Character behavior](docs/LIVE_CHARACTER.md) · [Logo and artwork provenance](docs/brand/CHARACTER_V2_ART.md).
+You need **Python 3.12+**, [uv](https://docs.astral.sh/uv/), and **ffmpeg/ffprobe** for video validation.
 
 ```bash
-./run.sh --mode live serve         # open http://127.0.0.1:8765 in your browser
-# Or explore without credentials:
+git clone https://github.com/Gurtejhundal/Clira.git
+cd Clira
+uv sync --locked
 ./run.sh --mode demo serve
 ```
 
-[Web workspace & keyboard controls](docs/WEB_WORKSPACE.md) · [Chat upload flow and limits](docs/CHAT_UPLOAD.md)
+Open **[http://127.0.0.1:8765](http://127.0.0.1:8765)**. Demo mode needs no Google credentials and
+uses synthetic channel data with a limited offline command router.
 
-## v1.0.0-rc.1 · local candidate
+To use your own channel and AI provider:
 
-The current branch adds the interactive terminal, shared saved conversations, five-step local
-channel planning, readable light/dark website themes, real thumbnail files and timed SRT/VTT
-packaging. **Stable v1.0.0 is not released.** An owner-authorized private demo upload and authenticated
-read are recorded in [verification notes](docs/VERIFICATION.md). The new chat upload path is tested
-with simulations; live model quality and thumbnail/caption playback remain separate validation work.
+1. Follow [Google/YouTube setup](docs/SETUP.md) for a Desktop OAuth client and the appropriate channel grant.
+2. Configure Gemini using the private, masked connection flow described in [creator setup](docs/CREATOR_SETUP.md).
+3. Start `./run.sh --mode live serve`. Follow the [chat-upload guide](docs/CHAT_UPLOAD.md) to enable approved uploads.
+
+For personal creator setup in the terminal, run `uv run --locked clira`. You can review saved
+preferences and consent before sharing relevant profile context with your configured AI provider.
+The web app does not require the interactive terminal to stay open.
+
+## Your channel, your approval
+
+Clira runs one Python agent with typed tools. Account actions pass through deterministic channel,
+permission and approval checks. The character has no account authority.
+
+- Local conversations, preferences and jobs live in SQLite; credentials are kept in separate owner-only files.
+- Account writes need the correct grant, explicit write enablement and approval of the exact request.
+- Uploaded media and approved payloads are bound to their channel and content hashes.
+- Interrupted or uncertain account operations stop for inspection instead of blindly starting duplicates.
+
+Local storage does not make every provider interaction offline: enabled Gemini requests send relevant
+context and sampled video frames to the configured provider; YouTube operations contact Google.
+
+## Current scope
+
+Clira accepts **finished videos up to 256 MiB** in chat. It prepares and manages their release workflow;
+it does not autonomously film, edit or render them. Audio transcription, complete-video understanding,
+automatic image-model thumbnails and hosted/team access are not implemented. Thumbnail/caption
+packaging has separate local and approved-upload paths.
+
+An owner-authorized authenticated read and private demo upload are recorded in the verification notes.
+The newer chat-upload automation has isolated simulation coverage; its live content quality and
+thumbnail/caption playback remain separate validation work. No growth or revenue outcome is guaranteed.
+
+[Detailed verification and limits →](docs/VERIFICATION.md)
+
+## Documentation
+
+| Guide | Contents |
+| --- | --- |
+| [Channel setup](docs/SETUP.md) | Google OAuth, API prerequisites and grants |
+| [Upload from chat](docs/CHAT_UPLOAD.md) | Video preparation, exact review and recovery |
+| [Web workspace](docs/WEB_WORKSPACE.md) | Navigation, keyboard controls, text selection and themes |
+| [Creator setup & memory](docs/CREATOR_SETUP.md) | Preferences, saved notes, consent and optional Telegram |
+| [Packaging](docs/PACKAGING.md) | MP4, metadata, thumbnails and timed captions |
+| [Character system](docs/LIVE_CHARACTER.md) | Expressions, motion settings and local event hooks |
+| [Architecture](docs/PRODUCT_ANALYSIS.md) | Agent, tools, state and account boundaries |
+| [Changelog](CHANGELOG.md) | Changes in the current codebase |
+
+## Development
 
 ```bash
 uv sync --locked --extra dev
-uv run clira                       # personal creator setup, then your workspace
-uv run clira --no-logo
-uv run clira serve                 # synchronized local website
-uv run clira --channel ID --resume SESSION
-uv run clira chat --channel ID --json 'Show my latest videos'
-```
-
-First run learns your name, passions, audience, voice, goals, resources and working preferences,
-saves progress locally, asks you to review the profile, guides optional connections, then creates
-your first personal project. Returning users resume their saved workspace.
-[Full creator setup, memory and Telegram guide](docs/CREATOR_SETUP.md).
-
-![Personal creator setup: name, interests and preferences saved locally](docs/media/terminal/creator-setup.png)
-
-`./run.sh` preserves its existing website launch behavior; `uv run clira` opens the terminal.
-Terminal: the Clira sidebar stays fixed while the conversation scrolls independently.
-Enter sends; Shift+Enter or Ctrl+J adds a line. Shift+Backspace or `/back` navigates back.
-Ctrl+R searches input history, Tab completes, and Ctrl+D exits. Mouse-wheel scrolling over the
-conversation and Page Up/Page Down browse history; Ctrl+End returns to the latest message.
-Shift shortcuts require distinct modified-key reports from the terminal; Ctrl+J and `/back` work
-when a terminal sends the same sequence for shifted and ordinary keys.
-Use `/setup`, `/profile`, `/project`, `/memory`, `/remember TEXT`, `/forget ID`, `/connections`,
-`/help`, `/channel`, `/launch`, `/new`, `/sessions`, `/resume ID`, `/title NAME`, `/status`,
-`/ideas`, `/calendar`, `/jobs`, `/approvals`, `/approve ID`, `/details`, `/sources`,
-`/back`, `/theme auto|light|dark|mono`, `/web`, `/clear`, `/connect`, `/model`, `/mode`, `/quit`.
-Use `/back` to return to the start menu, then `0` to return to your current workspace.
-During setup, `/back` revisits the previous question and `/cancel` returns to the menu without
-creating a draft. Existing answers are retained; Enter keeps a saved answer.
-A repeated idle Ctrl+C exits. In split view, a running request finishes before accepting new input;
-Ctrl+C during work reports that it is still running. Inspect receipts and `/jobs` for saved work.
-The terminal starts no background worker. `/web` verifies the same local store before opening a link.
-
-[Candidate verification and blockers](docs/VERIFICATION_V1_RC.md) ·
-[Packaging guide](docs/PACKAGING.md) · [Migration and rollback](docs/MIGRATIONS.md)
-
-### Clira in your terminal
-
-![Clira split terminal: fixed lettering, portrait and help at left, scrollable conversation and input at right](docs/media/terminal/workspace-split.png)
-
-The terminal pins its large CLIRA lettering, approved portrait and help in the left sidebar,
-with independently scrollable conversation history and a fixed composer on the right,
-using the supplied Ink/Ivory palette and Antique Gold accents. Clear first-run choices, five guided
-launch steps, grouped help, Markdown replies and source-labelled receipts keep the work readable.
-It inherits your terminal background; light/dark/mono and compact layouts remain available.
-The sidebar wordmark has top padding and is centered. Question labels sit at the composer
-left edge, aligned with the answer field. Below 110 columns or 24 rows, a compact header replaces the sidebar. Shorter sidebars simplify the
-lettering before hiding the portrait. Resize preserves the input and conversation.
-These previews decode the visible cells from an actual terminal process using synthetic data.
-For the original scrolling layout: `CLIRA_TERMINAL_LAYOUT=inline uv run --locked clira`.
-[First-run preview](docs/media/terminal/welcome-split.png) · [Visual checks and controls](docs/TERMINAL_VISUALS.md)
-
-### Candidate screenshots (synthetic demo)
-
-[Desktop](docs/media/v1/clira-chat-1440.png) · [Mobile](docs/media/v1/clira-chat-390.png) ·
-[Local launch at 320px](docs/media/v1/clira-launch-320.png) · [Terminal capture](docs/media/v1/Clira-terminal-rc.txt)
-
-<details>
-<summary>Earlier v0.1.0 tours and CLI walkthrough</summary>
-
-### v0.1.0 historical preview videos
-
-<p align="center">
-  <img src="docs/media/clira-preview.gif" width="800" alt="Animated Clira demo: desktop performance workspace, mobile channel conversation, and completed private-upload simulation with a durable receipt">
-</p>
-
-| Guided product tour · 39 seconds | CLI walkthrough · 24 seconds |
-|:---:|:---:|
-| [![Watch the Clira product tour](docs/media/tour-poster.jpg)](https://github.com/Gurtejhundal/Clira/releases/download/v0.1.0/Clira-tour.mp4) | [![Watch the Clira CLI walkthrough](docs/media/cli-poster.jpg)](https://github.com/Gurtejhundal/Clira/releases/download/v0.1.0/Clira-cli.mp4) |
-| [▶ Watch or download the captioned MP4](https://github.com/Gurtejhundal/Clira/releases/download/v0.1.0/Clira-tour.mp4) | [▶ Watch or download the captioned MP4](https://github.com/Gurtejhundal/Clira/releases/download/v0.1.0/Clira-cli.mp4) |
-
-The product tour uses real captured **synthetic-demo screens** with a guided pan/scroll presentation.
-The CLI walkthrough uses actual command-output excerpts. Both are silent with on-screen explanations.
-[Transcript, original captures and media details →](docs/media/README.md)
-
-</details>
-
-## A creator workflow, held together
-
-| You want to… | Clira keeps the work connected |
-|---|---|
-| Understand your channel | Recent uploads, dated metrics, reporting freshness and a weekly comparison |
-| Find the next story | Public-video research, channel-specific ideas and duplicate-topic checks |
-| Develop the package | Script briefs, source-review notes, titles, descriptions and editorial lint |
-| Prepare a finished video | Manual production handoff, MP4 validation, managed copies and rights review |
-| Put it on the right channel | Exact approval preview, private-first upload, saved session and verified receipt |
-| Keep release and audience work moving | Separately approved publishing, metadata changes and comment replies |
-| Know what happened | Channel memory, durable jobs, visible errors and an append-only action history |
-
-**One Python agent, explicit tools and deterministic permissions.** Channel identity, content memory
-and approvals stay isolated. No Hermes runtime, autonomous subagents or required renderer.
-
-## Run
-
-Requires Python 3.12+, [uv](https://docs.astral.sh/uv/), and ffmpeg/ffprobe for media validation.
-From this directory:
-
-```bash
-./run.sh
-```
-
-Open [the local dashboard](http://127.0.0.1:8765/). The launcher installs the locked dependencies
-into `.venv`. State, imported copies and owner-only secrets live in `.clira` (ignored by Git).
-Use `CLIRA_DATA_DIR` for another state directory. The server binds only to loopback.
-
-```bash
-./run.sh doctor
-./run.sh chat --channel DEMO_CHANNEL_TECH 'Show my latest five uploads'
-./run.sh ideas --channel DEMO_CHANNEL_TECH
-./run.sh tool weekly_digest --channel DEMO_CHANNEL_TECH
-```
-
-## What works
-
-- One bounded model/tool loop; strict input and result schemas; Gemini REST adapter; daily model request cap.
-- Isolated channel profiles, conversation history, ideas, scripts, metadata and editorial calendars.
-- Google desktop OAuth with PKCE, exact channel-ID confirmation, refresh and local disconnect.
-- Official channel/video reads, lifetime video statistics, dated analytics, two-week comparisons,
-  public-video research and comment reads. Empty analytics are unavailable, never invented zeros.
-- MP4 import with ffprobe QC, managed copies, hashing, rights evidence and human creative review.
-- Private resumable uploads with persisted secret sessions, receipts, retry backoff and crash recovery.
-- Exact, expiring, single-use approvals; separate approval and execution; idempotent jobs; append-only audit.
-- Approved metadata updates, future public scheduling, publication and exact comment replies.
-- Responsive eight-view dashboard and CLI; pause writes; database backup; optional disabled systemd templates.
-- Optional installed title/hook editorial utilities. Scores are labeled heuristics, not outcome forecasts.
-- Manual production handoff protocol. Lemo remains external and unmodified.
-
-## Connect a real channel
-
-Enable YouTube Data API v3 and YouTube Analytics API in your Google Cloud project. Configure
-the consent screen/test users and create a **Desktop app** OAuth client. Keep the downloaded JSON
-outside this repository. See [the Google setup guide](docs/SETUP.md).
-
-```bash
-export CLIRA_GOOGLE_CLIENT_FILE=/absolute/path/outside/repo/client.json
-./run.sh --mode live connect
-./run.sh --mode live channels
-./run.sh --mode live chat --channel YOUR_ACTUAL_UC_ID 'Show my latest five uploads'
-./run.sh --mode live serve
-```
-
-You sign in through Google in your browser and confirm the immutable channel ID in the terminal.
-No credentials belong in chat. The initial grant is read-only plus basic analytics.
-
-## Enable the AI model yourself
-
-```bash
-export CLIRA_MODEL=gemini
-# Supply GEMINI_API_KEY privately using your shell or a secrets manager.
-export CLIRA_ALLOW_MODEL_CALLS=1
-export CLIRA_MAX_MODEL_CALLS_DAY=50
-./run.sh --mode live serve
-```
-
-`CLIRA_MODEL_ID` defaults to `gemini-2.5-flash` and is configurable. The daily request cap counts
-each generateContent request conservatively, including failed requests. Output is limited to
-4,096 tokens per call and eight tool calls per turn. This is **not a currency budget**; use your
-provider's billing controls as well. No paid model calls were made during development.
-
-## Upload a finished video from chat
-
-Attach an MP4 in **Talk to Clira** and say “Upload this video.” Clira prepares an editable
-video/package preview in the conversation. Review it and approve once to upload privately.
-No manual metadata entry or switching between Production and Approvals is required.
-[Setup, terminal commands, analysis limits and recovery](docs/CHAT_UPLOAD.md).
-
-## Private upload
-
-Reconnect with upload capability, then explicitly enable approved writes:
-
-```bash
-./run.sh --mode live connect --capability upload
-export CLIRA_ENABLE_WRITES=1
-./run.sh --mode live serve
-```
-
-In Production inbox, copy the finished MP4 into the displayed imports directory, enter its
-metadata/disclosure choices, document rights for **all video and audio**, and confirm creative review.
-Validate and prepare, review the exact PRIVATE request in Approvals, approve it, then execute it.
-The receipt must contain a real video ID and `verified_remotely: true` before treating a live upload
-as verified. Rendering and legal clearance are not established by technical QC.
-
-For metadata/publication/replies reconnect with `--capability manage`. These always require their
-own exact approval. Scheduling is deliberately limited to private videos originally uploaded and
-tracked by Clira. YouTube also enforces its never-published requirement and project restrictions.
-
-```bash
-./run.sh approval show APPROVAL_ID --channel CHANNEL_ID
-./run.sh approval approve APPROVAL_ID --channel CHANNEL_ID
-./run.sh jobs run JOB_ID --channel CHANNEL_ID
-./run.sh jobs list --channel CHANNEL_ID
-./run.sh pause-all
-```
-
-## Recovery and backup
-
-`clira worker` processes already approved due jobs once; no background timer is enabled for you.
-`clira recover` checks expired leases. Resume interrupted uploads using the **same job**, never by
-starting another upload. `RECOVERY_REQUIRED` means inspect YouTube and the receipt/session before
-manual repair. The app deliberately refuses automatic replays of ambiguous comments or writes.
-
-Expired resumable jobs can request fresh owner consent using `clira approval renew ID --channel ID`;
-the job and saved session stay the same. Edited requests without an external-write checkpoint can
-be prepared again with fresh consent. Completed uploads remain deduplicated by channel and file hash.
-
-```bash
-./run.sh backup /safe/location/clira-backup.sqlite3
-./run.sh disconnect --channel CHANNEL_ID
-```
-
-A database backup excludes secrets and media copies. Back up `.clira/assets` separately; protect
-credential backups separately. Disconnect removes local credentials; revoke the Google grant at
-[Google account permissions](https://myaccount.google.com/permissions) if needed. Pausing or
-disconnecting cannot undo an in-flight request or cancel a publication already scheduled on YouTube.
-
-## Verify
-
-```bash
-uv run --extra dev pytest -q
-uv run --extra dev ruff check clira tests
+uv run --locked pytest -q
+uv run --locked ruff check clira tests scripts
 node --check clira/web/app.js
-uv run --extra dev playwright install chromium
-uv run --extra dev python tests/browser_smoke.py
+uv run --locked playwright install chromium
+uv run --locked python tests/browser_smoke.py --output /tmp/clira-browser-check
 ```
 
-If an existing browser is used, set `CLIRA_BROWSER=/absolute/path/to/chromium` for the browser test.
-The browser test creates its own temporary demo database and never signs in or mutates a real channel.
-See [verification evidence](docs/VERIFICATION.md) and [the product analysis](docs/PRODUCT_ANALYSIS.md).
+Browser checks run against isolated synthetic demo data. See the [verification record](docs/VERIFICATION.md)
+and [media capture notes](docs/brand/LOGO_AND_README_MEDIA.md) for what was tested and how the previews were made.
 
-## Limits and remaining work
-
-An owner-authorized authenticated read and private demo upload are recorded in the verification
-notes. Full production readiness is not established: the new chat upload path has simulation coverage,
-and live model quality plus thumbnail/caption acceptance and playback remain unverified. Retention/cohort diagnostics, external-renderer
-execution, automatic fact verification and hosted/team access are not implemented. Script evidence
-links remain unverified; public search results are examples, not trend proof. Semantic duplicate
-detection currently uses normalized title similarity, not embeddings. UI reads are capped to recent
-items; complete-history pagination is a future improvement. Nothing in this release guarantees
-growth, licensing clearance, or replacement of human creative judgment.
-
-The [original 21-file build pack](mds/Clira_Agent_Architecture_Build_Pack/Clira/) is preserved in the repository.
+<p align="center"><sub>The name Clira draws inspiration from Clio's storytelling and Minerva's strategic wisdom.</sub></p>

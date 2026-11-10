@@ -2,6 +2,10 @@
 
 ## 1.0.0rc1 · unreleased local candidate
 
+- Add terminal `/back`, previous-question navigation and `/cancel` during setup. Retain answers
+  when revisiting questions, and preserve the current session when returning from the start menu.
+  `0` returns to the active workspace; the channel picker also accepts `/back`.
+
 - Restore the owner-preferred large CLIRA wordmark, rounded frame and portrait/status composition.
   Apply the supplied Ink/Ivory and Antique Gold palette, including matching prompt colors, readable
   secondary text and light/dark/mono fallbacks. Keep responsive status composition, guided

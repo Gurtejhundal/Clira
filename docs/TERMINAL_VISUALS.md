@@ -46,13 +46,18 @@ tools and disclose the OAuth requirement. Five launch steps, grouped help and sa
 retain their existing behavior. Markdown replies preserve line breaks and Unicode bullets; receipts
 show actual sources and `/details` exposes complete results. Elapsed time measures actual work.
 
+`/back` opens the start menu; `0` returns to the existing workspace and conversation. During setup,
+`/back` revisits a question (or the start menu from question one), and `/cancel` discards the unfinished
+setup. Saved answers remain available when revisiting questions; Enter keeps them. No draft is
+created until all five questions are completed. The channel picker also accepts `/back`.
+
 Enter sends, Ctrl+J adds a newline, Ctrl+R searches history, Tab completes slash commands and Ctrl+D
 exits empty input. Owner review retains the exact channel, target, operation, expiry, privacy,
 rights, file hash and complete payload. Approval and execution remain separate.
 
 ## Verification
 
-**134 local tests pass**, including terminal PTY, security, shared-session, packaging and API suites.
+**138 local tests pass**, including terminal PTY, security, shared-session, packaging and API suites.
 Presentation tests cover 40/52/80/99/100/120/160 columns, short windows, mono/no-logo, real status,
 copyable IDs, literal untrusted text, reply bullets, readable secondary contrast and the restored
 large lettering/frame. Auto-mode tests verify actual gold in rendered output, background hints and

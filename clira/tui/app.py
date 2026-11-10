@@ -27,6 +27,7 @@ COMMANDS = [
     "/channel",
     "/connect",
     "/launch",
+    "/back",
     "/new",
     "/sessions",
     "/resume",
@@ -84,18 +85,28 @@ class Terminal:
         return self.prompt.prompt(text, placeholder="").strip()
 
     def onboarding(self, show=True):
+        previous_channel = self.channel
         if show:
             self.view.onboarding()
         while True:
             try:
                 if self.onboarding_choice():
                     break
+                self.view.onboarding()
             except CliraError as exc:
                 self.print(exc.code + ": " + exc.message)
+        if self.channel != previous_channel:
+            self.conversation = self.last = None
         self.service.store.set_setting("active_workspace:" + self.service.config.mode, self.channel)
 
     def onboarding_choice(self):
         choice = self.ask("Choose 1 / 2 / 3 > ")
+        if choice.lower() in {"0", "b", "back", "/back"}:
+            if self.channel:
+                self.print("Back to your workspace.")
+                return True
+            self.print("You are at the first menu. Choose a path or press Ctrl+D to exit.")
+            return False
         if choice == "1":
             questions = [
                 ("Your interest > ", "What could you keep making videos about?"),
@@ -104,10 +115,25 @@ class Terminal:
                 ("Time per week > ", "Choose a realistic amount of creator time."),
                 ("Format > ", "Shorts, longer videos, or another format you enjoy?"),
             ]
-            answers = []
-            for number, (question, hint) in enumerate(questions, 1):
-                self.view.launch_step(number, hint)
-                answers.append(self.ask(question))
+            answers = [""] * len(questions)
+            step = 0
+            while step < len(questions):
+                question, hint = questions[step]
+                self.view.launch_step(step + 1, hint)
+                if answers[step]:
+                    self.print("Saved answer: " + answers[step] + " · Enter keeps it.")
+                answer = self.ask(question)
+                if answer.lower() in {"b", "back", "/back"}:
+                    if step == 0:
+                        self.print("Back to the start menu. No draft created.")
+                        return False
+                    step -= 1
+                    continue
+                if answer.lower() in {"/cancel", "cancel"}:
+                    self.print("Setup cancelled. No draft created.")
+                    return False
+                answers[step] = answer or answers[step]
+                step += 1
             result = launch(self.service, *answers)
             self.channel = result["workspace"]["id"]
             self.print(result["plan"]["positioning"])
@@ -173,14 +199,17 @@ class Terminal:
             self.status()
         elif cmd == "/connect":
             self.connect()
-        elif cmd == "/launch":
+        elif cmd in {"/launch", "/back"}:
             self.onboarding()
         elif cmd == "/channel":
             rows = self.service.channels()
             if not arg:
                 for c in rows:
                     self.print(f"{c['name']} · {c['mode']} · {c['id']}")
-                arg = self.ask("Exact workspace ID (empty cancels) > ")
+                arg = self.ask("Exact workspace ID (/back or empty cancels) > ")
+            if arg.lower() in {"/back", "back", "b", "0"}:
+                self.print("Back to your workspace.")
+                return True
             if arg:
                 self.service.policy.channel(arg)
                 self.channel, self.conversation, self.last = arg, None, None

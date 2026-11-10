@@ -303,3 +303,75 @@ def test_colored_visual_startup_help_and_resize_keep_keyboard_working(tmp_path):
     output = capture.getvalue()
     assert child.exitstatus == 0 and "End of single-file" not in output
     assert re.search(r"\x1b\[[0-9;]*(?:33|38)(?:;[0-9;]*)?m", output)
+
+
+def test_launch_back_edits_previous_answer_and_keeps_later_answers(service, monkeypatch):
+    from clira.tui.app import Terminal
+
+    app = Terminal(service, DEMO_CHANNEL)
+    app.conversation = service.store.new_session(DEMO_CHANNEL)["id"]
+    app.last = {"old": "receipt"}
+    answers = iter(
+        ["1", "Batteries", "Beginners", "/back", "Engineers", "English", "/back", "", "4 hours", "short"]
+    )
+    monkeypatch.setattr(app, "ask", lambda text: next(answers))
+    app.onboarding(show=False)
+    plan = service.store.list(app.channel, "launch")[0]
+    assert plan["decisions"] == {
+        "interest": "Batteries",
+        "viewer": "Engineers",
+        "language": "English",
+        "time": "4 hours",
+        "format": "short",
+    }
+    assert app.conversation is None and app.last is None
+
+
+@pytest.mark.parametrize("inputs", [["1", "/back", "0"], ["1", "Batteries", "/cancel", "0"]])
+def test_setup_back_or_cancel_preserves_workspace_and_session(service, monkeypatch, inputs):
+    from clira.tui.app import Terminal
+
+    app = Terminal(service, DEMO_CHANNEL)
+    session = service.store.new_session(DEMO_CHANNEL)["id"]
+    app.conversation = session
+    before = service.channels()
+    answers = iter(inputs)
+    monkeypatch.setattr(app, "ask", lambda text: next(answers))
+    app.command("/back")
+    assert app.channel == DEMO_CHANNEL and app.conversation == session
+    assert service.channels() == before
+    assert service.store.setting("active_workspace:demo") == DEMO_CHANNEL
+
+
+def test_terminal_back_navigation_from_setup_and_workspace(tmp_path):
+    child = spawn(tmp_path, 80, "--no-logo")
+    child.expect("Choose 1 / 2 / 3")
+    child.send("1\r")
+    child.expect("Your interest")
+    child.send("/back\r")
+    child.expect("No draft created")
+    child.expect("Choose 1 / 2 / 3")
+    child.send("3\r")
+    child.expect("❯")
+    child.send("/new\r")
+    child.expect(r"New session:\s+(chat_[a-f0-9]{32})")
+    session = child.match.group(1)
+    child.expect("❯")
+    child.send("/back\r")
+    child.expect("0  Back to your workspace")
+    child.expect("Choose 1 / 2 / 3")
+    child.send("0\r")
+    child.expect("Back to your workspace")
+    child.expect("❯")
+    child.send("/status\r")
+    child.expect(session)
+    child.expect("❯")
+    child.send("/channel\r")
+    child.expect("Exact workspace ID")
+    child.send("/back\r")
+    child.expect("Back to your workspace")
+    child.expect("❯")
+    child.send("/quit\r")
+    child.expect(pexpect.EOF)
+    child.close()
+    assert child.exitstatus == 0

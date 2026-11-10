@@ -47,7 +47,10 @@ uv run clira chat --channel ID --json 'Show my latest videos'
 Terminal: Enter sends, Ctrl+J adds a line, Ctrl+R searches history, Tab completes, Ctrl+D exits.
 Use `/help`, `/channel`, `/launch`, `/new`, `/sessions`, `/resume ID`, `/title NAME`, `/status`,
 `/ideas`, `/calendar`, `/jobs`, `/approvals`, `/approve ID`, `/details`, `/sources`,
-`/theme auto|light|dark|mono`, `/web`, `/clear`, `/connect`, `/model`, `/mode`, `/quit`.
+`/back`, `/theme auto|light|dark|mono`, `/web`, `/clear`, `/connect`, `/model`, `/mode`, `/quit`.
+Use `/back` to return to the start menu, then `0` to return to your current workspace.
+During setup, `/back` revisits the previous question and `/cancel` returns to the menu without
+creating a draft. Existing answers are retained; Enter keeps a saved answer.
 A repeated idle Ctrl+C exits. Interrupting a request can leave completed local drafts; inspect receipts.
 The terminal starts no background worker. `/web` verifies the same local store before opening a link.
 

@@ -29,6 +29,7 @@ WORDMARK = (
 HELP = [
     ("WORKSPACE", "/channel [ID]", "Choose a channel or local workspace"),
     ("", "/launch · /connect", "Plan locally or start read-only OAuth"),
+    ("", "/back", "Return to the start menu; keep saved work"),
     ("CONVERSATIONS", "/new · /sessions [search]", "Start or find saved conversations"),
     ("", "/resume [ID] · /title NAME", "Resume or name a conversation"),
     ("CREATOR WORK", "/ideas · /calendar", "Saved ideas and draft plans"),
@@ -157,6 +158,11 @@ class Presentation:
                 literal("Model   " + model),
                 literal("Policy  " + policy),
                 literal("Human approval for channel changes.", self.muted),
+                *(
+                    [literal("0  Back to your workspace", "bold " + self.accent)]
+                    if self.terminal.channel
+                    else []
+                ),
             ]
         )
         return Group(*entries)
@@ -251,6 +257,7 @@ class Presentation:
         self.emit(Text(""))
         self.emit(self.heading(f"CHANNEL LAUNCH  /  {number} OF 5"))
         self.emit(literal(hint, self.muted))
+        self.emit(literal("/back previous step · /cancel start menu", self.muted))
 
     def status(self):
         terminal = self.terminal
@@ -271,7 +278,7 @@ class Presentation:
         self.emit(
             Text.assemble(
                 ("  /help", "bold " + self.accent),
-                (" commands   /sessions saved work   /web website", self.muted),
+                (" commands   /back start menu   /sessions saved work   /web website", self.muted),
             )
         )
         self.emit(literal("  Enter sends · Ctrl+J newline · Ctrl+R history · Ctrl+D exits", self.muted))

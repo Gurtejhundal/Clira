@@ -103,3 +103,21 @@ def test_workspace_names_are_literal_text_in_frame(service):
     app.view.welcome()
     output = app.console.export_text()
     assert "[red]Viewer" in output and "hidden" not in output
+
+
+@pytest.mark.parametrize("theme,background", [("light", "#f8f7f2"), ("dark", "#171a18")])
+def test_rendered_secondary_text_has_readable_contrast(service, theme, background):
+    app = terminal(service)
+    app.theme = theme
+    app.console.no_color = False
+    app.view.welcome()
+    html = app.console.export_html(inline_styles=True)
+    assert "color: " + app.view.muted in html
+
+    def luminance(color):
+        channels = [int(color[i : i + 2], 16) / 255 for i in (1, 3, 5)]
+        linear = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+        return sum(c * weight for c, weight in zip(linear, [0.2126, 0.7152, 0.0722]))
+
+    high, low = sorted([luminance(background), luminance(app.view.muted)], reverse=True)
+    assert (high + 0.05) / (low + 0.05) >= 4.5

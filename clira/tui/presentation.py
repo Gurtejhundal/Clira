@@ -66,6 +66,14 @@ class Presentation:
         # ANSI colors follow the terminal's own light/dark palette in auto mode.
         return "yellow"
 
+    @property
+    def muted(self):
+        # Dimming halves contrast on light terminals. Explicit themes use readable
+        # secondary colors; auto/mono inherit the owner's normal foreground.
+        if self.console.no_color:
+            return ""
+        return {"light": "#62675c", "dark": "#abb1a5"}.get(self.terminal.theme, "")
+
     def emit(self, renderable):
         self.console.print(renderable, width=self.width)
 
@@ -116,7 +124,7 @@ class Presentation:
 
     def fact_table(self, rows):
         table = Table.grid(padding=(0, 2), expand=True)
-        table.add_column(width=7, style="dim", no_wrap=True)
+        table.add_column(width=7, style=self.muted, no_wrap=True)
         table.add_column(overflow="fold", ratio=1)
         for label, value in rows:
             table.add_row(literal(label), literal(value, "bold" if label in {"Channel", "Mode"} else ""))
@@ -134,16 +142,16 @@ class Presentation:
             entry = Text.assemble((number + "  ", "bold " + self.accent), (title, "bold"))
             entries.append(entry)
             if not compact:
-                entries.extend([literal("   " + description, "dim"), Text("")])
+                entries.extend([literal("   " + description, self.muted), Text("")])
         model, policy = self.runtime()
         entries.extend(
             [
                 self.heading("LOCAL BY DEFAULT"),
-                literal("Your work stays in this workspace.", "dim"),
+                literal("Your work stays in this workspace.", self.muted),
                 Text(""),
                 literal("Model   " + model),
                 literal("Policy  " + policy),
-                literal("Human approval for channel changes.", "dim"),
+                literal("Human approval for channel changes.", self.muted),
             ]
         )
         return Group(*entries)
@@ -162,20 +170,20 @@ class Presentation:
                 mark,
                 Group(
                     self.heading("YOUR CREATIVE INTELLIGENCE"),
-                    literal("The work behind your YouTube channel.", "dim"),
-                    literal(f"v{__version__}  /  local workspace", "dim"),
+                    literal("The work behind your YouTube channel.", self.muted),
+                    literal(f"v{__version__}  /  local workspace", self.muted),
                 ),
             )
             # A narrow terminal gets the tagline underneath instead of a crushed column.
             if self.width < 80:
                 self.emit(mark)
-                self.emit(literal(f"Your Creative Intelligence · v{__version__}", "dim"))
+                self.emit(literal(f"Your Creative Intelligence · v{__version__}", self.muted))
             else:
                 self.emit(Padding(header, (0, 2)))
             self.emit(Text(""))
         else:
-            self.emit(Text.assemble(("CLIRA", "bold " + self.accent), (f"  v{__version__}", "dim")))
-            self.emit(literal("Your Creative Intelligence", "dim"))
+            self.emit(Text.assemble(("CLIRA", "bold " + self.accent), (f"  v{__version__}", self.muted)))
+            self.emit(literal("Your Creative Intelligence", self.muted))
             self.emit(Text(""))
 
         if terminal.channel:
@@ -188,12 +196,12 @@ class Presentation:
                 literal("Plan      ideas · scripts · calendar"),
                 literal("Package   titles · thumbnails · timed captions"),
                 literal("Account   reads · uploads · community"),
-                literal("Account tools require OAuth and owner policy.", "dim"),
+                literal("Account tools require OAuth and owner policy.", self.muted),
                 Text(""),
-                literal(f"{len(TOOLS)} typed tools · /help to explore", "dim"),
+                literal(f"{len(TOOLS)} typed tools · /help to explore", self.muted),
                 Text(""),
                 self.heading("What should we work on?"),
-                literal("Try: Show my latest videos", "dim"),
+                literal("Try: Show my latest videos", self.muted),
             )
         else:
             right = self.choices()
@@ -216,7 +224,7 @@ class Presentation:
                 Panel(
                     body,
                     title=literal(" YOUTUBE WORKSPACE ", self.accent),
-                    subtitle=literal(" ONE AGENT · YOUR CHANNEL · YOUR CALL ", "dim"),
+                    subtitle=literal(" ONE AGENT · YOUR CHANNEL · YOUR CALL ", self.muted),
                     title_align="left",
                     subtitle_align="left",
                     border_style=self.accent,
@@ -237,7 +245,7 @@ class Presentation:
     def launch_step(self, number, hint):
         self.emit(Text(""))
         self.emit(self.heading(f"CHANNEL LAUNCH  /  {number} OF 5"))
-        self.emit(literal(hint, "dim"))
+        self.emit(literal(hint, self.muted))
 
     def status(self):
         terminal = self.terminal
@@ -257,10 +265,11 @@ class Presentation:
     def ready(self):
         self.emit(
             Text.assemble(
-                ("  /help", "bold " + self.accent), (" commands   /sessions saved work   /web website", "dim")
+                ("  /help", "bold " + self.accent),
+                (" commands   /sessions saved work   /web website", self.muted),
             )
         )
-        self.emit(literal("  Enter sends · Ctrl+J newline · Ctrl+R history · Ctrl+D exits", "dim"))
+        self.emit(literal("  Enter sends · Ctrl+J newline · Ctrl+R history · Ctrl+D exits", self.muted))
         self.emit(Text(""))
 
     def composer(self):
@@ -269,7 +278,7 @@ class Presentation:
             name = self.terminal.service.store.channel(self.terminal.channel)["name"]
             label += "  /  " + name
         if self.width >= 52:
-            self.emit(Rule(literal(label, "dim"), align="left", style="dim"))
+            self.emit(Rule(literal(label, self.muted), align="left", style=self.muted))
 
     def answer(self, text, receipts=None, elapsed=None):
         self.emit(Text(""))
@@ -289,8 +298,8 @@ class Presentation:
         self.emit(Text(""))
         if receipts:
             table = Table(box=None, padding=(0, 2), show_header=False, expand=False)
-            table.add_column(style="dim", overflow="fold")
-            table.add_column(style="dim", overflow="fold")
+            table.add_column(style=self.muted, overflow="fold")
+            table.add_column(style=self.muted, overflow="fold")
             for receipt in receipts[:4]:
                 ok = receipt.get("ok", False)
                 label = receipt.get("tool", receipt.get("error", {}).get("code", "tool"))
@@ -300,9 +309,9 @@ class Presentation:
             self.emit(Padding(table, (0, 2)))
         if elapsed is not None:
             total = len(receipts or [])
-            self.emit(literal(f"  {total} tool receipts · {elapsed:.1f}s · /details", "dim"))
+            self.emit(literal(f"  {total} tool receipts · {elapsed:.1f}s · /details", self.muted))
         if self.terminal.conversation:
-            self.emit(literal("  session " + self.terminal.conversation, "dim"))
+            self.emit(literal("  session " + self.terminal.conversation, self.muted))
         self.emit(Text(""))
 
     def help(self):
@@ -320,20 +329,22 @@ class Presentation:
                 if section:
                     self.emit(self.heading("\n" + section))
                 self.emit(literal(command, "bold"))
-                self.emit(literal(description, "dim"))
+                self.emit(literal(description, self.muted))
         self.emit(
-            literal("\n/help shows this guide. /clear clears display only. /approve never executes.", "dim")
+            literal(
+                "\n/help shows this guide. /clear clears display only. /approve never executes.", self.muted
+            )
         )
         self.ready()
 
     def records(self, title, records, fields):
         self.emit(self.heading(title))
         if not records:
-            self.emit(literal("Nothing saved here yet.", "dim"))
+            self.emit(literal("Nothing saved here yet.", self.muted))
             return
         for record in records:
             self.emit(literal(record.get("title") or record.get("operation") or record.get("id"), "bold"))
-            self.emit(literal(record["id"], "dim"))
+            self.emit(literal(record["id"], self.muted))
             for field in fields:
                 if record.get(field):
                     self.emit(literal(f"{field.replace('_', ' ')}  {record[field]}"))
@@ -361,7 +372,7 @@ class Presentation:
             if key in payload:
                 rows.append((label, payload[key]))
         self.emit(self.fact_table(rows))
-        self.emit(literal("Review the complete exact payload below before typing APPROVE.", "dim"))
+        self.emit(literal("Review the complete exact payload below before typing APPROVE.", self.muted))
 
     def error(self, code, message):
         content = Text.assemble((terminal_text(code) + "\n", "bold"), terminal_text(message))

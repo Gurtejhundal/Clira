@@ -26,8 +26,10 @@ previews, not screenshots of a native terminal window. Real pseudo-terminals are
 Output is bounded to 124 columns for readable line lengths, and reflows after terminal resizing.
 Auto uses the terminal's own ANSI palette and foreground; no terminal background is changed.
 `/theme light`, `/theme dark`, `/theme mono` and `NO_COLOR` remain supported. In mono, color is removed
-while useful bold/dim hierarchy remains. Rendering previews use explicit light/dark palettes to
-demonstrate both; the running terminal inherits its actual background.
+while useful bold hierarchy remains. Rendering previews use explicit light/dark palettes to
+demonstrate both; the running terminal inherits its actual background. Explicit secondary text colors
+meet 4.5:1 contrast against the documented light/dark backgrounds. Auto/mono keep the terminal
+foreground instead of applying dim styling that can become faint on light backgrounds.
 
 The input has a clear user/workspace divider, styled prompt, placeholder, slash-command completion
 and multiline continuation. Enter sends; Ctrl+J adds a newline; Ctrl+R searches history; Ctrl+D exits
@@ -42,7 +44,7 @@ All untrusted values remain literal/sanitized; Markdown hyperlinks do not emit t
 
 ## Verification
 
-Baseline: 104 passing tests. After this pass: **128 tests passed**. The additional 24 checks cover
+Baseline: 104 passing tests. After this pass: **130 tests passed**. The additional 26 checks cover
 40/52/80/99/100/120/160-column rendering, short-height behavior, no-logo, mono, real status values,
 copyable IDs, untrusted content, preserved reply bullets and colored PTY startup/help/completion/resize.
 The complete existing PTY onboarding/session/approval suite remains intact. The portrait test now

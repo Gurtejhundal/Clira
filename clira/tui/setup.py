@@ -50,6 +50,12 @@ class CreatorSetup:
                     continue
                 try:
                     self.creator.save_answer(key, answer or existing, step + 1)
+                    if key == "timezone":
+                        t.print(
+                            "Timezone saved: "
+                            + self.creator.draft()["answers"][key]
+                            + ". You can change it later with /profile set timezone CITY."
+                        )
                 except CliraError as exc:
                     t.view.error(exc.code, exc.message)
                     continue

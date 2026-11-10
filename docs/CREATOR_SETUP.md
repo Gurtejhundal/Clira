@@ -13,6 +13,10 @@ personal onboarding for a temporary demo. It does not grant account permissions.
 4. **Your resources:** weekly time, equipment, editing tools and production budget.
 5. **How we work:** boundaries, feedback style, first tasks and review preferences.
 6. **Memory and privacy:** choose whether your profile and relevant saved notes may be sent to your AI provider. Default: no.
+Timezone entry accepts a city such as `Kolkata`, a timezone such as `Asia/Kolkata`, and
+case/spacing variants such as `asia kolkata`. `skip`, `don't know`, or keeping the initial
+default uses UTC, which is displayed before continuing. Unknown places are never guessed.
+
 7. **Review:** inspect all 19 answers; enter a question number to edit, or type SAVE to approve the profile.
 8. **Connections:** configure Gemini, connect a YouTube channel and/or configure a personal Telegram bot. Every connection can wait.
 9. **First project:** choose a name. Clira reuses the saved interests, audience, language, schedule and format to create a local workspace, three starter ideas and a draft calendar. Voice, timezone, boundaries, goal and cadence are retained too.

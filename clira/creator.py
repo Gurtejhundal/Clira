@@ -2,7 +2,8 @@
 
 import os
 import re
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from functools import lru_cache
+from zoneinfo import available_timezones
 
 from .config import CliraError
 from .storage import encode, now
@@ -16,7 +17,7 @@ QUESTIONS = [
     ("motivation", "YOU", "Why do you want to create on YouTube?", "Share useful work"),
     ("audience", "YOUR CHANNEL", "Who do you want to help or entertain?", ""),
     ("language", "YOUR CHANNEL", "What language should your content use?", "English"),
-    ("timezone", "YOUR CHANNEL", "What is your IANA timezone? e.g. Asia/Kolkata", "UTC"),
+    ("timezone", "YOUR CHANNEL", "Your timezone or city? e.g. Kolkata, Asia/Kolkata; skip uses UTC", "UTC"),
     ("voice", "YOUR CHANNEL", "How should your channel sound and feel?", "Clear, warm and practical"),
     ("format", "YOUR CHANNEL", "What formats do you want to make?", "long"),
     ("goal", "YOUR DIRECTION", "What would meaningful progress in 90 days look like?", ""),
@@ -67,6 +68,28 @@ def clean_fact(value):
     return cleaned
 
 
+@lru_cache(maxsize=1)
+def timezone_names():
+    return sorted(available_timezones())
+
+
+def normalize_timezone(value):
+    compact = lambda text: re.sub(r"[\s/_-]+", "", text.casefold())
+    if value.casefold() in {"skip", "don't know", "dont know", "not sure", "unknown"}:
+        return "UTC"
+    names = timezone_names()
+    full = [name for name in names if compact(name) == compact(value)]
+    if full:
+        return full[0]
+    cities = [name for name in names if compact(name.rsplit("/", 1)[-1]) == compact(value)]
+    if len(cities) == 1:
+        return cities[0]
+    raise CliraError(
+        "PROFILE_TIMEZONE",
+        "Timezone not recognized. Try Kolkata, Asia/Kolkata or UTC; type skip to use UTC for now.",
+    )
+
+
 class Creator:
     def __init__(self, service):
         self.service, self.store = service, service.store
@@ -83,10 +106,7 @@ class Creator:
             raise CliraError("PROFILE_FIELD", "Unknown creator field.")
         value = clean_fact(value)
         if key == "timezone":
-            try:
-                ZoneInfo(value)
-            except (ZoneInfoNotFoundError, ValueError):
-                raise CliraError("PROFILE_TIMEZONE", "Use a timezone such as Asia/Kolkata or UTC.") from None
+            value = normalize_timezone(value)
         if key == "share_with_model" and value.lower() not in {"yes", "no"}:
             raise CliraError("PROFILE_CONSENT", "Choose yes or no for AI context sharing.")
         return value

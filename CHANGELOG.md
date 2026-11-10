@@ -2,6 +2,9 @@
 
 ## 1.0.0rc1 · unreleased local candidate
 
+- Make timezone setup accept case/spacing variants and unambiguous city names. Support skip/unknown
+  with an explicit UTC fallback, show the saved timezone, and preserve progress after invalid input.
+
 - Review follow-up: accept dotted Gemini auth keys, recover connection setup after errors,
   atomically claim Telegram updates and pairing codes, and reject malformed model responses with
   redacted domain errors. Preserve the existing visual layout and account-write policy.

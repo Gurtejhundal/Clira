@@ -477,7 +477,9 @@ class Terminal:
                         + profile["answers"]["name"]
                         + ". Your creator profile is saved on this device."
                     )
-                if not self.channel:
+                if self.channel:
+                    self.status()
+                else:
                     self.view.onboarding()
             else:
                 self.view.welcome()

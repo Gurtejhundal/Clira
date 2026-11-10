@@ -216,7 +216,8 @@ def test_home_hierarchy_commands_and_version_do_not_repeat_welcome(tmp_path, wid
         assert __version__ not in probe.text
         if width >= 100:
             assert re.search(r"[\u2801-\u28ff]", probe.left)
-            assert not any(c in probe.left for c in "┌┐└┘│")
+            assert "│" in probe.left
+            assert "CLIRA" in probe.left
         probe.send("3\r")
         probe.wait("❯")
         before = probe.text.count("Welcome to Clira")

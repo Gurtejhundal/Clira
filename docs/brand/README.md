@@ -42,3 +42,9 @@ At 80 columns, a compact centered header preserves all six shortcuts and hides
 only decorative artwork. Short terminal heights also hide the portrait before
 it can crowd the commands. Channel name and mode stay in the secondary header.
 The welcome is emitted on interactive startup, outside the message loop.
+
+
+The owner restored the antique-gold sidebar and composer frames after reviewing
+the borderless experiment. The conversation heading, startup status panel and
+onboarding panel retain their framed presentation. The six shortcut rows remain
+beneath the portrait. Native text selection and the F2 mouse toggle are unchanged.

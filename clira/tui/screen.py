@@ -24,7 +24,7 @@ from prompt_toolkit.layout.processors import ConditionalProcessor, PasswordProce
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets import SearchToolbar, TextArea
+from prompt_toolkit.widgets import Frame, SearchToolbar, TextArea
 from rich.console import Console
 from rich.padding import Padding
 from rich.text import Text
@@ -111,7 +111,7 @@ class SplitScreen:
         )
         self.right = HSplit(
             [
-                Window(FormattedTextControl(self.title), height=1, style="class:muted"),
+                Window(FormattedTextControl(self.title), height=1, style="class:heading"),
                 self.log,
                 Window(FormattedTextControl(self.scroll_hint), height=1, style="class:muted"),
                 Window(
@@ -122,7 +122,7 @@ class SplitScreen:
                     style="class:heading",
                 ),
                 FloatContainer(
-                    self.input,
+                    Frame(self.input, style="class:composer"),
                     floats=[Float(xcursor=True, ycursor=True, content=CompletionsMenu(max_height=6))],
                 ),
                 self.search,
@@ -130,8 +130,8 @@ class SplitScreen:
         )
         self.wide = VSplit(
             [
-                self.sidebar,
-                Window(width=3, char=" "),
+                Frame(self.sidebar, title=" CLIRA ", style="class:frame"),
+                Window(width=1, char=" "),
                 self.right,
             ]
         )
@@ -252,7 +252,6 @@ class SplitScreen:
         gold = "class:heading"
         add("")
         add("")
-        add("")
         if height >= 42 and not t.no_logo:
             add("\n".join(line.center(44) for line in WORDMARK), gold)
         else:
@@ -284,10 +283,10 @@ class SplitScreen:
         ]
 
     def title(self):
+        label = "CONVERSATION"
         if self.terminal.channel:
-            channel = self.terminal.service.store.channel(self.terminal.channel)
-            return terminal_text(channel["name"] + "  /  " + channel["mode"].upper())
-        return "Local workspace"
+            label += "  /  " + self.terminal.channel
+        return terminal_text(label)
 
     def scroll_hint(self):
         if self.busy:

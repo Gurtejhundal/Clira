@@ -262,9 +262,7 @@ class Presentation:
         self.emit(Text(""))
 
     def onboarding(self):
-        if self.terminal.screen:
-            self.emit(Padding(self.choices(), (1, 2)))
-        elif self.width >= 52:
+        if self.width >= 52:
             self.emit(Panel(self.choices(), border_style=self.accent, padding=(1, 2), box=box.ROUNDED))
         else:
             self.emit(self.choices())

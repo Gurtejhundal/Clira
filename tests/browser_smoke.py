@@ -97,6 +97,7 @@ def main():
                 shared_id = json.loads(terminal_result.stdout)["conversation_id"]
                 page.goto(url + "/?channel=DEMO_CHANNEL_TECH&session=" + shared_id, wait_until="networkidle")
                 page.locator("#terminalResume", has_text=shared_id).wait_for(state="attached")
+                page.locator("#characterArtwork svg").wait_for()
                 assert "Latest uploads" in page.locator("#messages").inner_text()
                 assert not page.locator("#chatWelcome").is_visible()
                 assert "Mono" in page.locator("body").evaluate("n=>getComputedStyle(n).fontFamily")
@@ -330,7 +331,7 @@ def main():
                         page.locator("nav button[data-view=" + view + "]").click()
                         assert page.locator("#view-" + view).is_visible()
                         assert page.locator("nav button:visible").count() == 8
-                        assert page.locator(".portrait pre").evaluate(
+                        assert page.locator("#characterInteract").evaluate(
                             "n=>{const p=n.getBoundingClientRect(),s=document.querySelector('#sidebar').getBoundingClientRect();return p.left>=s.left && p.right<=s.right;}"
                         )
                         if width == 1440:

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" fill="none" aria-hidden="true">
+  <!-- Original layered companion illustration, adapted from Clira's identity. -->
+  <g class="character-body">
+    <g class="hoodie">
+      <path d="M47 309c5-47 31-73 75-81h71c47 6 72 35 80 81" fill="var(--character-dark)" stroke="var(--character-light)" stroke-width="4"/>
+      <path d="m110 229 42 49 45-48 31 21-45 37-32-4-63-33Z" fill="var(--character-light)"/>
+      <path d="m92 246 59 40 47-38m-44 38-1 23m37-35 10 35M86 271l-9 38" stroke="var(--character-dark)" stroke-width="5" stroke-linecap="round"/>
+      <path d="m127 282-8 27m61-27 8 27" stroke="var(--character-light)" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <g class="character-head">
+      <g class="hair-back" fill="var(--character-dark)" stroke="var(--character-light)" stroke-width="3.5" stroke-linejoin="round">
+        <path d="M77 105C57 58 89 23 135 27c19-27 57-13 63 0 39-8 79 21 73 58 24 18 22 42 10 64 25 26 11 58-6 70 11 20-12 45-42 40-7 15-24 20-43 12l-67-5c-30 10-66-4-67-29-31-7-35-37-20-56-15-28 1-59 41-76Z"/>
+        <path d="M63 157c-18 33-8 57 12 61-15 14-7 34 13 37m156-109c29 28 25 58 8 75 12 7 8 22-4 26"/>
+      </g>
+      <path d="m135 207-7 31 29 28 34-34-9-30" fill="var(--character-light)" stroke="var(--character-dark)" stroke-width="4"/>
+      <path d="M96 117c-3-45 31-62 72-59 49 3 69 32 67 77-2 50-32 87-65 90-39 3-73-49-74-108Z" fill="var(--character-light)" stroke="var(--character-dark)" stroke-width="4"/>
+      <path d="M99 156c-22-16-23 21-3 27m132-31c18-15 20 18 2 23" fill="var(--character-light)" stroke="var(--character-dark)" stroke-width="3"/>
+      <g class="brows" stroke="var(--character-dark)" stroke-width="4" stroke-linecap="round">
+        <path class="brow-left" d="M114 121q12-9 24-3"/><path class="brow-right" d="M176 116q13-9 27-1"/>
+      </g>
+      <g class="eyes" stroke="var(--character-dark)" stroke-width="3" stroke-linecap="round">
+        <g class="eye-left"><path d="M111 143q14-16 30-1-14 14-30 1Z" fill="var(--character-light)"/><g class="pupil"><ellipse cx="128" cy="141" rx="6" ry="8" fill="var(--character-dark)"/><circle cx="130" cy="138" r="1.6" fill="var(--character-light)" stroke="none"/></g><path d="m111 142-5-3"/></g>
+        <g class="eye-right"><path d="M174 138q15-17 31-1-14 15-31 1Z" fill="var(--character-light)"/><g class="pupil"><ellipse cx="191" cy="136" rx="6" ry="8" fill="var(--character-dark)"/><circle cx="193" cy="133" r="1.6" fill="var(--character-light)" stroke="none"/></g><path d="m205 136 4-4"/></g>
+      </g>
+      <g class="closed-eyes" stroke="var(--character-dark)" stroke-width="3" stroke-linecap="round"><path d="M111 143q14-13 30-1m33-4q15-14 31-1"/></g>
+      <g class="dizzy-eyes" stroke="var(--character-dark)" stroke-width="2.5" stroke-linecap="round"><path d="M128 141c-10-11-20 7-5 12 13 4 19-16 7-20-7-2-11 7-5 10m66-7c-10-11-20 7-5 12 13 4 19-16 7-20-7-2-11 7-5 10"/></g>
+      <g class="glasses" stroke="var(--character-dark)" stroke-width="2.7"><circle cx="126" cy="145" r="24"/><circle cx="191" cy="140" r="25"/><path d="M150 142q7-8 16-1m-65-3-18-5m132-1 15-8"/></g>
+      <path d="m161 147-5 20q5 5 10 0" stroke="var(--character-dark)" stroke-width="2.5" stroke-linecap="round"/>
+      <g class="freckles" fill="var(--character-dark)"><circle cx="111" cy="174" r="1.2"/><circle cx="119" cy="179" r="1.3"/><circle cx="127" cy="174" r="1.1"/><circle cx="135" cy="180" r="1.3"/><circle cx="184" cy="173" r="1.2"/><circle cx="192" cy="177" r="1.3"/><circle cx="201" cy="170" r="1.2"/></g>
+      <g class="cheeks" fill="var(--character-gold)" opacity=".45"><ellipse cx="119" cy="183" rx="12" ry="4"/><ellipse cx="199" cy="178" rx="10" ry="4"/></g>
+      <g class="mouths" stroke="var(--character-dark)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <path class="mouth-neutral" d="M153 190q9 5 18-2"/>
+        <path class="mouth-smile" d="M149 187q13 16 27-3"/>
+        <path class="mouth-open" d="M148 186q14 5 28-3c-4 22-24 24-28 3Z" fill="var(--character-dark)"/>
+        <path class="mouth-worry" d="M152 193q9-7 18-3"/>
+        <ellipse class="mouth-curious" cx="165" cy="190" rx="5" ry="7"/>
+      </g>
+      <g class="hair-front" fill="var(--character-dark)" stroke="var(--character-light)" stroke-width="3" stroke-linejoin="round">
+        <path d="M77 116C65 70 98 27 140 34c29-23 64-1 66 8 38 0 61 28 56 63 13 15 12 42 1 61 0-34-15-49-36-64 6 23 0 42-8 51 0-29-10-43-25-56 2 17-4 30-15 35 4-15 1-34-8-43-5 23-34 41-60 45 19-8 24-17 26-25-14 21-35 30-53 31l13 25c-25-10-32-31-20-49Z"/>
+        <path d="M96 97q18-41 59-40M112 98q19-29 48-35m42-4q32 12 38 37" stroke-width="2"/>
+        <path d="M85 162c4 36 14 43 32 48-23 4-42-8-46-26m157-17c0 22-6 35-18 45 27-4 36-23 32-44"/>
+      </g>
+      <g class="headphones" stroke="var(--character-light)" stroke-width="4">
+        <path d="M70 143C57 38 216 7 251 112" stroke-width="11"/><path d="M70 143C57 38 216 7 251 112" stroke="var(--character-dark)" stroke-width="5"/>
+        <rect x="55" y="134" width="35" height="65" rx="17" fill="var(--character-dark)" transform="rotate(-12 72 166)"/>
+        <rect x="63" y="144" width="19" height="44" rx="9" stroke-width="2"/>
+        <path d="M246 122q25 1 22 30l-3 24q-3 15-17 12" fill="var(--character-dark)"/>
+      </g>
+    </g>
+    <g class="delight-marks" stroke="var(--character-gold)" stroke-width="3" stroke-linecap="round"><path d="m38 86-3-10m5 31-11 1m244-29 5-8m-2 27 12 1"/><path d="M267 47c-13-16-23 2 0 14 23-17 11-29 0-14Z" fill="var(--character-gold)" stroke="none"/></g>
+  </g>
+</svg>

@@ -126,3 +126,23 @@ owner review and simulated private upload. Browser errors: **zero**. Screenshots
 All new model/upload execution tests used isolated demo state, mock model output and simulated
 account writes. No new real upload, paid model call, stable tag or stable release was made.
 See [WEB_WORKSPACE.md](WEB_WORKSPACE.md) and [CHAT_UPLOAD.md](CHAT_UPLOAD.md) for behavior and limits.
+
+
+## 10 November 2026 — interactive web companion
+
+Added an original layered SVG adaptation, a local presentation state machine and scoped app-event
+hooks. Tested single versus double click, gaze/hover, circular gestures, keyboard and touch, actual
+pending offline chat, timeout cleanup, preview/approval and simulated-result reactions. Verified
+success is exercised with an explicitly mocked API receipt; no new real account write was made.
+Full/Reduced/Off preferences, OS reduced motion, visibility, return-from-inactivity, BFCache,
+teardown/late callbacks, fallback artwork and responsive navigation are covered by the dedicated
+browser test. A short WebM records the actual offline application.
+
+Final Python run: **207 passed**, one upstream Starlette/httpx warning. An initial timing-sensitive
+terminal resize assertion failed while parallel browser tests ran; its isolated recheck and the
+complete rerun both passed without changing terminal code or weakening that test. Existing browser
+smoke passed eight views at seven widths; the chat-upload simulation and dedicated character browser
+suite passed with zero JavaScript errors. Ruff check/format and both JavaScript syntax checks passed.
+The original PNG and terminal Braille files are unchanged. No paid model request or live upload was
+performed. The SVG is a simplified new interpretation, not independent facial layers recovered from
+the original PNG. See [LIVE_CHARACTER.md](LIVE_CHARACTER.md) for implementation and behavior limits.

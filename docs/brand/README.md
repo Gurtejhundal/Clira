@@ -48,3 +48,11 @@ The owner restored the antique-gold sidebar and composer frames after reviewing
 the borderless experiment. The conversation heading, startup status panel and
 onboarding panel retain their framed presentation. The six shortcut rows remain
 beneath the portrait. Native text selection and the F2 mouse toggle are unchanged.
+
+
+## Interactive web adaptation
+
+The web sidebar now uses `clira/web/assets/clira-live.svg`, an original simplified layered adaptation
+of the owner-supplied character. Independent eyes, brows, mouths, hair, headphones and body support
+local interactions. The original PNG and all Braille files remain unchanged; the compact Braille
+portrait is the failed-SVG/no-JavaScript fallback. See [live character behavior](../LIVE_CHARACTER.md).

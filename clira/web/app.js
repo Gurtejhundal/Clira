@@ -1,5 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
+const characterEvent = (event,detail) => window.cliraCharacter?.emit(event,detail);
+let characterRequestId=0;
 let session, state, channelId, conversationId = null, activeView = 'chat', busy = false, attachedVideo = null;
 const views = ['chat', 'library', 'ideas', 'production', 'approvals', 'community', 'operations', 'settings'];
 const crumbs = {chat:'Your channel, in good hands.',library:'Every story has a home.',ideas:'Make space for what comes next.',production:'From a finished file to a reviewed upload.',approvals:'Nothing consequential without your say.',community:'Stay close to your audience.',operations:'See what happened. Know what comes next.',settings:'A workspace that knows your channel.'};
@@ -12,6 +14,7 @@ function el(tag, cls, value) {
 }
 function clear(id) { $(id).replaceChildren(); return $(id); }
 function toast(message, error = false) {
+  if(error)characterEvent('error');
   $('toast').textContent = message;
   $('toast').hidden = false;
   $('toast').classList.toggle('error', error);
@@ -19,15 +22,25 @@ function toast(message, error = false) {
   toast.timer = window.setTimeout(() => { $('toast').hidden = true; }, error ? 12000 : 6000);
 }
 async function api(path, body, method = 'POST') {
-  const response = await fetch(path, {method: body === undefined ? 'GET' : method,
-    headers: {'Content-Type':'application/json', ...(session ? {'X-Clira-Token': session.token} : {})},
-    body: body === undefined ? undefined : JSON.stringify(body)});
-  const value = await response.json();
-  if (!response.ok || value.ok === false) {
-    const error = value.error;
-    throw new Error(error ? `${error.code}: ${error.message}` : `Request failed (${response.status})`);
-  }
-  return value;
+  const kind=body!==undefined && (/^\/api\/chat$/.test(path)?'thinking':(/^\/api\/(?:jobs\/[^/]+\/run|upload-drafts\/[^/]+\/approve)$/.test(path)?'uploading':null));
+  const id=kind?'request-'+(++characterRequestId):null;
+  if(id)characterEvent('request:start',{id,kind});
+  try {
+    const response = await fetch(path, {method: body === undefined ? 'GET' : method,
+      headers: {'Content-Type':'application/json', ...(session ? {'X-Clira-Token': session.token} : {})},
+      body: body === undefined ? undefined : JSON.stringify(body)});
+    const value = await response.json();
+    if (!response.ok || value.ok === false) {
+      const error = value.error;
+      throw new Error(error ? `${error.code}: ${error.message}` : `Request failed (${response.status})`);
+    }
+    if(kind==='uploading')characterEvent('outcome',{
+      verified:value.data?.verified_remotely===true,
+      simulated:value.data?.source==='mock' && value.data?.verified_remotely!==true,
+    });
+    return value;
+  } catch(error) {if(id)characterEvent('error');throw error;}
+  finally {if(id)characterEvent('request:end',{id});}
 }
 async function tool(name, args = {}) {
   const result = await api('/api/tool', {channel_id: channelId, tool: name, arguments: args});
@@ -104,6 +117,7 @@ async function sendMessage(text) {
     conversationId = result.conversation_id;
     updateSessionContext(); await loadSessions();
     addMessage('assistant', result.message, result.receipts);
+    characterEvent('reply');
     await refresh();
   } catch (error) {
     addMessage('assistant', 'The request could not finish. ' + error.message);
@@ -198,6 +212,7 @@ async function approve(approval, trigger) {
 function renderApprovals() {
   const container = clear('approvals');
   $('approvalCount').textContent = state.approvals.filter(a=>a.status==='PENDING').length;
+  characterEvent('approval',{source:'queue',required:state.approvals.some(a=>a.status==='PENDING'&&a.expires_at>new Date().toISOString())});
   for (const approval of state.approvals) {
     const job = state.jobs.find(j=>j.approval_id===approval.id);
     const expired = approval.expires_at < new Date().toISOString();
@@ -269,6 +284,7 @@ async function refresh() {
   renderMetrics(); renderVideos(); renderIdeas(); renderProduction(); renderApprovals(); renderCommunity(); renderOperations(); renderSettings();
 }
 async function changeChannel() {
+  characterEvent('context');
   $('channelSelect').disabled=true;
   try {
   attachedVideo=null;
@@ -314,7 +330,7 @@ async function init() {
   document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
   $('channelSelect').addEventListener('change',()=>changeChannel().catch(e=>toast(e.message,true)));
   $('newChat').addEventListener('click',async()=>{try{
-    const result=await api('/api/conversations',{channel_id:channelId});conversationId=result.id;clear('messages');updateSessionContext(result);await loadSessions();$('message').focus();
+    const result=await api('/api/conversations',{channel_id:channelId});conversationId=result.id;clear('messages');characterEvent('conversation');updateSessionContext(result);await loadSessions();$('message').focus();
   }catch(e){toast(e.message,true);}});
   $('chatVideo').addEventListener('change',async()=>{
     const file=$('chatVideo').files[0];if(!file||busy||!channelId)return;
@@ -325,12 +341,13 @@ async function init() {
       const result=await response.json();if(!response.ok)throw new Error(result.error?.message||'Attachment failed.');
       if(target!==channelId)return;
       attachedVideo={path:result.path,name:file.name};
+      characterEvent('attached');
       $('composerHint').textContent=file.name+' attached. Sampled frames will be sent to your configured AI provider when you send.';
       if(!$('message').value.trim())$('message').value='Upload this video';$('message').focus();
     }catch(error){toast(error.message,true);}finally{busy=false;$('sendButton').disabled=false;$('channelSelect').disabled=false;$('chatVideo').value='';}
   });
   $('chatForm').addEventListener('submit',event=>{event.preventDefault();const text=$('message').value.trim();if(text&&!busy){if(!attachedVideo&&navigateCommand(text)){$('message').value='';updateBlockCursor();}else sendMessage(text);}});
-  $('message').addEventListener('input',()=>{$('message').style.height='auto';$('message').style.height=Math.min($('message').scrollHeight,320)+'px';});
+  $('message').addEventListener('input',()=>{characterEvent('typing',{active:Boolean($('message').value.trim())});$('message').style.height='auto';$('message').style.height=Math.min($('message').scrollHeight,320)+'px';});
   $('message').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();$('chatForm').requestSubmit();}});
   document.querySelectorAll('[data-prompt]').forEach(b=>b.addEventListener('click',()=>sendMessage(b.dataset.prompt)));
   $('suggestIdeas').addEventListener('click',()=>{showView('chat');sendMessage('Suggest three new topic ideas for this channel.');});
@@ -486,6 +503,8 @@ function initV1() {
 
 
 function renderUploadPreview(container, draft) {
+  characterEvent('approval',{source:'preview:'+draft.id,required:draft.state==='DRAFT'});
+  if(draft.state==='DRAFT')characterEvent('preview');
   const c=card('Review your private upload','Draft · '+draft.source,'Destination: '+draft.destination+' · '+draft.destination_channel);
   const video=el('video');video.controls=true;video.preload='metadata';video.src='/api/upload-drafts/'+encodeURIComponent(draft.channel_id)+'/'+encodeURIComponent(draft.id)+'/video';video.setAttribute('aria-label','Exact video to upload');c.append(video);const download=el('a','','Open/download this exact video');download.href=video.src;download.target='_blank';download.rel='noopener';c.append(download);video.addEventListener('error',()=>c.insertBefore(el('p','','Your browser cannot play this codec. Open/download the video to review it before approving.'),download),{once:true});
   const fields={};
@@ -502,6 +521,7 @@ function renderUploadPreview(container, draft) {
   const status=el('p');status.setAttribute('role','status');c.append(status);
   c.append(button('Approve & upload privately',async b=>{
     if(!rights.value||!evidence.value.trim()||!kids.value||!synthetic.value||!reviewed.checked)throw new Error('Complete the owner review and both disclosure choices.');
+    characterEvent('approval',{source:'preview:'+draft.id,required:false});
     const target=draft.channel_id;b.disabled=true;status.textContent='Uploading privately… Keep this page open.';
     c.querySelectorAll('input,textarea,select').forEach(n=>n.disabled=true);
     try{

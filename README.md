@@ -38,6 +38,11 @@ frames, the original Braille character, CLIRA wordmark, monospace controls and a
 You can select and copy answers, use slash navigation, attach a video and review its upload in chat.
 The interactive terminal remains optional; it does not have to run alongside the website.
 
+Clira's layered SVG companion blinks, follows nearby pointer movement, distinguishes single and
+double clicks, reacts to circular gestures, and responds to real chat/upload/review states.
+**Character motion: Full / Reduced / Off** is available in Settings and honors reduced motion.
+The original portrait assets are preserved. [Character behavior and event hooks](docs/LIVE_CHARACTER.md).
+
 ```bash
 ./run.sh --mode live serve         # open http://127.0.0.1:8765 in your browser
 # Or explore without credentials:

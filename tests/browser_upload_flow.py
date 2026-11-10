@@ -80,6 +80,9 @@ def main():
                 page.get_by_text("demo.mp4 attached.", exact=False).wait_for()
                 page.locator("#sendButton").click()
                 page.get_by_role("button", name="Approve & upload privately").wait_for()
+                page.wait_for_function(
+                    "() => cliraCharacter.state === 'preview' || cliraCharacter.state === 'approval'"
+                )
                 page.wait_for_function("() => document.querySelector('#messages video')?.readyState >= 2")
                 assert page.locator("#messages video").evaluate("v => v.videoWidth") == 320
                 assert page.locator("#messages").get_by_label("Title", exact=True).count() == 1
@@ -109,6 +112,8 @@ def main():
                 page.screenshot(path=str(output / "chat-review-mobile.png"), full_page=True)
                 page.get_by_role("button", name="Approve & upload privately").click()
                 page.get_by_text("SYNTHETIC DEMO: simulated upload only; no real video exists.").wait_for()
+                page.wait_for_function("() => cliraCharacter.state === 'demo'")
+                assert page.locator("#characterStatus").inner_text() == "Demo simulation complete"
                 assert not errors, errors
                 page.screenshot(path=str(output / "chat-upload-result.png"), full_page=True)
                 browser.close()

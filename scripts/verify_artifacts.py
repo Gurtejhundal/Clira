@@ -14,6 +14,7 @@ import zipfile
 from pathlib import Path
 
 import pexpect
+from capture_split_terminal import TerminalProbe
 
 
 def run(args, cwd, env):
@@ -57,6 +58,7 @@ def main():
             if k not in {"PYTHONPATH", "GEMINI_API_KEY", "CLIRA_GOOGLE_CLIENT_FILE", "CLIRA_IMPORT_DIR"}
         }
         env.update(
+            CLIRA_TERMINAL_LAYOUT="inline",
             CLIRA_MODE="demo",
             CLIRA_MODEL="offline",
             CLIRA_ALLOW_MODEL_CALLS="0",
@@ -145,6 +147,19 @@ def main():
             interactive.close()
             assert interactive.exitstatus == 0
 
+            split = TerminalProbe(case / "split-state", python=str(venv / "bin/python"), cwd=case)
+            try:
+                split.wait("Choose 1 / 2 / 3")
+                assert "█" in split.left
+                split.send("3\r")
+                split.wait("❯")
+                split.send("Show latest videos\r")
+                split.wait("list_videos")
+                assert "SYNTHETIC DEMO" in split.text
+            finally:
+                split.close()
+            assert split.process.exitstatus == 0
+
             capture = run(
                 [
                     str(venv / "bin/python"),
@@ -162,6 +177,7 @@ def main():
                         "artifact checksum",
                         "console version",
                         "installed interactive PTY",
+                        "installed persistent split screen and offline receipt",
                         "safe non-TTY startup",
                         "doctor migration",
                         "offline chat",

@@ -1,80 +1,81 @@
-# Clira terminal visuals
+# Clira split terminal
 
-The owner-approved composition keeps the large CLIRA lettering, fine rounded workspace border,
-and the supplied Braille portrait beside actual channel status or first-run choices. The latest
-owner clarification applies the design Markdown to the **color palette**, preserving this layout.
-The [master specification](../CLIRA_V1_TERMINAL_WEB_MASTER_SPEC_AND_CODEX_PROMPT.md) supplies the
-Ink/Ivory and Antique Gold tokens and the exact approved character.
+The owner-requested layout keeps Clira visible throughout long conversations. The left sidebar
+pins the large lettering, exact approved monochrome Braille portrait and command hints. The right
+side contains independently scrollable output and a fixed multiline composer. The existing service,
+commands, SQLite sessions and exact owner approvals remain in use.
 
-![Clira first-run render](media/terminal/welcome-120.png)
+![Clira fixed sidebar and conversation](media/terminal/workspace-split.png)
 
-[Returning workspace](media/terminal/workspace-120.png). These are previews of the actual Rich
-renderer with synthetic data and installed system fonts. They are not native-window screenshots
-or live-channel verification. The capture script exports emitted ANSI, including actual mono output.
+[First-run view](media/terminal/welcome-split.png). These previews come from actual terminal processes:
+pexpect drives the application, pyte decodes visible VT cells, and Rich exports those cells to SVG.
+They use synthetic demo data and installed system fonts. They do not establish live-channel success.
 
-## Palette and hierarchy
+## Palette and composition
+
+The [supplied master specification](../CLIRA_V1_TERMINAL_WEB_MASTER_SPEC_AND_CODEX_PROMPT.md) supplies
+Ink/Ivory, Antique Gold and the approved portrait. The owner's later requests control the large
+lettering, borders and persistent split layout.
 
 | Role | Light | Dark |
 |---|---|---|
 | Main text | Ink `#252B24` | Ivory `#F3F0E8` |
-| CLIRA lettering, frame, headings and prompt | Antique Gold `#85652F` | Antique Gold `#C5A368` |
+| Wordmark, borders, headings | Gold `#85652F` | Gold `#C5A368` |
 | Secondary text | `#62675C` | `#ABB1A5` |
 | Preview background | Ivory `#F8F7F2` | Ink `#171A18` |
 
-The runtime inherits the user's terminal background. Auto keeps the native main foreground,
-uses the light gold when COLORFGBG reports a conventional white background (7 or 15), and otherwise
-uses dark-theme gold. `/theme light` or `/theme dark` explicitly selects the palette when the
-terminal supplies no background hint. The prompt uses the same gold as the lettering and borders.
-Secondary light text is slightly darker than the suggested muted token to pass 4.5:1 contrast on
-Ivory. NO_COLOR and mono remove color while preserving hierarchy and labels. The exact approved
-22-line portrait remains monochrome. No fonts are downloaded or distributed.
+Runtime inherits the terminal's background. Auto inherits the main foreground, using light gold
+when COLORFGBG reports a conventional white background (7 or 15), dark gold otherwise. Explicit
+`/theme light` and `/theme dark` resolve missing background hints. NO_COLOR and mono disable color
+in both panes. The portrait is unchanged and monochrome. Light secondary text passes 4.5:1 on Ivory.
 
-## Responsive composition
-
-| Available space | Behavior |
+| Space | Layout |
 |---|---|
-| 100+ columns and 36+ rows | Large wordmark, portrait and status/choices side by side inside a rounded frame |
-| 80–99 columns | Large wordmark and tagline; framed content without portrait |
-| 52–79 columns | Large lettering with tagline below; single-column framed content |
-| Under 52 columns | Small text identity and unframed content |
-| Short windows | Compact identity, no portrait, condensed choices |
-| `--no-logo` | Small identity and content, without large lettering or portrait |
+| 110+ columns, 42+ rows | Large CLIRA, portrait and help in a fixed left sidebar |
+| 110+ columns, 34–41 rows | Small CLIRA identity, full portrait and help |
+| 110+ columns, 24–33 rows | Compact sidebar identity and help, no cropped portrait |
+| Under 110 columns or 24 rows | Fixed compact header, conversation and composer |
+| `--no-logo` | Text identity/help; no large lettering or portrait |
 
-The canvas is bounded to 124 columns and reflows on resize. Channel name, complete immutable ID,
-actual model, policy, approvals and job counts remain visible. Toolkit summaries describe existing
-tools and disclose the OAuth requirement. Five launch steps, grouped help and saved-session records
-retain their existing behavior. Markdown replies preserve line breaks and Unicode bullets; receipts
-show actual sources and `/details` exposes complete results. Elapsed time measures actual work.
+Both the transcript and input reflow on resize. Unsent input survives resizing. The ordinary
+scrolling renderer remains available with `CLIRA_TERMINAL_LAYOUT=inline uv run --locked clira`;
+TERM=dumb selects it automatically. Redirected use keeps the existing noninteractive guidance.
 
-`/back` opens the start menu; `0` returns to the existing workspace and conversation. During setup,
-`/back` revisits a question (or the start menu from question one), and `/cancel` discards the unfinished
-setup. Saved answers remain available when revisiting questions; Enter keeps them. No draft is
-created until all five questions are completed. The channel picker also accepts `/back`.
+## Controls
 
-Enter sends, Ctrl+J adds a newline, Ctrl+R searches history, Tab completes slash commands and Ctrl+D
-exits empty input. Owner review retains the exact channel, target, operation, expiry, privacy,
-rights, file hash and complete payload. Approval and execution remain separate.
+- Enter sends; Ctrl+J or Alt+Enter adds a newline.
+- Page Up/Page Down browse conversation output; Ctrl+End follows the latest message.
+- Tab completes slash commands and known channel IDs; Ctrl+R searches input history.
+- `/back` opens the start menu; `0` returns to the current workspace and conversation.
+- During setup, `/back` revisits a question and `/cancel` returns to the menu without creating a draft.
+- `/clear` clears displayed output while keeping the sidebar and stored conversations.
+- Empty Ctrl+D exits; Ctrl+C clears idle input, and a second idle Ctrl+C exits.
+
+A running request disables the composer while the display remains responsive to resize and history
+navigation. Ctrl+C during work reports that it is still running; it never claims a write was
+cancelled. Actual elapsed time and tool receipts remain visible. No fake streaming is introduced.
+The existing workflow runs serially on one UI worker thread; no extra agent or durable job worker is
+started. OAuth exact-channel confirmation also uses the composer. Owner review still exposes the
+full exact payload; granting approval does not execute it.
 
 ## Verification
 
-**138 local tests pass**, including terminal PTY, security, shared-session, packaging and API suites.
-Presentation tests cover 40/52/80/99/100/120/160 columns, short windows, mono/no-logo, real status,
-copyable IDs, literal untrusted text, reply bullets, readable secondary contrast and the restored
-large lettering/frame. Auto-mode tests verify actual gold in rendered output, background hints and
-absence of background painting. Colored PTY tests exercise startup, help, completion and resize.
+The full suite includes real-screen VT tests at 40/80/140 columns, long transcripts, an unchanged
+sidebar, Page Up/Down, retained input across resizing, setup Back/Cancel, session persistence,
+clear, multiline submission, completion, history search, palette switching, NO_COLOR and owner
+approval without execution. Existing inline terminal, security, policy, API and shared-session
+regressions remain part of the suite. Browser checks cover all eight views at five viewport widths.
 
 ```bash
 uv run --locked --extra dev pytest -q
 uv run --locked --extra dev ruff check clira tests scripts
 uv run --locked --extra dev ruff format --check clira tests scripts
-node --check clira/web/app.js
-bash -n run.sh
-uv run --locked --extra dev python scripts/capture_terminal.py --output work/terminal-palette/previews
-uv run --locked --extra dev python tests/browser_smoke.py --output work/terminal-palette/browser
+uv run --locked --extra dev python scripts/capture_split_terminal.py --output work/split-terminal/previews
+uv run --locked --extra dev python tests/browser_smoke.py --output work/split-terminal/browser
 ```
 
-The capture gallery includes welcome, workspace, replies, help, light, mono and narrow/short views.
-Browser regression covers all eight website views at 1440/1280/768/390/320px. Packaging verification
-checks fresh wheel, source ZIP and sdist installations and their terminal/runtime behavior.
+Package checks require the split-screen runtime in the wheel. Clean wheel/source ZIP/sdist installs
+verify both inline and default split terminal entrypoints. pyte is a development-only dependency;
+the runtime uses the existing prompt_toolkit and Rich dependencies.
 
-Exit an existing process with Ctrl+D, then run `uv run --locked clira` to load this revision.
+Exit the previous process with Ctrl+D and run `uv run --locked clira` to load the new layout.

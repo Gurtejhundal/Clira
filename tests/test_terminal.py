@@ -18,6 +18,7 @@ def spawn(tmp_path, width=80, *args, color=False):
     env = {
         **os.environ,
         "CLIRA_MODEL": "offline",
+        "CLIRA_TERMINAL_LAYOUT": "inline",
         "CLIRA_MODE": "demo",
         "NO_COLOR": "1",
         "TERM": "xterm",

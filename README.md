@@ -44,14 +44,17 @@ uv run clira chat --channel ID --json 'Show my latest videos'
 ```
 
 `./run.sh` preserves its existing website launch behavior; `uv run clira` opens the terminal.
-Terminal: Enter sends, Ctrl+J adds a line, Ctrl+R searches history, Tab completes, Ctrl+D exits.
+Terminal: the Clira sidebar stays fixed while the conversation scrolls independently.
+Enter sends, Ctrl+J adds a line, Ctrl+R searches input history, Tab completes, Ctrl+D exits.
+Page Up/Page Down browse the conversation; Ctrl+End returns to the latest message.
 Use `/help`, `/channel`, `/launch`, `/new`, `/sessions`, `/resume ID`, `/title NAME`, `/status`,
 `/ideas`, `/calendar`, `/jobs`, `/approvals`, `/approve ID`, `/details`, `/sources`,
 `/back`, `/theme auto|light|dark|mono`, `/web`, `/clear`, `/connect`, `/model`, `/mode`, `/quit`.
 Use `/back` to return to the start menu, then `0` to return to your current workspace.
 During setup, `/back` revisits the previous question and `/cancel` returns to the menu without
 creating a draft. Existing answers are retained; Enter keeps a saved answer.
-A repeated idle Ctrl+C exits. Interrupting a request can leave completed local drafts; inspect receipts.
+A repeated idle Ctrl+C exits. In split view, a running request finishes before accepting new input;
+Ctrl+C during work reports that it is still running. Inspect receipts and `/jobs` for saved work.
 The terminal starts no background worker. `/web` verifies the same local store before opening a link.
 
 [Candidate verification and blockers](docs/VERIFICATION_V1_RC.md) ·
@@ -59,14 +62,18 @@ The terminal starts no background worker. `/web` verifies the same local store b
 
 ### Clira in your terminal
 
-![Clira terminal workspace: approved portrait, large CLIRA wordmark, actual channel and model status, and conversational prompt](docs/media/terminal/workspace-120.png)
+![Clira split terminal: fixed lettering, portrait and help at left, scrollable conversation and input at right](docs/media/terminal/workspace-split.png)
 
-The terminal keeps its large CLIRA lettering, fine rounded borders and portrait/status layout,
+The terminal pins its large CLIRA lettering, approved portrait and help in the left sidebar,
+with independently scrollable conversation history and a fixed composer on the right,
 using the supplied Ink/Ivory palette and Antique Gold accents. Clear first-run choices, five guided
 launch steps, grouped help, Markdown replies and source-labelled receipts keep the work readable.
 It inherits your terminal background; light/dark/mono and compact layouts remain available.
-This is an actual Rich render preview using synthetic demo data, rather than a native-window capture.
-[First-run preview](docs/media/terminal/welcome-120.png) · [Visual checks and controls](docs/TERMINAL_VISUALS.md)
+Below 110 columns or 24 rows, a compact header replaces the sidebar. Shorter sidebars simplify the
+lettering before hiding the portrait. Resize preserves the input and conversation.
+These previews decode the visible cells from an actual terminal process using synthetic data.
+For the original scrolling layout: `CLIRA_TERMINAL_LAYOUT=inline uv run --locked clira`.
+[First-run preview](docs/media/terminal/welcome-split.png) · [Visual checks and controls](docs/TERMINAL_VISUALS.md)
 
 ### Candidate screenshots (synthetic demo)
 

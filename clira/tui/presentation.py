@@ -81,7 +81,10 @@ class Presentation:
         return {"light": "#62675c", "dark": "#abb1a5"}.get(self.palette, "")
 
     def emit(self, renderable):
-        self.console.print(renderable, width=self.width)
+        if self.terminal.screen:
+            self.terminal.screen.emit(renderable)
+        else:
+            self.console.print(renderable, width=self.width)
 
     def heading(self, label):
         return literal(label, "bold " + self.accent)
@@ -275,6 +278,8 @@ class Presentation:
             self.emit(content)
 
     def ready(self):
+        if self.terminal.screen:
+            return
         self.emit(
             Text.assemble(
                 ("  /help", "bold " + self.accent),

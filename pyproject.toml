@@ -18,7 +18,13 @@ Repository = "https://github.com/Gurtejhundal/Clira"
 Issues = "https://github.com/Gurtejhundal/Clira/issues"
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10", "ruff>=0.9,<1", "playwright>=1.49,<2", "pexpect>=4.9,<5"]
+dev = [
+    "pytest>=8,<10",
+    "ruff>=0.9,<1",
+    "playwright>=1.49,<2",
+    "pexpect>=4.9,<5",
+    "pyte>=0.8.2,<1",
+]
 
 [project.scripts]
 clira = "clira.cli:main"

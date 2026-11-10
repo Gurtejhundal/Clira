@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import webbrowser
+from contextlib import contextmanager
 
 import httpx
 from prompt_toolkit import PromptSession
@@ -13,6 +14,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.styles import Style
 from rich.console import Console
+from rich.text import Text
 
 from ..agent import Agent
 from ..config import CliraError
@@ -58,20 +60,26 @@ class Terminal:
         self.console = Console(no_color="NO_COLOR" in os.environ, highlight=False)
         self.theme = service.store.setting("terminal_theme", "auto")
         self.prompt = None
+        self.screen = None
         self.apply_theme()
         self.view = Presentation(self)
 
     def apply_theme(self):
         self.console.no_color = "NO_COLOR" in os.environ or self.theme == "mono"
         self.console.style = {"light": "#252b24", "dark": "#f3f0e8"}.get(self.theme)
-        if self.prompt:
+        if self.screen:
+            self.screen.refresh_style()
+        elif self.prompt:
             self.prompt.color_depth = ColorDepth.DEPTH_1_BIT if self.console.no_color else None
             color = self.view.accent
             self.prompt.style = Style.from_dict({"prompt": "bold " + color, "placeholder": "ansibrightblack"})
 
     def print(self, text):
         # User/model strings are never Rich markup or terminal control instructions.
-        self.console.print(terminal_text(text), markup=False)
+        if self.screen:
+            self.screen.emit(Text(terminal_text(text)))
+        else:
+            self.console.print(terminal_text(text), markup=False)
 
     def status(self):
         self.view.status()
@@ -158,7 +166,16 @@ class Terminal:
             return False
         from ..youtube import connect
 
-        result = connect(self.service.config, self.service.store, self.service.secrets, "read", None)
+        result = connect(
+            self.service.config,
+            self.service.store,
+            self.service.secrets,
+            "read",
+            None,
+            choose=lambda actual: self.ask(
+                f"Connect {terminal_text(actual['snippet']['title'])}? Type {actual['id']}: "
+            ),
+        )
         self.print(json.dumps(result, indent=2))
         self.channel = result["id"]
         self.conversation = None
@@ -273,7 +290,10 @@ class Terminal:
         elif cmd in {"/details", "/sources"}:
             self.print(json.dumps(self.last or {}, indent=2, ensure_ascii=False))
         elif cmd == "/clear":
-            self.console.clear()
+            if self.screen:
+                self.screen.clear()
+            else:
+                self.console.clear()
         elif cmd == "/web":
             url = "http://127.0.0.1:8765"
             try:
@@ -304,6 +324,28 @@ class Terminal:
         if not sys.stdin.isatty() or not sys.stdout.isatty():
             self.print('Interactive chat requires a terminal. Use clira chat --channel ID "question" --json.')
             return 0
+        if os.getenv("CLIRA_TERMINAL_LAYOUT") != "inline" and os.getenv("TERM") != "dumb":
+            from .screen import SplitScreen
+
+            self.screen = SplitScreen(self)
+            return self.screen.run()
+        return self.run_inline()
+
+    @contextmanager
+    def working(self):
+        if self.screen:
+            self.screen.busy = True
+            self.screen.invalidate()
+            try:
+                yield
+            finally:
+                self.screen.busy = False
+                self.screen.invalidate()
+        else:
+            with self.console.status("Clira is working on this request…", spinner_style=self.view.accent):
+                yield
+
+    def run_inline(self):
         bindings = KeyBindings()
 
         @bindings.add("enter")
@@ -329,6 +371,9 @@ class Terminal:
             color_depth=ColorDepth.DEPTH_1_BIT if self.console.no_color else None,
         )
         self.apply_theme()
+        return self.interact()
+
+    def interact(self):
         try:
             if self.channel:
                 self.service.policy.channel(self.channel)
@@ -336,7 +381,14 @@ class Terminal:
                 saved = self.service.store.setting("active_workspace:" + self.service.config.mode)
                 if saved and any(c["id"] == saved for c in self.service.channels()):
                     self.channel = saved
-            self.view.welcome()
+            if self.screen:
+                self.print("Welcome to Clira. Your workspace stays in the sidebar.")
+                if self.channel:
+                    self.status()
+                else:
+                    self.view.onboarding()
+            else:
+                self.view.welcome()
             if not self.channel:
                 self.onboarding(show=False)
                 self.status()
@@ -356,9 +408,7 @@ class Terminal:
                             break
                     else:
                         started = time.perf_counter()
-                        with self.console.status(
-                            "Clira is working on this request…", spinner_style=self.view.accent
-                        ):
+                        with self.working():
                             self.last = Agent(self.service).chat(self.channel, line, self.conversation)
                         self.conversation = self.last["conversation_id"]
                         self.view.answer(

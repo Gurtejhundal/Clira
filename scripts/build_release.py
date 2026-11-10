@@ -53,6 +53,7 @@ def main():
             "clira/assets/clira_braille_compact.txt",
             "clira/tui/app.py",
             "clira/tui/presentation.py",
+            "clira/tui/screen.py",
         ]:
             if name not in wheel.namelist():
                 raise RuntimeError(f"Wheel is missing a runtime asset: {name}")

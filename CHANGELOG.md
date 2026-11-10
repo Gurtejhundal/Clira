@@ -2,6 +2,12 @@
 
 ## 1.0.0rc1 · unreleased local candidate
 
+- Persistent split terminal: fixed Clira lettering, portrait and help sidebar; independently
+  scrollable conversation; fixed multiline composer. Page Up/Down browse history and Ctrl+End
+  follows the latest message. Responsive compact header, retained input across resize, working
+  completion/history search, light/dark/mono themes and legacy inline fallback. Existing typed
+  tools, SQLite sessions, exact owner approvals and execution policy remain in use.
+
 - Add terminal `/back`, previous-question navigation and `/cancel` during setup. Retain answers
   when revisiting questions, and preserve the current session when returning from the start menu.
   `0` returns to the active workspace; the channel picker also accepts `/back`.

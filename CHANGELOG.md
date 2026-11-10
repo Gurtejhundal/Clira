@@ -2,9 +2,9 @@
 
 ## 1.0.0rc1 · unreleased local candidate
 
-- Terminal visuals follow the supplied master design language: quiet wordmark, approved monochrome
-  portrait, Ink/Ivory hierarchy and interaction-only gold. Remove the oversized block banner,
-  decorative outer frame and tool-wall slogans. Keep responsive status composition, guided
+- Restore the owner-preferred large CLIRA wordmark, rounded frame and portrait/status composition.
+  Apply the supplied Ink/Ivory and Antique Gold palette, including matching prompt colors, readable
+  secondary text and light/dark/mono fallbacks. Keep responsive status composition, guided
   onboarding, readable help/records/owner review, Markdown replies and real source receipts.
   Remove the accidentally copied spec footer from the portrait and fix slash-command Tab completion.
 - Terminal-first prompt_toolkit client with approved Braille asset, width/no-color fallbacks,

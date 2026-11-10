@@ -56,11 +56,11 @@ The terminal starts no background worker. `/web` verifies the same local store b
 
 ### Clira in your terminal
 
-![Clira terminal workspace: approved portrait, quiet identity, actual channel and model status, and conversational prompt](docs/media/terminal/workspace-120.png)
+![Clira terminal workspace: approved portrait, large CLIRA wordmark, actual channel and model status, and conversational prompt](docs/media/terminal/workspace-120.png)
 
-The terminal follows the supplied Ink/Ivory design language: a small wordmark, the approved
-monochrome portrait, clear first-run choices and gold interaction accents. Five guided launch steps,
-grouped help, Markdown replies and source-labelled receipts keep the work readable.
+The terminal keeps its large CLIRA lettering, fine rounded borders and portrait/status layout,
+using the supplied Ink/Ivory palette and Antique Gold accents. Clear first-run choices, five guided
+launch steps, grouped help, Markdown replies and source-labelled receipts keep the work readable.
 It inherits your terminal background; light/dark/mono and compact layouts remain available.
 This is an actual Rich render preview using synthetic demo data, rather than a native-window capture.
 [First-run preview](docs/media/terminal/welcome-120.png) · [Visual checks and controls](docs/TERMINAL_VISUALS.md)

@@ -65,7 +65,7 @@ class Terminal:
         self.console.style = {"light": "#252b24", "dark": "#f3f0e8"}.get(self.theme)
         if self.prompt:
             self.prompt.color_depth = ColorDepth.DEPTH_1_BIT if self.console.no_color else None
-            color = {"light": "#85652f", "dark": "#c5a368"}.get(self.theme, "ansiyellow")
+            color = self.view.accent
             self.prompt.style = Style.from_dict({"prompt": "bold " + color, "placeholder": "ansibrightblack"})
 
     def print(self, text):

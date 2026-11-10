@@ -73,7 +73,7 @@ def test_answer_renders_real_receipts_and_inert_untrusted_content(service):
     unsafe = "\n[owner](https://example.com)\x1b]52;c;clipboard-payload\x07\u202e"
     app.view.answer(result["message"] + unsafe, result["receipts"], elapsed=0.2)
     output = app.console.export_text()
-    assert "Clira" in output and "SYNTHETIC DEMO" in output
+    assert "CLIRA" in output and "SYNTHETIC DEMO" in output
     assert "list_videos" in output and "mock" in output
     assert result["conversation_id"] in output and "1 tool receipts" in output
     assert "clipboard-payload" not in output and "\u202e" not in output and "\x1b" not in output
@@ -121,12 +121,25 @@ def test_rendered_secondary_text_has_readable_contrast(service, theme, backgroun
     assert (high + 0.05) / (low + 0.05) >= 4.5
 
 
-def test_startup_follows_clira_master_design_contract(service):
+def test_startup_preserves_approved_bold_layout(service):
     app = terminal(service, channel=DEMO_CHANNEL)
     app.view.welcome()
     output = app.console.export_text()
-    assert "Clira" in output and "Your Creative Intelligence" in output
-    assert "█" not in output  # No invented block-letter brand asset.
-    assert not any(term in output for term in ["YOUTUBE WORKSPACE", "CREATOR TOOLKIT", "YOUR CALL"])
-    assert not any(char in output for char in "╭╮╰╯")  # No decorative outer dashboard frame.
+    assert "█" in output and "YOUR CREATIVE INTELLIGENCE" in output
+    assert "YOUTUBE WORKSPACE" in output and "CREATOR TOOLKIT" in output
+    assert all(char in output for char in "╭╮╰╯")
     assert DEMO_CHANNEL in output and "live writes disabled" in output
+
+
+@pytest.mark.parametrize("background,accent", [("0;15", "#85652f"), ("15;0", "#c5a368"), ("", "#c5a368")])
+def test_auto_uses_clira_gold_and_respects_background_hint(service, monkeypatch, background, accent):
+    monkeypatch.setenv("COLORFGBG", background)
+    app = terminal(service)
+    app.theme = "auto"
+    assert app.view.accent == accent
+    app.console.no_color = False
+    app.view.welcome()
+    html = app.console.export_html(inline_styles=True)
+    assert "color: " + accent in html
+    # The app must never paint over the owner's terminal background.
+    assert "background-color:" not in html.split("<code", 1)[1].split("</code>", 1)[0]

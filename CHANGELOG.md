@@ -2,6 +2,11 @@
 
 ## 1.0.0rc1 · unreleased local candidate
 
+- Center and lower the sidebar wordmark with top padding; left-align composer question labels
+  with the answer field. Add a transcript scrollbar and mouse-wheel scrolling. Recognize reported
+  Shift+Enter and Shift+Backspace via CSI-u/xterm encodings, preserving Ctrl+J, `/back` and ordinary
+  Backspace editing.
+
 - Persistent split terminal: fixed Clira lettering, portrait and help sidebar; independently
   scrollable conversation; fixed multiline composer. Page Up/Down browse history and Ctrl+End
   follows the latest message. Responsive compact header, retained input across resize, working

@@ -18,21 +18,34 @@ from prompt_toolkit.layout import HSplit, Layout, VSplit, Window
 from prompt_toolkit.layout.containers import DynamicContainer, Float, FloatContainer
 from prompt_toolkit.layout.controls import FormattedTextControl, UIContent, UIControl
 from prompt_toolkit.layout.dimension import Dimension
+from prompt_toolkit.layout.margins import ScrollbarMargin
 from prompt_toolkit.layout.menus import CompletionsMenu
+from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import Frame, SearchToolbar, TextArea
+from rich.cells import cell_len
 from rich.console import Console
 from rich.text import Text
 
 from .. import __version__
 from ..text import terminal_text
+from .keys import register_modified_keys
 from .presentation import WORDMARK
 
 
 class Transcript(UIControl):
     def __init__(self, shell):
         self.shell = shell
+
+    def mouse_handler(self, mouse_event):
+        if mouse_event.event_type == MouseEventType.SCROLL_UP:
+            self.shell.scroll(3)
+        elif mouse_event.event_type == MouseEventType.SCROLL_DOWN:
+            self.shell.scroll(-3)
+        else:
+            return NotImplemented
+        return None
 
     def create_content(self, width, height):
         lines = self.shell.render_lines(width)
@@ -50,6 +63,7 @@ class SplitScreen:
     def __init__(self, terminal):
         from .app import COMMANDS
 
+        register_modified_keys()
         self.terminal = terminal
         self.blocks = []
         self.lock = threading.Lock()
@@ -80,7 +94,12 @@ class SplitScreen:
             read_only=Condition(lambda: not self.waiting),
             style="class:input",
         )
-        self.log = Window(Transcript(self), wrap_lines=False, always_hide_cursor=True)
+        self.log = Window(
+            Transcript(self),
+            wrap_lines=False,
+            always_hide_cursor=True,
+            right_margins=[ScrollbarMargin(display_arrows=True)],
+        )
         self.sidebar = Window(
             FormattedTextControl(self.sidebar_text), width=44, dont_extend_width=True, style="class:body"
         )
@@ -89,8 +108,15 @@ class SplitScreen:
                 Window(FormattedTextControl(self.title), height=1, style="class:heading"),
                 self.log,
                 Window(FormattedTextControl(self.scroll_hint), height=1, style="class:muted"),
+                Window(
+                    FormattedTextControl(lambda: " " + self.prompt_label),
+                    height=Dimension(min=1, max=3),
+                    dont_extend_height=True,
+                    wrap_lines=True,
+                    style="class:heading",
+                ),
                 FloatContainer(
-                    Frame(self.input, title=lambda: self.prompt_label, style="class:composer"),
+                    Frame(self.input, style="class:composer"),
                     floats=[Float(xcursor=True, ycursor=True, content=CompletionsMenu(max_height=6))],
                 ),
                 self.search,
@@ -119,7 +145,7 @@ class SplitScreen:
             color_depth=lambda: (
                 ColorDepth.DEPTH_1_BIT if terminal.console.no_color else ColorDepth.DEPTH_24_BIT
             ),
-            mouse_support=False,
+            mouse_support=True,
             refresh_interval=0.15,
             before_render=self.before_render,
         )
@@ -131,7 +157,7 @@ class SplitScreen:
 
     @property
     def content_width(self):
-        return max(12, self.size[0] - (47 if self.is_wide else 0))
+        return max(12, self.size[0] - (47 if self.is_wide else 0) - 1)
 
     def before_render(self, app):
         size = app.output.get_size()
@@ -209,13 +235,16 @@ class SplitScreen:
             text.append((style, value + "\n"))
 
         gold = "class:heading"
-        if height >= 40 and not t.no_logo:
-            add("\n".join(WORDMARK), gold)
+        add("")
+        add("")
+        if height >= 42 and not t.no_logo:
+            padding = " " * ((44 - max(cell_len(line) for line in WORDMARK)) // 2)
+            add("\n".join(padding + line for line in WORDMARK), gold)
         else:
-            add("CLIRA", gold)
-        add("Your Creative Intelligence", "class:muted")
-        add("v" + __version__, "class:muted")
-        if height >= 32 and not t.no_logo:
+            add("CLIRA".center(44), gold)
+        add("Your Creative Intelligence".center(44), "class:muted")
+        add(("v" + __version__).center(44), "class:muted")
+        if height >= 34 and not t.no_logo:
             add("")
             add(files("clira").joinpath("assets/clira_braille_compact.txt").read_text().rstrip())
         add("")
@@ -224,10 +253,10 @@ class SplitScreen:
         add("/back     Start menu")
         add("/sessions Saved conversations")
         add("PgUp/PgDn Conversation history")
-        if height >= 40:
-            add("Ctrl+End  Latest message")
-            add("Ctrl+J    New line")
-            add("Ctrl+D    Exit")
+        if height >= 42:
+            add("Shift+Enter New line")
+            add("Shift+Bksp  Back · /back")
+            add("Ctrl+D      Exit")
         return text
 
     def compact_title(self):
@@ -247,7 +276,7 @@ class SplitScreen:
             return "Clira is working…"
         if self.offset:
             return "History · PgUp/PgDn scroll · Ctrl+End returns to latest"
-        return "Latest · PgUp history · Enter send · Ctrl+J newline"
+        return "Wheel/PgUp history · Enter send · Shift+Enter newline · Shift+Bksp back"
 
     def scroll(self, amount):
         self.offset = max(0, min(len(self.lines) - 1, self.offset + amount))
@@ -266,6 +295,12 @@ class SplitScreen:
             self.offset = 0
             self.emit(Text(self.prompt_label + " " + terminal_text(value)))
             self.answers.put(value)
+
+        @keys.add("escape", "c-h", filter=has_focus(self.input))
+        def back(event):
+            if self.waiting:
+                self.input.text = "/back"
+                submit(event)
 
         @keys.add("tab", filter=has_focus(self.input))
         def complete(event):

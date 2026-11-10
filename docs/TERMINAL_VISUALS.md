@@ -2,7 +2,9 @@
 
 The owner-requested layout keeps Clira visible throughout long conversations. The left sidebar
 pins the large lettering, exact approved monochrome Braille portrait and command hints. The right
-side contains independently scrollable output and a fixed multiline composer. The existing service,
+side contains independently scrollable output, a scrollbar and a fixed multiline composer.
+The wordmark is centered with two rows of top padding. Composer question labels align with the
+answer field at the left edge rather than sitting in the middle of a wide border. The existing service,
 commands, SQLite sessions and exact owner approvals remain in use.
 
 ![Clira fixed sidebar and conversation](media/terminal/workspace-split.png)
@@ -31,9 +33,9 @@ in both panes. The portrait is unchanged and monochrome. Light secondary text pa
 
 | Space | Layout |
 |---|---|
-| 110+ columns, 42+ rows | Large CLIRA, portrait and help in a fixed left sidebar |
-| 110+ columns, 34–41 rows | Small CLIRA identity, full portrait and help |
-| 110+ columns, 24–33 rows | Compact sidebar identity and help, no cropped portrait |
+| 110+ columns, 44+ rows | Large CLIRA, portrait and help in a fixed left sidebar |
+| 110+ columns, 36–43 rows | Small CLIRA identity, full portrait and help |
+| 110+ columns, 24–35 rows | Compact sidebar identity and help, no cropped portrait |
 | Under 110 columns or 24 rows | Fixed compact header, conversation and composer |
 | `--no-logo` | Text identity/help; no large lettering or portrait |
 
@@ -43,13 +45,19 @@ TERM=dumb selects it automatically. Redirected use keeps the existing noninterac
 
 ## Controls
 
-- Enter sends; Ctrl+J or Alt+Enter adds a newline.
-- Page Up/Page Down browse conversation output; Ctrl+End follows the latest message.
+- Enter sends; Shift+Enter, Ctrl+J or Alt+Enter adds a newline.
+- Shift+Backspace follows the same Back path as `/back`. Ordinary Backspace still edits text.
+- Mouse wheel over the conversation and Page Up/Page Down browse output; Ctrl+End follows the latest message.
+- Mouse reporting is enabled for scrolling. Hold Shift while selecting text using the terminal's native selection.
 - Tab completes slash commands and known channel IDs; Ctrl+R searches input history.
 - `/back` opens the start menu; `0` returns to the current workspace and conversation.
 - During setup, `/back` revisits a question and `/cancel` returns to the menu without creating a draft.
 - `/clear` clears displayed output while keeping the sidebar and stored conversations.
 - Empty Ctrl+D exits; Ctrl+C clears idle input, and a second idle Ctrl+C exits.
+
+Modified shortcuts recognize CSI-u and xterm modifyOtherKeys reports. Some terminals send the same
+bytes for shifted and unshifted Enter/Backspace; the application cannot distinguish those physical
+keys. Ctrl+J and `/back` remain available in those terminals. Unmodified keys are never remapped.
 
 A running request disables the composer while the display remains responsive to resize and history
 navigation. Ctrl+C during work reports that it is still running; it never claims a write was

@@ -45,8 +45,11 @@ uv run clira chat --channel ID --json 'Show my latest videos'
 
 `./run.sh` preserves its existing website launch behavior; `uv run clira` opens the terminal.
 Terminal: the Clira sidebar stays fixed while the conversation scrolls independently.
-Enter sends, Ctrl+J adds a line, Ctrl+R searches input history, Tab completes, Ctrl+D exits.
-Page Up/Page Down browse the conversation; Ctrl+End returns to the latest message.
+Enter sends; Shift+Enter or Ctrl+J adds a line. Shift+Backspace or `/back` navigates back.
+Ctrl+R searches input history, Tab completes, and Ctrl+D exits. Mouse-wheel scrolling over the
+conversation and Page Up/Page Down browse history; Ctrl+End returns to the latest message.
+Shift shortcuts require distinct modified-key reports from the terminal; Ctrl+J and `/back` work
+when a terminal sends the same sequence for shifted and ordinary keys.
 Use `/help`, `/channel`, `/launch`, `/new`, `/sessions`, `/resume ID`, `/title NAME`, `/status`,
 `/ideas`, `/calendar`, `/jobs`, `/approvals`, `/approve ID`, `/details`, `/sources`,
 `/back`, `/theme auto|light|dark|mono`, `/web`, `/clear`, `/connect`, `/model`, `/mode`, `/quit`.
@@ -69,7 +72,8 @@ with independently scrollable conversation history and a fixed composer on the r
 using the supplied Ink/Ivory palette and Antique Gold accents. Clear first-run choices, five guided
 launch steps, grouped help, Markdown replies and source-labelled receipts keep the work readable.
 It inherits your terminal background; light/dark/mono and compact layouts remain available.
-Below 110 columns or 24 rows, a compact header replaces the sidebar. Shorter sidebars simplify the
+The sidebar wordmark has top padding and is centered. Question labels sit at the composer
+left edge, aligned with the answer field. Below 110 columns or 24 rows, a compact header replaces the sidebar. Shorter sidebars simplify the
 lettering before hiding the portrait. Resize preserves the input and conversation.
 These previews decode the visible cells from an actual terminal process using synthetic data.
 For the original scrolling layout: `CLIRA_TERMINAL_LAYOUT=inline uv run --locked clira`.

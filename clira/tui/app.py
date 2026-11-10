@@ -21,6 +21,7 @@ from ..config import CliraError
 from ..service import DEMO_CHANNEL
 from ..text import terminal_text
 from ..workspaces import launch
+from .keys import register_modified_keys
 from .presentation import Presentation
 
 COMMANDS = [
@@ -346,6 +347,7 @@ class Terminal:
                 yield
 
     def run_inline(self):
+        register_modified_keys()
         bindings = KeyBindings()
 
         @bindings.add("enter")
@@ -359,6 +361,11 @@ class Terminal:
         @bindings.add("escape", "enter")
         def shift_enter(event):
             event.current_buffer.insert_text("\n")
+
+        @bindings.add("escape", "c-h")
+        def back(event):
+            event.current_buffer.text = "/back"
+            event.current_buffer.validate_and_handle()
 
         self.prompt = PromptSession(
             history=InMemoryHistory(),

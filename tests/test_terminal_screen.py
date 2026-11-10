@@ -52,6 +52,10 @@ def test_long_conversation_sidebar_scroll_resize_and_input_are_independent(tmp_p
         probe.wait("History ·")
         assert probe.left == portrait and probe.text != latest
         assert "unfinished message" in probe.text
+        probe.send("\x1b[<64;80;15M")  # mouse wheel up over the conversation
+        probe.wait("History ·")
+        assert probe.left == portrait
+        probe.send("\x1b[<65;80;15M")  # wheel down
         probe.send("\x1b[1;5F")  # Ctrl+End
         probe.wait("Latest uploads")
         assert probe.left == portrait
@@ -143,5 +147,40 @@ def test_full_screen_completion_history_search_and_theme_changes(tmp_path):
         probe.send("/theme mono\r")
         probe.wait("Theme saved: mono")
         assert all(cell.fg == "default" for row in probe.screen.buffer.values() for cell in row.values())
+    finally:
+        probe.close()
+
+
+@pytest.mark.parametrize(
+    "newline,back",
+    [("\x1b[13;2u", "\x1b[127;2u"), ("\x1b[27;2;13~", "\x1b[27;2;127~"), ("\x1b[13;2~", "\x1b[8;2u")],
+)
+def test_shift_shortcuts_and_left_aligned_question(tmp_path, newline, back):
+    probe = TerminalProbe(tmp_path)
+    try:
+        probe.wait("Choose 1 / 2 / 3")
+        # The block heading starts below the border with breathing room on both sides.
+        assert "█" not in probe.screen.display[1] and "█" not in probe.screen.display[2]
+        heading = next(line for line in probe.screen.display if "█" in line)
+        assert heading.index("█") >= 4 and "█" not in heading[40:46]
+        probe.send("1\r")
+        probe.wait("Your interest >")
+        label = next(line for line in probe.screen.display if "Your interest >" in line)
+        assert label.index("Your interest >") == 48  # same left edge as the answer field
+        probe.send("Batteries\r")
+        probe.wait("Your viewer >")
+        probe.send(back)
+        probe.wait("Saved answer: Batteries")
+        probe.send("/back\r")
+        probe.wait("Choose 1 / 2 / 3")
+        probe.send("3\r")
+        probe.wait("❯")
+        probe.send("Show latest" + newline + "videos\r")
+        probe.wait("list_videos")
+        sessions = Store(tmp_path / "clira.sqlite3").sessions(DEMO_CHANNEL)
+        assert sessions[0]["messages"][0]["text"] == "Show latest\nvideos"
+        # Ordinary Backspace still edits text; it must never trigger navigation.
+        probe.send("/statux\x7fs\r")
+        probe.wait("Workspace status")
     finally:
         probe.close()

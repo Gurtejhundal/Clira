@@ -1,3 +1,5 @@
+> Historical v0.1.0 evidence. For the current candidate, see [v1 RC verification](VERIFICATION_V1_RC.md).
+
 # Verification · 9 November 2026
 
 **Environment:** Ubuntu, Python 3.12.16 managed by uv; SQLite 3.53.1; ffmpeg/ffprobe present.

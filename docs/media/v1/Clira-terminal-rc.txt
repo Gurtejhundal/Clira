@@ -1,0 +1,131 @@
+ACTUAL PTY CAPTURE · DEMO/SYNTHETIC · 52 columns · NO_COLOR=1
+Cursor-control sequences removed for this text transcript.
+
+Welcome to Clira.
+1  Start planning a new YouTube channel
+2  Connect an existing channel
+3  Explore synthetic demo data
+Choose 1 / 2 / 3 >Choose 1 / 2 / 3 > 3
+Clira 1.0.0rc1 · DEMO · SYNTHETIC
+Inside the everyday · Demo
+DEMO_CHANNEL_TECH
+Model: Offline · limited templates
+Policy: live writes disabled
+Pending approvals: 0 · Jobs: none
+❯❯ /theme mono
+Theme saved: mono
+❯❯ /new
+New session: chat_e1f171becb314725b5b1210199d21b69
+❯❯ Show my latest videos
+⠋ Working on this request…
+SYNTHETIC DEMO · Latest uploads — lifetime views:
+• Why your phone gets slower: 12,400 views
+• What deleting a file really does: 8,200 views
+• Inside a password manager: 6,100 views
+• The hidden cost of notifications: 3,800 views
+• How maps find the fastest route: 2,900 views
+Sources: list_videos · mock
+1 tool receipts · /details · session
+chat_e1f171becb314725b5b1210199d21b69
+❯❯ /approvals
+No approvals in this workspace.
+❯❯ /quit
+Goodbye. No background worker is started by this
+terminal.
+Session saved. Goodbye.
+
+
+ACTUAL PTY CAPTURE · DEMO/SYNTHETIC · 80 columns · NO_COLOR=1
+Cursor-control sequences removed for this text transcript.
+
+Welcome to Clira.
+1  Start planning a new YouTube channel
+2  Connect an existing channel
+3  Explore synthetic demo data
+Choose 1 / 2 / 3 >Choose 1 / 2 / 3 > 3
+Clira 1.0.0rc1 · DEMO · SYNTHETIC
+Inside the everyday · Demo
+DEMO_CHANNEL_TECH
+Model: Offline · limited templates
+Policy: live writes disabled
+Pending approvals: 0 · Jobs: none
+Scopes: none
+❯❯ /theme mono
+Theme saved: mono
+❯❯ /new
+New session: chat_3d5e1fa9248d4988b4eb7b7edf4f5a9f
+❯❯ Show my latest videos
+⠋ Working on this request…
+SYNTHETIC DEMO · Latest uploads — lifetime views:
+• Why your phone gets slower: 12,400 views
+• What deleting a file really does: 8,200 views
+• Inside a password manager: 6,100 views
+• The hidden cost of notifications: 3,800 views
+• How maps find the fastest route: 2,900 views
+Sources: list_videos · mock
+1 tool receipts · /details · session chat_3d5e1fa9248d4988b4eb7b7edf4f5a9f
+❯❯ /approvals
+No approvals in this workspace.
+❯❯ /quit
+Goodbye. No background worker is started by this terminal.
+Session saved. Goodbye.
+
+
+ACTUAL PTY CAPTURE · DEMO/SYNTHETIC · 120 columns · NO_COLOR=1
+Cursor-control sequences removed for this text transcript.
+
+                 ⢀⠠⡠⢄⣀⡀⣤⣤⣐⡠⠠⢄
+             ⡀⣠⠄⠈⣠⣴⣾⣿⣿⣿⣿⣿⢿⣿⣷⣾⣷⡲⡆⠢⡀
+          ⣀⠔⣲⡾⠊ ⣴⠿⠟⢻⠿⡿⣻⡟⣡⣿⣿⣯⡛⠿⣿⣿⣧⡙⠄
+        ⢀⣔⢅⣰⣾⠁ ⣼⣵⣦⣴⣥⣴⣿⣿⡮⣿⣿⡎⢿⡱ ⠈⢟⣿⣻⣿⣦⢄
+        ⣿⢈⣾⣿⡇ ⡰⣿⣿⣟⣿⣿⣿⡟⣿⣿⡿⡽⠃⢸⠏  ⢅⡟⣿⣿⣿⣧⠙⢄
+      ⣀⣬⢶⣿⣿⣿⣚⢉⣿⣟⣷⣿⡻⢋⢁⣴⣿⣿⠼⠛⠛⠛⠛⢀⠈⠈⡉⣉⣿⣽⢻⡂⠈⠱
+   ⢀⡴⠊⠁⣰⣿⣿⣿⣿⣿⠐⣿⣿⢿⣿⣫⣷⣿⣿⠋⡼⣰⣰⠶⡳⠄⢀⠎⠉⠏⠻⢿⣿⡷⣆⠊⢀⠁
+   ⠎ ⣴⣽⠿⢛⢏⣾⣿⣿⢀⡛⣉⠙⠺⢿⣿⣯⣗⠹⠁⠈⠄⡀  ⢀⠁ ⡄⢰⠈⢿⣻⣟⢿⡄
+   ⠐⡼⢹⢁⣀⣴⣵⣿⣿⣱⣷⣷⣶⡕⢄⠈⢚⣿⣾⣦⡀   ⠁⠈  ⠁ ⣀⡀⠸⣿⣿⡠⠃
+   ⠐⢁⣦⣿⣾⣿⣟⣾⣿⣺⣿⣿⣿⣿⡎⢆⣤⡿⣿⣿⢮⠂⠂    ⠠⠐⠉⡈⠑⢘⣿⣿⣧⡐⡀
+  ⠐⢔⡷⣿⢿⣿⣿⣿⣿⣿⣷⣻⣿⣿⣿⢇⢯⣿⢯⣿⣿⠩⢃⠡         ⢸⣿⠇⣻⢷⠈
+   ⡿⠁⠺⠳⡽⡟⣿⣿⣿⣿⣿⣾⣽⣽⣮⣿⣫⣿⣿⠾⢰⣯⣀⣀⣀⣀⣀⣀⣀⣠⣠⣤⣾⡯⠄⠁⡈
+       ⣠⡵⣿⣽⣽⣿⣿⣿⣿⣿⣿⣿⣿⣻⡝⠐⠋⠃⠈⠙⠛⠿⣿⣿⣿⣟⡿⢻⢟⠂ ⠈
+      ⠂⠋ ⠈⠋⡙⠿⣝⠛⠿⡿⣿⣿⡿⣟⠣⠄      ⢈⣿⠧⡈ ⠃
+         ⣀⣤⡠⠄⠐⠐⠐⠐⠛⠿⡁⡊⠁       ⡈⠉
+       ⣀⠜⢋⣡⣤⣶⣿⣿⠾⠂   ⠈⠒⠦⣀    ⠠⠂
+     ⠠⡈⢀⡴⢫⣾⠿⠛⠉ ⢀⣠⡴⡶⣾⣶⣶⣦⣌⠻⢦⡄ ⣾⣦⣦⣄⢀
+      ⣷⠟⡱⠋  ⢀⣀⣤⣥⣦⣶⣦⣦⣤⣍⣛⣿⣟⠮⠹⣧⣿⣿⣿⠟ ⢣
+     ⡔⣩⣾⠁⣀⣶⣿⡿⣿⠟⠋⠁   ⠈⠙⢿⣿⣿⣿⣦⢬⣹⠟⠁⢀⣀⠆⢑⠄
+    ⢨⣶⣿⣷⣼⣿⡟⡡⠊⢀        ⢤⠘⢿⣿⣿⡌⣿⣷⢘⣹⣥⣶⣯⣄⡀
+    ⢸⣿⣿⣿⡿⠋ ⠁⢠⡃         ⠹⣄⠙⢿⣇⢻⣿⣿⣿⣇⢽⣿⣿⢿⣦
+     ⠉⢿⠟   ⢠⡿           ⠘⣧⠈⢻⠸⣿⣿⣿⣿⡈⡿⠁⠊⢻⣧⡀
+End of single-file Clira v1.0.0 design and implementation contract.
+
+Welcome to Clira.
+1  Start planning a new YouTube channel
+2  Connect an existing channel
+3  Explore synthetic demo data
+Choose 1 / 2 / 3 >Choose 1 / 2 / 3 > 3
+Clira 1.0.0rc1 · DEMO · SYNTHETIC
+Inside the everyday · Demo
+DEMO_CHANNEL_TECH
+Model: Offline · limited templates
+Policy: live writes disabled
+Pending approvals: 0 · Jobs: none
+Scopes: none
+❯❯ /theme mono
+Theme saved: mono
+❯❯ /new
+New session: chat_352622e1658545d8b2d1b873e457370e
+❯❯ Show my latest videos
+⠋ Working on this request…
+SYNTHETIC DEMO · Latest uploads — lifetime views:
+• Why your phone gets slower: 12,400 views
+• What deleting a file really does: 8,200 views
+• Inside a password manager: 6,100 views
+• The hidden cost of notifications: 3,800 views
+• How maps find the fastest route: 2,900 views
+Sources: list_videos · mock
+1 tool receipts · /details · session chat_352622e1658545d8b2d1b873e457370e
+❯❯ /approvals
+No approvals in this workspace.
+❯❯ /quit
+Goodbye. No background worker is started by this terminal.
+Session saved. Goodbye.

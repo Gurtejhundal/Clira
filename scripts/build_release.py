@@ -38,17 +38,21 @@ def main():
         for path in files:
             z.write(ROOT / path, Path(f"Clira-{version}") / path)
     subprocess.run(["uv", "build", "--out-dir", str(output)], cwd=ROOT, check=True)
-    for name in ["Clira-tour.mp4", "Clira-cli.mp4"]:
-        shutil.copyfile(ROOT / "docs/media" / name, output / name)
-    assets = [
-        archive,
-        output / f"clira-{version}-py3-none-any.whl",
-        output / f"clira-{version}.tar.gz",
-        output / "Clira-tour.mp4",
-        output / "Clira-cli.mp4",
-    ]
+    assets = [archive, output / f"clira-{version}-py3-none-any.whl", output / f"clira-{version}.tar.gz"]
+    # Keep old public preview videos in source history; never relabel them as current RC footage.
+    capture = ROOT / "docs/media/v1/Clira-terminal-rc.txt"
+    if capture.is_file():
+        destination = output / capture.name
+        shutil.copyfile(capture, destination)
+        assets.append(destination)
     with zipfile.ZipFile(assets[1]) as wheel:
-        for name in ["clira/web/index.html", "clira/web/app.js", "clira/web/style.css"]:
+        for name in [
+            "clira/web/index.html",
+            "clira/web/app.js",
+            "clira/web/style.css",
+            "clira/assets/clira_braille_compact.txt",
+            "clira/tui/app.py",
+        ]:
             if name not in wheel.namelist():
                 raise RuntimeError(f"Wheel is missing a runtime asset: {name}")
     checksums = "".join(hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n" for p in assets)

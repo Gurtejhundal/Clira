@@ -164,6 +164,50 @@ class GoogleYouTube:
             response.status_code in {429, 500, 502, 503, 504},
         )
 
+    def set_thumbnail(self, video_id, content, mime):
+        self.video(video_id)
+        response = self.client.post(
+            "https://www.googleapis.com/upload/youtube/v3/thumbnails/set",
+            params={"videoId": video_id, "uploadType": "media"},
+            content=content,
+            headers={"Authorization": "Bearer " + self.token(MANAGE_SCOPE), "Content-Type": mime},
+        )
+        self.check(response)
+        return response.json()
+
+    def insert_captions(self, video_id, content, language, name, is_draft):
+        self.video(video_id)
+        import secrets
+
+        boundary = "clira_" + secrets.token_hex(16)
+        metadata = json.dumps(
+            {"snippet": {"videoId": video_id, "language": language, "name": name, "isDraft": is_draft}}
+        ).encode()
+        body = (
+            b"--"
+            + boundary.encode()
+            + b"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"
+            + metadata
+            + b"\r\n--"
+            + boundary.encode()
+            + b"\r\nContent-Type: application/octet-stream\r\n\r\n"
+            + content
+            + b"\r\n--"
+            + boundary.encode()
+            + b"--\r\n"
+        )
+        response = self.client.post(
+            "https://www.googleapis.com/upload/youtube/v3/captions",
+            params={"part": "snippet", "uploadType": "multipart"},
+            content=body,
+            headers={
+                "Authorization": "Bearer " + self.token(MANAGE_SCOPE),
+                "Content-Type": "multipart/related; boundary=" + boundary,
+            },
+        )
+        self.check(response)
+        return response.json()
+
     def verify(self):
         result = self.request("GET", "channels", params={"part": "snippet,contentDetails", "mine": "true"})
         items = result.get("items", [])
@@ -379,6 +423,22 @@ class GoogleYouTube:
 
 
 def connect(config, store, secrets, capability="read", client_file=None, choose=None):
+    if config.mode != "live":
+        raise CliraError("LIVE_MODE_REQUIRED", "Demo never accesses Google credentials.")
+    if capability not in {"read", "upload", "manage"}:
+        raise CliraError("CAPABILITY", "Choose read, upload or manage explicitly.")
+    try:
+        return _connect(config, store, secrets, capability, client_file, choose)
+    except CliraError:
+        raise
+    except Exception:  # noqa: BLE001 -- provider exceptions can contain secrets and callback URLs
+        raise CliraError(
+            "OAUTH_NOT_COMPLETED",
+            "Google sign-in did not complete. Check your Desktop client, consent and network; retry without sharing credentials.",
+        ) from None
+
+
+def _connect(config, store, secrets, capability="read", client_file=None, choose=None):
     """Owner CLI only: browser participation + exact immutable channel confirmation."""
     import os
 
@@ -403,6 +463,7 @@ def connect(config, store, secrets, capability="read", client_file=None, choose=
         authorization_prompt_message="",
         success_message="Authorization received. Return to the Clira terminal to confirm the channel.",
         access_type="offline",
+        timeout_seconds=300,
         prompt="consent",
     )
     response = httpx.get(

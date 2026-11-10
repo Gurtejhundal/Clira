@@ -42,6 +42,10 @@ class Service:
 
     def adapter(self, channel_id):
         channel = self.policy.channel(channel_id)
+        if channel["mode"] == "draft":
+            raise CliraError(
+                "NOT_CONNECTED", "This is a local launch workspace. No YouTube account is connected."
+            )
         return DemoYouTube(channel_id) if channel["mode"] == "demo" else GoogleYouTube(channel, self.secrets)
 
     def channels(self):
@@ -54,7 +58,7 @@ class Service:
                 "connected": bool(json.loads(c["connection"])),
             }
             for c in self.store.rows(
-                "SELECT * FROM channels WHERE mode=? ORDER BY created_at", (self.config.mode,)
+                "SELECT * FROM channels WHERE mode IN (?, 'draft') ORDER BY created_at", (self.config.mode,)
             )
         ]
 
@@ -73,12 +77,16 @@ class Service:
                 errors = [{"field": ".".join(map(str, e["loc"])), "message": e["msg"]} for e in exc.errors()]
                 raise CliraError("INVALID_INPUT", encode(errors)) from None
             if (
-                name == "import_video"
+                name in {"import_video", "import_package_asset"}
                 and actor != "owner"
                 and (args.rights != "unreviewed" or args.creative_reviewed)
             ):
                 raise CliraError(
                     "OWNER_REVIEW_REQUIRED", "The model cannot assert rights ownership or creative approval."
+                )
+            if name == "review_package_asset" and actor != "owner":
+                raise CliraError(
+                    "OWNER_REVIEW_REQUIRED", "Only the owner can attest packaging rights or creative review."
                 )
             data = getattr(self, "tool_" + name)(channel_id, args)
             self.store.audit(channel_id, name, "completed", metadata={"permission": permission}, actor=actor)
@@ -88,7 +96,19 @@ class Service:
                 "channel_id": channel_id,
                 "observed_at": now(),
                 "source": "mock"
-                if self.config.mode == "demo"
+                if self.store.channel(channel_id)["mode"] == "demo"
+                and name
+                in {
+                    "channel_overview",
+                    "list_videos",
+                    "channel_report",
+                    "weekly_digest",
+                    "list_comments",
+                    "research_videos",
+                    "prepare_metadata",
+                    "prepare_schedule",
+                    "prepare_publish",
+                }
                 else (
                     "youtube_analytics_api"
                     if name in {"channel_report", "weekly_digest"}
@@ -98,7 +118,7 @@ class Service:
                 ),
                 "data": data,
                 "warnings": ["Synthetic demo mode; no real account operations."]
-                if self.config.mode == "demo"
+                if self.store.channel(channel_id)["mode"] == "demo"
                 else [],
             }
             return ToolSuccess.model_validate(result).model_dump()
@@ -223,12 +243,145 @@ class Service:
             },
         )
 
+    def tool_title_options(self, channel_id, args):
+        return {
+            "titles": [
+                args.subject + ": a beginner's guide",
+                "Understanding " + args.subject,
+                args.subject + ": one decision explained",
+            ],
+            "source": "local",
+            "status": "Offline templates; owner selects and checks every factual claim.",
+        }
+
+    def tool_import_package_asset(self, channel_id, args):
+        from .packaging import import_asset
+
+        return import_asset(self, channel_id, args)
+
+    def tool_thumbnail_template(self, channel_id, args):
+        from .packaging import template
+
+        return template(self, channel_id, args)
+
+    def tool_review_package_asset(self, channel_id, args):
+        record = self.store.get(channel_id, args.package_asset_id, "package_asset")
+        return self.store.put(
+            channel_id,
+            "package_asset",
+            {
+                **record,
+                "rights": args.rights,
+                "rights_evidence": args.rights_evidence,
+                "creative_reviewed": args.creative_reviewed,
+            },
+            record["id"],
+        )
+
+    def tool_edit_captions(self, channel_id, args):
+        from .packaging import captions, save_asset
+
+        record = self.store.get(channel_id, args.package_asset_id, "package_asset")
+        if record["type"] != "captions":
+            raise CliraError("CAPTION_FORMAT", "Select a caption file.")
+        asset = (
+            self.store.get(channel_id, record["video_asset_id"], "asset")
+            if record.get("video_asset_id")
+            else None
+        )
+        data = captions(args.text, asset["qc"]["duration_seconds"] if asset else None)
+        return save_asset(
+            self,
+            channel_id,
+            data["text"].encode(),
+            "." + data["format"],
+            {
+                **data,
+                "type": "captions",
+                "language": record["language"],
+                "mime": "text/vtt" if data["format"] == "vtt" else "application/x-subrip",
+                "video_asset_id": record.get("video_asset_id"),
+                "edited_from": record["id"],
+            },
+            "unreviewed",
+            "",
+            False,
+        )
+
+    def tool_prepare_attachment(self, channel_id, args):
+        from .packaging import verify_package_asset
+
+        record = self.store.get(channel_id, args.package_asset_id, "package_asset")
+        verify_package_asset(self, channel_id, record)
+        video = self.adapter(channel_id).video(args.video_id)  # adapter enforces immutable ownership
+        payload = {
+            "video_id": args.video_id,
+            "package_asset_id": record["id"],
+            "sha256": record["sha256"],
+            "destination_channel": channel_id,
+            "visibility": video["status"]["privacyStatus"],
+            "rights": record["rights"],
+            "rights_evidence": record["rights_evidence"],
+            "name": args.name,
+            "is_draft": args.is_draft,
+            "language": record.get("language"),
+            "mime": record["mime"],
+        }
+        return self.policy.prepare(
+            channel_id, "set_thumbnail" if record["type"] == "thumbnail" else "insert_captions", payload
+        )
+
     def tool_package_video(self, channel_id, args):
+        from .packaging import chapters, verify_package_asset
+
+        if any(not re.fullmatch(r"#[\w]+", tag) for tag in args.hashtags):
+            raise CliraError(
+                "HASHTAGS",
+                "Use at most five relevant hashtags, each beginning with # and containing no spaces.",
+            )
+        if any("<" in text or ">" in text for text in [args.title, args.description, *args.tags]):
+            raise CliraError("METADATA", "Angle brackets are not supported in YouTube metadata.")
+        if len(args.description.encode()) > 5000:
+            raise CliraError("DESCRIPTION_LENGTH", "Description must fit 5000 UTF-8 bytes.")
+        chapter_text = ""
+        if args.chapters:
+            if not args.asset_id:
+                raise CliraError(
+                    "VIDEO_REQUIRED", "Select the real imported video to validate chapter duration."
+                )
+            asset = self.store.get(channel_id, args.asset_id, "asset")
+            chapter_text = chapters([c.model_dump() for c in args.chapters], asset["qc"]["duration_seconds"])
+        manifest = []
+        for rid, expected in [(args.thumbnail_id, "thumbnail"), (args.captions_id, "captions")]:
+            if rid:
+                item = self.store.get(channel_id, rid, "package_asset")
+                if item["type"] != expected:
+                    raise CliraError("PACKAGE_TYPE", "Select the correct packaging file type.")
+                verify_package_asset(self, channel_id, item, reviewed=False)
+                if expected == "captions" and item.get("video_asset_id") != args.asset_id:
+                    raise CliraError(
+                        "PACKAGE_VIDEO", "Caption file must be timed against this imported video."
+                    )
+                manifest.append(
+                    {
+                        "id": rid,
+                        "type": expected,
+                        "sha256": item["sha256"],
+                        "rights": item["rights"],
+                        "rights_evidence": item["rights_evidence"],
+                        "creative_reviewed": item["creative_reviewed"],
+                    }
+                )
+        description = "\n\n".join(t for t in [args.description, chapter_text, " ".join(args.hashtags)] if t)
+        if len(description.encode()) > 5000:
+            raise CliraError("DESCRIPTION_LENGTH", "Combined description exceeds 5000 UTF-8 bytes.")
         return self.store.put(
             channel_id,
             "metadata",
             {
                 **args.model_dump(),
+                "description": description,
+                "packaging_manifest": manifest,
                 "status": "draft",
                 "lint": editorial_lint("title", args.title, args.thumbnail_text),
             },
@@ -288,7 +441,21 @@ class Service:
         asset = self.store.get(channel_id, args.asset_id, "asset")
         self.validate_asset(channel_id, asset)
         metadata = self.store.get(channel_id, args.metadata_id, "metadata")
+        if metadata.get("asset_id") and metadata["asset_id"] != args.asset_id:
+            raise CliraError("PACKAGE_VIDEO", "Package belongs to another imported video.")
+        manifest = metadata.get("packaging_manifest", [])
+        from .packaging import verify_package_asset
+
+        for item in manifest:
+            record = self.store.get(channel_id, item["id"], "package_asset")
+            verify_package_asset(self, channel_id, record)
+            if any(
+                record[k] != item[k] for k in ["sha256", "rights", "rights_evidence", "creative_reviewed"]
+            ):
+                raise CliraError("ASSET_CHANGED", "Packaging asset changed.")
         payload = {
+            "packaging_manifest": manifest,
+            "packaging_note": "Thumbnail and captions need separate approval and upload after the private video receipt.",
             "asset_id": args.asset_id,
             "asset_sha256": asset["sha256"],
             "filename": asset["filename"],
@@ -508,6 +675,15 @@ class Service:
             raise CliraError("APPROVAL_INVALIDATED", "The asset or metadata changed after approval.")
         if asset["rights_evidence"] != payload["rights_evidence"] or asset["rights"] != payload["rights"]:
             raise CliraError("APPROVAL_INVALIDATED", "Rights evidence changed after approval.")
+        from .packaging import verify_package_asset
+
+        for item in payload.get("packaging_manifest", []):
+            record = self.store.get(channel_id, item["id"], "package_asset")
+            verify_package_asset(self, channel_id, record)
+            if any(
+                record[k] != item[k] for k in ["sha256", "rights", "rights_evidence", "creative_reviewed"]
+            ):
+                raise CliraError("APPROVAL_INVALIDATED", "Packaging file changed after approval.")
         if payload["body"]["status"]["privacyStatus"] != "private":
             raise CliraError("PRIVATE_REQUIRED", "Uploads must explicitly use private visibility.")
         if isinstance(adapter, DemoYouTube):
@@ -600,6 +776,58 @@ class Service:
         return result
 
     def run_mutation(self, channel_id, job_id, operation, payload, adapter):
+        if operation in {"set_thumbnail", "insert_captions"}:
+            from .packaging import verify_package_asset
+
+            record = self.store.get(channel_id, payload["package_asset_id"], "package_asset")
+            path = verify_package_asset(self, channel_id, record)
+            if any(record[k] != payload[k] for k in ["sha256", "rights", "rights_evidence"]):
+                raise CliraError("APPROVAL_INVALIDATED", "Packaging file or rights changed since approval.")
+            adapter.video(payload["video_id"])
+            self.policy.write_gate(channel_id)
+            if isinstance(adapter, DemoYouTube):
+                return {
+                    "source": "mock",
+                    "video_id": payload["video_id"],
+                    "operation": operation,
+                    "verified_remotely": False,
+                    "notice": "Synthetic simulation; nothing uploaded.",
+                }
+            self.checkpoint(job_id, {"stage": "mutation_started"})
+            if operation == "set_thumbnail":
+                response = adapter.set_thumbnail(payload["video_id"], path.read_bytes(), payload["mime"])
+                receipt = {"items": response.get("items", [])}
+                if not receipt["items"]:
+                    raise CliraError(
+                        "RECONCILIATION_REQUIRED",
+                        "Thumbnail response lacked image details; inspect YouTube before retrying.",
+                    )
+            else:
+                response = adapter.insert_captions(
+                    payload["video_id"],
+                    path.read_bytes(),
+                    payload["language"],
+                    payload["name"],
+                    payload["is_draft"],
+                )
+                receipt = {
+                    "caption_id": response.get("id"),
+                    "status": response.get("snippet", {}).get("status"),
+                }
+                if not receipt["caption_id"]:
+                    raise CliraError(
+                        "RECONCILIATION_REQUIRED",
+                        "Caption response lacked a track ID; inspect YouTube before retrying.",
+                    )
+            return {
+                "source": adapter.source,
+                "video_id": payload["video_id"],
+                "operation": operation,
+                "accepted_by_api": True,
+                "verified_remotely": False,
+                "notice": "API accepted upload; visual/timed playback verification remains owner review.",
+                **receipt,
+            }
         if operation == "post_reply":
             if isinstance(adapter, DemoYouTube):
                 return {

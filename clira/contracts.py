@@ -54,11 +54,21 @@ class Script(Strict):
     # Unverified factual claims keep a brief in draft, never grant upload rights.
 
 
+class Chapter(Strict):
+    seconds: int = Field(ge=0)
+    title: str = Field(min_length=1, max_length=100, pattern=r"^[^\r\n<>]+$")
+
+
 class Package(Strict):
     title: str = Field(min_length=1, max_length=100)
     description: str = Field(default="", max_length=5000)
     tags: list[str] = Field(default_factory=list, max_length=50)
     thumbnail_text: str = Field(default="", max_length=150)
+    hashtags: list[str] = Field(default_factory=list, max_length=5)
+    chapters: list[Chapter] = Field(default_factory=list, max_length=100)
+    asset_id: str | None = None
+    thumbnail_id: str | None = None
+    captions_id: str | None = None
     category_id: str = Field(default="22", pattern=r"^\d{1,3}$")
     made_for_kids: bool
     synthetic_media: bool
@@ -66,8 +76,10 @@ class Package(Strict):
     @field_validator("tags")
     @classmethod
     def tag_length(cls, value):
-        if sum(len(t) + 1 for t in value) > 450:
-            raise ValueError("Combined tags must be under 450 characters")
+        # YouTube counts commas and implicit quotation marks around tags with spaces.
+        length = sum(len(t) + (2 if " " in t else 0) for t in value) + max(0, len(value) - 1)
+        if any(not t.strip() for t in value) or length > 450:
+            raise ValueError("Use nonempty tags, at most 450 characters including commas and quotes")
         return value
 
 
@@ -163,7 +175,89 @@ class ExecuteJob(Strict):
     channel_id: str
 
 
+class LaunchRequest(Strict):
+    interest: str = Field(min_length=1, max_length=500)
+    viewer: str = Field(min_length=1, max_length=500)
+    language: str = Field(min_length=1, max_length=100)
+    time: str = Field(min_length=1, max_length=500)
+    format: str = Field(min_length=1, max_length=100)
+
+
+class SessionRequest(Strict):
+    channel_id: str
+    title: str = Field(default="Untitled conversation", min_length=1, max_length=120)
+
+
+class CopyWorkspace(Strict):
+    workspace_id: str
+    channel_id: str
+    confirmation: str
+
+
+class PackageImport(Import):
+    type: Literal["thumbnail", "captions"]
+    asset_id: str | None = None
+    language: str = Field(default="en", pattern=r"^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*$")
+
+
+class ThumbnailTemplate(Strict):
+    text: str = Field(min_length=1, max_length=95, pattern=r"^[\x20-\x7e]+$")
+
+
+class ReviewPackageAsset(Strict):
+    package_asset_id: str
+    rights: Literal["original", "licensed", "unreviewed", "unlicensed"]
+    rights_evidence: str = Field(max_length=4000)
+    creative_reviewed: bool
+
+
+class Attachment(Strict):
+    video_id: str = Field(pattern=r"^[\w-]{1,80}$")
+    package_asset_id: str
+    name: str = Field(default="Captions", min_length=1, max_length=100)
+    is_draft: bool = True
+
+
+class EditCaptions(Strict):
+    package_asset_id: str
+    text: str = Field(min_length=1, max_length=200000)
+
+
+class TitleOptions(Strict):
+    subject: str = Field(min_length=1, max_length=65, pattern=r"^[^<>\r\n]+$")
+
+
 TOOLS = {
+    "title_options": (
+        TitleOptions,
+        "DRAFT",
+        "Suggest local title templates; factual claims require owner review.",
+    ),
+    "import_package_asset": (
+        PackageImport,
+        "LOCAL_WRITE",
+        "Import real JPEG/PNG or timed SRT/VTT from imports; no rights attestation by model.",
+    ),
+    "thumbnail_template": (
+        ThumbnailTemplate,
+        "LOCAL_WRITE",
+        "Create an actual local deterministic PNG template; requires owner review.",
+    ),
+    "review_package_asset": (
+        ReviewPackageAsset,
+        "LOCAL_WRITE",
+        "Owner-only rights and creative review of packaging files.",
+    ),
+    "edit_captions": (
+        EditCaptions,
+        "DRAFT",
+        "Validate edited timed captions and create a new unreviewed local file.",
+    ),
+    "prepare_attachment": (
+        Attachment,
+        "DRAFT",
+        "Request exact approval to set a thumbnail or insert a caption track; no upload.",
+    ),
     "channel_overview": (Empty, "READ", "Read this channel's verified identity and profile."),
     "list_videos": (Recent, "READ", "List owned recent videos with source and lifetime statistics."),
     "channel_report": (Report, "READ", "Read dated channel performance metrics. Unavailable is not zero."),
@@ -249,6 +343,7 @@ def tool_contracts():
             "input_schema": schema.model_json_schema(),
             "output_schema": ToolSuccess.model_json_schema(),
             "permission": permission,
+            "owner_only": name == "review_package_asset",
             "oauth_scopes": [
                 "https://www.googleapis.com/auth/" + s
                 for s in (

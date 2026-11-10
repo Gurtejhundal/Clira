@@ -27,7 +27,39 @@
 > command router. Real AI needs your configured Gemini account; real channel operations need Google
 > OAuth and owner approval. Live-channel reads and mutations remain unverified. Rendering stays external.
 
-## See Clira in action
+## v1.0.0-rc.1 · local candidate
+
+The current branch adds the interactive terminal, shared saved conversations, five-step local
+channel planning, readable light/dark website themes, real thumbnail files and timed SRT/VTT
+packaging. **Stable v1.0.0 is not released.** Google OAuth/read/private upload, live model quality
+and thumbnail/caption playback still need owner-authorized live verification.
+
+```bash
+uv sync --locked --extra dev
+uv run clira                       # interactive terminal, no account or key required
+uv run clira --no-logo
+uv run clira serve                 # synchronized local website
+uv run clira --channel ID --resume SESSION
+uv run clira chat --channel ID --json 'Show my latest videos'
+```
+
+`./run.sh` preserves its existing website launch behavior; `uv run clira` opens the terminal.
+Terminal: Enter sends, Ctrl+J adds a line, Ctrl+R searches history, Tab completes, Ctrl+D exits.
+Use `/help`, `/channel`, `/launch`, `/new`, `/sessions`, `/resume ID`, `/title NAME`, `/status`,
+`/ideas`, `/calendar`, `/jobs`, `/approvals`, `/approve ID`, `/details`, `/sources`,
+`/theme auto|light|dark|mono`, `/web`, `/clear`, `/connect`, `/model`, `/mode`, `/quit`.
+A repeated idle Ctrl+C exits. Interrupting a request can leave completed local drafts; inspect receipts.
+The terminal starts no background worker. `/web` verifies the same local store before opening a link.
+
+[Candidate verification and blockers](docs/VERIFICATION_V1_RC.md) ·
+[Packaging guide](docs/PACKAGING.md) · [Migration and rollback](docs/MIGRATIONS.md)
+
+### Candidate screenshots (synthetic demo)
+
+[Desktop](docs/media/v1/clira-chat-1440.png) · [Mobile](docs/media/v1/clira-chat-390.png) ·
+[Local launch at 320px](docs/media/v1/clira-launch-320.png) · [Terminal capture](docs/media/v1/Clira-terminal-rc.txt)
+
+## v0.1.0 historical preview videos
 
 <p align="center">
   <img src="docs/media/clira-preview.gif" width="800" alt="Animated Clira demo: desktop performance workspace, mobile channel conversation, and completed private-upload simulation with a durable receipt">
@@ -190,7 +222,7 @@ See [verification evidence](docs/VERIFICATION.md) and [the product analysis](doc
 ## Limits and remaining work
 
 The live-channel MVP gate is **not yet verified**. No OAuth client or Gemini key was configured in
-the inspected environment. Thumbnail uploads, retention/cohort diagnostics, external-renderer
+the inspected environment. Live thumbnail/caption acceptance and playback remain unverified. Retention/cohort diagnostics, external-renderer
 execution, automatic fact verification and hosted/team access are not implemented. Script evidence
 links remain unverified; public search results are examples, not trend proof. Semantic duplicate
 detection currently uses normalized title similarity, not embeddings. UI reads are capped to recent

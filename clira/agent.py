@@ -2,13 +2,14 @@ import json
 import os
 import re
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from typing import Protocol
 
 import httpx
 
 from .config import CliraError
 from .contracts import TOOLS
-from .storage import encode, now, uid
+from .storage import encode, now
 
 SYSTEM = """You are Clira, one YouTube channel operations assistant. Work only for the immutable
 active channel ID supplied by the backend. Resolve facts using tools. Never invent metrics, sources,
@@ -184,18 +185,61 @@ class Agent:
         return [
             {"name": name, "description": description, "parametersJsonSchema": schema.model_json_schema()}
             for name, (schema, _, description) in TOOLS.items()
+            if name != "review_package_asset"
         ]
 
     def chat(self, channel_id, message, conversation_id=None):
+        self.service.policy.channel(channel_id)
+        if not isinstance(message, str) or not message.strip() or len(message) > 12000:
+            raise CliraError("MESSAGE_LENGTH", "Use a message of 1–12000 characters.")
+        store = self.service.store
+        if conversation_id:
+            existing = store.rows("SELECT channel_id FROM conversations WHERE id=?", (conversation_id,))
+            if not existing:
+                raise CliraError("NOT_FOUND", "Session not found. Start a new conversation.")
+            if existing[0]["channel_id"] != channel_id:
+                raise CliraError("CHANNEL_MISMATCH", "Conversation belongs to another workspace.")
+        else:
+            conversation_id = store.new_session(channel_id, message[:80])["id"]
+        cutoff = (datetime.now(UTC) - timedelta(minutes=10)).isoformat()
+        claimed = store.execute(
+            "UPDATE session_meta SET activity='running',accessed_at=? WHERE id=? "
+            "AND (activity!='running' OR accessed_at<?)",
+            (now(), conversation_id, cutoff),
+        )
+        if not claimed:
+            raise CliraError(
+                "SESSION_BUSY",
+                "This session already has a running request. After an interrupted process, its lease expires in ten minutes.",
+            )
+        try:
+            result = self._chat(channel_id, message, conversation_id)
+        except BaseException:
+            store.execute(
+                "UPDATE session_meta SET activity='failed',accessed_at=? WHERE id=?", (now(), conversation_id)
+            )
+            raise
+        store.execute(
+            "UPDATE session_meta SET activity='completed',accessed_at=? WHERE id=?", (now(), conversation_id)
+        )
+        return result
+
+    def _chat(self, channel_id, message, conversation_id=None):
+        if not isinstance(message, str) or not message.strip() or len(message) > 12000:
+            raise CliraError("MESSAGE_LENGTH", "Use a message of 1–12000 characters.")
         channel = self.service.policy.channel(channel_id)
         store = self.service.store
-        conversation_id = conversation_id or uid("chat")
+        conversation_id = conversation_id or store.new_session(channel_id, message[:80])["id"]
         existing = store.rows("SELECT * FROM conversations WHERE id=?", (conversation_id,))
+        if not existing:
+            raise CliraError("NOT_FOUND", "Session not found. Start a new conversation.")
         if existing and existing[0]["channel_id"] != channel_id:
             raise CliraError(
                 "CHANNEL_MISMATCH", "Conversation belongs to another channel. Start a new conversation."
             )
         history = json.loads(existing[0]["messages"]) if existing else []
+        if channel["mode"] == "draft" and self.service.config.model == "offline":
+            return self.launch_reply(channel, message, conversation_id, history)
         provider = self.provider or (
             GeminiProvider(self.service.config, store)
             if self.service.config.model == "gemini"
@@ -253,11 +297,21 @@ class Agent:
             answer = "SYNTHETIC DEMO · " + answer
         elif self.service.config.model == "offline":
             answer = "OFFLINE ROUTER · " + answer
-        history = (history + [{"role": "user", "text": message}, {"role": "assistant", "text": answer}])[-20:]
+        history = history + [
+            {"role": "user", "text": message},
+            {"role": "assistant", "text": answer, "receipts": receipts},
+        ]
         store.execute(
             "INSERT INTO conversations VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET "
             "messages=excluded.messages,updated_at=excluded.updated_at",
             (conversation_id, channel_id, encode(history), now()),
+        )
+        store.execute(
+            "INSERT OR IGNORE INTO session_meta VALUES(?,?,?,?,?)",
+            (conversation_id, message[:80], now(), now(), "completed"),
+        )
+        store.execute(
+            "UPDATE session_meta SET accessed_at=?,activity='completed' WHERE id=?", (now(), conversation_id)
         )
         return {
             "conversation_id": conversation_id,
@@ -266,4 +320,27 @@ class Agent:
             "receipts": receipts,
             "mode": self.service.config.mode,
             "model": self.service.config.model,
+        }
+
+    def launch_reply(self, channel, message, conversation_id, history):
+        plan = self.service.store.list(channel["id"], "launch")[0]
+        answer = (
+            "LOCAL DRAFT · Offline planning workspace.\n" + plan["positioning"] + "\n"
+            "Your launch plan, three starter ideas and calendar are saved. "
+            "Edit your profile and ideas in the website. Create your actual channel at "
+            "https://www.youtube.com/create_channel then use /connect for read-only OAuth. "
+            "No Google account has been created. Open-ended writing needs a configured model."
+        )
+        history += [{"role": "user", "text": message}, {"role": "assistant", "text": answer}]
+        self.service.store.execute(
+            "UPDATE conversations SET messages=?,updated_at=? WHERE id=?",
+            (encode(history), now(), conversation_id),
+        )
+        return {
+            "conversation_id": conversation_id,
+            "channel_id": channel["id"],
+            "message": answer,
+            "receipts": [],
+            "mode": "draft",
+            "model": "offline",
         }

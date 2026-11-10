@@ -1,7 +1,9 @@
 # Clira implementation
 
 Read the original product contract in `mds/Clira_Agent_Architecture_Build_Pack/Clira/AGENTS.md`
-and `docs/PRODUCT_ANALYSIS.md`. It remains the design authority; originals are preserved.
+and `docs/PRODUCT_ANALYSIS.md`. Originals are preserved. For the v1 candidate, read
+`CLIRA_V1_TERMINAL_WEB_MASTER_SPEC_AND_CODEX_PROMPT.md` completely; it controls UX and release scope.
+Do not tag/publish stable v1.0.0 until every mandatory gate passes and the owner explicitly approves.
 
 - One Python agent with deterministic typed tools. No Hermes or autonomous subagents.
 - Rendering is external and optional. Do not modify Lemo internals.

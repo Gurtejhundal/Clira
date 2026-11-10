@@ -2,6 +2,10 @@
 
 ## 1.0.0rc1 · unreleased local candidate
 
+- Refresh the README around the faithful live character, with real reaction and workspace GIFs,
+  transparent and black-background borderless logos, a small favicon and the current tagline.
+  Retain existing setup/operation documentation and document media provenance and rebuild steps.
+
 - Replace the simplified live-character drawing with faithful portrait textures, eight restrained
   expressions and a dedicated blink. Clip facial changes over a shared silhouette, with subtle head,
   breathing and iris motion. Keep the existing event controller, motion controls and agent backend.

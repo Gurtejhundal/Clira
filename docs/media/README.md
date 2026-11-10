@@ -1,5 +1,23 @@
 # Demo media
 
+## Current character and website
+
+- [`character/clira-character.gif`](character/clira-character.gif): the faithful character reacting
+  to real browser hover, click, double-click and circular-pointer inputs. Thinking/attachment/error
+  examples use local presentation events. This is not an account operation.
+- [`character/clira-workspace.gif`](character/clira-workspace.gif): continuous actual website capture
+  with the offline synthetic demo backend, including a real chat request to that offline backend.
+- [`character/character-poster.png`](character/character-poster.png): static character alternative.
+- [`web/terminal-workspace.png`](web/terminal-workspace.png): updated website with the faithful portrait.
+- [`../../clira/web/assets/clira-logo-black.png`](../../clira/web/assets/clira-logo-black.png): default borderless logo on black.
+  The transparent alternative and small browser icon are alongside it.
+
+[Exact dimensions, generation prompt, file sizes and capture provenance](../brand/LOGO_AND_README_MEDIA.md).
+No account API or configured model calls were used for these captures. Built-in image generation
+was used for the black-background logo variant.
+
+## Historical v0.1.0 media
+
 These assets are captured from, or generated around, Clira's real local **synthetic demo**.
 No actual Google account, channel statistics, paid model requests, public replies or uploads are shown.
 

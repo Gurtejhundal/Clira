@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="clira/web/assets/clira-portrait.png" alt="Clira — glasses, headphones, and a thoughtful creative partner" width="180">
+  <img src="clira/web/assets/clira-logo-black.png" alt="Clira — borderless monochrome character logo on black" width="140">
 </p>
 
 <p align="center">
-  <img src="docs/media/clira-banner.svg" alt="Clira — Storytelling meets strategic wisdom" width="100%">
+  <img src="docs/media/clira-banner.svg" alt="CLIRA — Intelligence Behind Creation" width="600">
 </p>
 
 <p align="center">
@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Gurtejhundal/Clira/releases/tag/v0.1.0"><img src="https://img.shields.io/badge/preview-v0.1.0-a18b4e?style=flat-square" alt="Preview v0.1.0"></a>
+  <a href="docs/VERIFICATION_V1_RC.md"><img src="https://img.shields.io/badge/candidate-1.0.0rc1-c4a466?style=flat-square" alt="Local candidate 1.0.0rc1; not a stable release"></a>
   <img src="https://img.shields.io/badge/Python-3.12%2B-617851?style=flat-square" alt="Python 3.12 or later">
   <a href="https://github.com/Gurtejhundal/Clira/actions/workflows/release.yml"><img src="https://github.com/Gurtejhundal/Clira/actions/workflows/release.yml/badge.svg" alt="Verify and release"></a>
   <img src="https://img.shields.io/badge/Local_first-SQLite-303a2c?style=flat-square" alt="Local first with SQLite">
@@ -23,13 +23,45 @@
   <a href="#run">Get started</a> ·
   <a href="#see-clira-in-action">Watch the demos</a> ·
   <a href="docs/SETUP.md">Connect YouTube</a> ·
-  <a href="https://github.com/Gurtejhundal/Clira/releases/tag/v0.1.0">Download v0.1.0</a> ·
+  <a href="docs/LIVE_CHARACTER.md">Meet Clira</a> ·
   <a href="docs/PRODUCT_ANALYSIS.md">Product & architecture</a>
 </p>
 
-> **First public MVP preview.** Explore immediately with synthetic demo data and a limited offline
-> command router. Real AI needs your configured Gemini account; real channel operations need Google
-> OAuth and owner approval. New upload automation is tested with simulations; rendering stays external.
+> **Local release candidate.** Explore with synthetic demo data. Open-ended AI needs your Gemini
+> configuration; YouTube operations need OAuth and exact owner approval. Stable v1.0.0 is not released.
+
+## Meet Clira
+
+A quiet creative partner with a little personality. The original portrait comes alive through eight
+restrained expressions, natural blinks, subtle gaze and tiny head movements.
+
+<p align="center">
+  <img src="docs/media/character/clira-character.gif" width="360" alt="Clira character animation: hover makes her curious, a single click brings a small smile, double-click brings delight, circling the pointer makes her dizzy, chat brings a thinking expression, and errors bring concern.">
+</p>
+
+<p align="center">
+  <strong>Hover to catch her attention. Click to say hello.</strong><br>
+  Double-click for delight. Circle the pointer for a little dizziness.<br>
+  <a href="docs/media/character/character-poster.png">Static portrait</a> ·
+  <a href="docs/LIVE_CHARACTER.md">Expressions & controls</a> ·
+  <a href="clira/web/assets/clira-logo-black.png">Black-background logo</a> ·
+  <a href="clira/web/assets/clira-logo.png">Transparent alternative</a>
+</p>
+
+The GIF runs the shipped character controller with local presentation events. It is a character
+preview, not an account operation. In the website, real chat, attachment, preview, review and error
+states drive the same reactions. Touch and keyboard work too. **Full / Reduced / Off** motion settings
+respect the operating system's reduced-motion preference. The terminal keeps its Braille portrait.
+
+## See Clira in action
+
+<p align="center">
+  <img src="docs/media/character/clira-workspace.gif" width="960" alt="Recorded Clira website: the detailed character reacts to hover, clicks and circular pointer movement, then a real offline demo chat shows synthetic latest uploads.">
+</p>
+
+A continuous browser recording of the current website, using the actual offline demo backend.
+The channel and replies are synthetic; no Google model call or YouTube write is shown.
+[Static workspace](docs/media/web/terminal-workspace.png) · [Capture details](docs/media/README.md).
 
 ## Terminal-style web workspace
 
@@ -38,19 +70,14 @@ frames, a faithful monochrome portrait, CLIRA wordmark, monospace controls and a
 You can select and copy answers, use slash navigation, attach a video and review its upload in chat.
 The interactive terminal remains optional; it does not have to run alongside the website.
 
-Clira's image-backed SVG companion preserves the original detailed artwork with eight expressions.
-It blinks, follows nearby pointer movement, distinguishes single and
-double clicks, reacts to circular gestures, and responds to real chat/upload/review states.
-**Character motion: Full / Reduced / Off** is available in Settings and honors reduced motion.
-The original portrait assets are preserved. [Character behavior and event hooks](docs/LIVE_CHARACTER.md).
+The gold frames, centered identity and command navigation remain consistent across desktop and
+mobile. [Character behavior](docs/LIVE_CHARACTER.md) · [Logo and artwork provenance](docs/brand/CHARACTER_V2_ART.md).
 
 ```bash
 ./run.sh --mode live serve         # open http://127.0.0.1:8765 in your browser
 # Or explore without credentials:
 ./run.sh --mode demo serve
 ```
-
-![Clira terminal-style web workspace, showing synthetic demo data](docs/media/web/terminal-workspace.png)
 
 [Web workspace & keyboard controls](docs/WEB_WORKSPACE.md) · [Chat upload flow and limits](docs/CHAT_UPLOAD.md)
 
@@ -120,7 +147,10 @@ For the original scrolling layout: `CLIRA_TERMINAL_LAYOUT=inline uv run --locked
 [Desktop](docs/media/v1/clira-chat-1440.png) · [Mobile](docs/media/v1/clira-chat-390.png) ·
 [Local launch at 320px](docs/media/v1/clira-launch-320.png) · [Terminal capture](docs/media/v1/Clira-terminal-rc.txt)
 
-## v0.1.0 historical preview videos
+<details>
+<summary>Earlier v0.1.0 tours and CLI walkthrough</summary>
+
+### v0.1.0 historical preview videos
 
 <p align="center">
   <img src="docs/media/clira-preview.gif" width="800" alt="Animated Clira demo: desktop performance workspace, mobile channel conversation, and completed private-upload simulation with a durable receipt">
@@ -134,6 +164,8 @@ For the original scrolling layout: `CLIRA_TERMINAL_LAYOUT=inline uv run --locked
 The product tour uses real captured **synthetic-demo screens** with a guided pan/scroll presentation.
 The CLI walkthrough uses actual command-output excerpts. Both are silent with on-screen explanations.
 [Transcript, original captures and media details →](docs/media/README.md)
+
+</details>
 
 ## A creator workflow, held together
 
@@ -289,12 +321,13 @@ See [verification evidence](docs/VERIFICATION.md) and [the product analysis](doc
 
 ## Limits and remaining work
 
-The live-channel MVP gate is **not yet verified**. No OAuth client or Gemini key was configured in
-the inspected environment. Live thumbnail/caption acceptance and playback remain unverified. Retention/cohort diagnostics, external-renderer
+An owner-authorized authenticated read and private demo upload are recorded in the verification
+notes. Full production readiness is not established: the new chat upload path has simulation coverage,
+and live model quality plus thumbnail/caption acceptance and playback remain unverified. Retention/cohort diagnostics, external-renderer
 execution, automatic fact verification and hosted/team access are not implemented. Script evidence
 links remain unverified; public search results are examples, not trend proof. Semantic duplicate
 detection currently uses normalized title similarity, not embeddings. UI reads are capped to recent
 items; complete-history pagination is a future improvement. Nothing in this release guarantees
 growth, licensing clearance, or replacement of human creative judgment.
 
-The original 21-file build pack is preserved under `mds/Clira_Agent_Architecture_Build_Pack/Clira/`.
+The [original 21-file build pack](mds/Clira_Agent_Architecture_Build_Pack/Clira/) is preserved in the repository.

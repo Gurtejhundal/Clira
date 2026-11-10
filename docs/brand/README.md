@@ -28,3 +28,17 @@ Drag to select, then use the terminal's Copy action (usually Ctrl+Shift+C on Lin
 F2 toggles application mouse scrolling; F2 again restores native selection.
 PgUp/PgDn and Ctrl+End work in both modes. Clipboard and selection appearance
 are controlled by the terminal emulator; Clira does not write OSC 52 clipboard data.
+
+## Terminal home hierarchy
+
+The terminal tagline is **Intelligence Behind Creation**, directly under the centered
+CLIRA wordmark. Startup branding omits the version; `/version` and `clira --version`
+expose it on demand. The borderless, unchanged Braille artwork is centered in the
+wide layout. Six aligned shortcuts remain below it: `/help`, `/new`, `/sessions`,
+`/channel`, `/status`, `/approvals`. Existing commands remain available through help.
+
+At 100 and 120 columns, the fixed sidebar leaves a separate conversation column.
+At 80 columns, a compact centered header preserves all six shortcuts and hides
+only decorative artwork. Short terminal heights also hide the portrait before
+it can crowd the commands. Channel name and mode stay in the secondary header.
+The welcome is emitted on interactive startup, outside the message loop.

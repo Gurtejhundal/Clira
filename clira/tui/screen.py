@@ -24,14 +24,12 @@ from prompt_toolkit.layout.processors import ConditionalProcessor, PasswordProce
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets import Frame, SearchToolbar, TextArea
-from rich.cells import cell_len
+from prompt_toolkit.widgets import SearchToolbar, TextArea
 from rich.console import Console
 from rich.padding import Padding
 from rich.text import Text
 from rich.theme import Theme
 
-from .. import __version__
 from ..text import terminal_text
 from .keys import register_modified_keys
 from .presentation import WORDMARK
@@ -113,7 +111,7 @@ class SplitScreen:
         )
         self.right = HSplit(
             [
-                Window(FormattedTextControl(self.title), height=1, style="class:heading"),
+                Window(FormattedTextControl(self.title), height=1, style="class:muted"),
                 self.log,
                 Window(FormattedTextControl(self.scroll_hint), height=1, style="class:muted"),
                 Window(
@@ -124,7 +122,7 @@ class SplitScreen:
                     style="class:heading",
                 ),
                 FloatContainer(
-                    Frame(self.input, style="class:composer"),
+                    self.input,
                     floats=[Float(xcursor=True, ycursor=True, content=CompletionsMenu(max_height=6))],
                 ),
                 self.search,
@@ -132,14 +130,14 @@ class SplitScreen:
         )
         self.wide = VSplit(
             [
-                Frame(self.sidebar, title=" CLIRA ", style="class:frame"),
-                Window(width=1, char=" "),
+                self.sidebar,
+                Window(width=3, char=" "),
                 self.right,
             ]
         )
         self.compact = HSplit(
             [
-                Window(FormattedTextControl(self.compact_title), height=2, style="class:heading"),
+                Window(FormattedTextControl(self.compact_title), height=6, style="class:body"),
                 self.right,
             ]
         )
@@ -161,7 +159,7 @@ class SplitScreen:
 
     @property
     def is_wide(self):
-        return self.size[0] >= 110 and self.size[1] >= 24
+        return self.size[0] >= 100 and self.size[1] >= 24
 
     @property
     def content_width(self):
@@ -254,39 +252,54 @@ class SplitScreen:
         gold = "class:heading"
         add("")
         add("")
+        add("")
         if height >= 42 and not t.no_logo:
-            padding = " " * ((44 - max(cell_len(line) for line in WORDMARK)) // 2)
-            add("\n".join(padding + line for line in WORDMARK), gold)
+            add("\n".join(line.center(44) for line in WORDMARK), gold)
         else:
             add("CLIRA".center(44), gold)
-        add("Storytelling meets strategic wisdom".center(44), "class:muted")
-        add(("v" + __version__).center(44), "class:muted")
-        if height >= 34 and not t.no_logo:
-            add("")
-            add(files("clira").joinpath("assets/clira_braille_v2_compact.txt").read_text().rstrip())
+        add("Intelligence Behind Creation".center(44), "class:muted")
         add("")
-        add("/help  Explore commands".center(44), "class:muted")
-        add("/back  Return to start".center(44), "class:muted")
-        add("F2  Copy / mouse scroll".center(44), "class:muted")
+        if height >= 34 and not t.no_logo:
+            portrait = files("clira").joinpath("assets/clira_braille_v2_compact.txt").read_text()
+            add("\n".join(line.center(44) for line in portrait.rstrip("\n").splitlines()))
+            add("")
+        for command, description in [
+            ("/help", "Commands"),
+            ("/new", "New conversation"),
+            ("/sessions", "Saved conversations"),
+            ("/channel", "Switch workspace"),
+            ("/status", "Workspace status"),
+            ("/approvals", "Pending review"),
+        ]:
+            add("     " + command.ljust(12) + description, "class:muted")
         return text
 
     def compact_title(self):
+        width = self.size[0]
         return [
-            ("class:heading", "CLIRA  ·  Storytelling meets strategic wisdom\n"),
-            ("class:muted", "/help commands · /back menu · PgUp/PgDn history"),
+            ("class:heading", "CLIRA".center(width) + "\n"),
+            ("class:muted", "Intelligence Behind Creation".center(width) + "\n\n"),
+            ("class:muted", "/help   /new   /sessions".center(width) + "\n"),
+            ("class:muted", "/channel   /status   /approvals".center(width) + "\n"),
         ]
 
     def title(self):
-        label = "CONVERSATION"
         if self.terminal.channel:
-            label += "  /  " + self.terminal.channel
-        return terminal_text(label)
+            channel = self.terminal.service.store.channel(self.terminal.channel)
+            return terminal_text(channel["name"] + "  /  " + channel["mode"].upper())
+        return "Local workspace"
 
     def scroll_hint(self):
         if self.busy:
             return "Clira is working…"
         if self.offset:
             return "History · PgUp/PgDn scroll · Ctrl+End returns to latest"
+        if self.content_width < 80:
+            return (
+                "Enter send · PgUp/PgDn history · F2 mouse"
+                if self.content_width >= 44
+                else "Enter send · F2 mouse · /help"
+            )
         mode = (
             "Mouse scroll · F2 select text"
             if self.mouse_scroll

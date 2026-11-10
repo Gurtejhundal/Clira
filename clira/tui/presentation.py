@@ -13,7 +13,6 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
-from .. import __version__
 from ..contracts import TOOLS
 from ..creator import model_key
 from ..text import terminal_text
@@ -39,7 +38,7 @@ HELP = [
     ("CREATOR WORK", "/ideas · /calendar", "Saved ideas and draft plans"),
     ("", "/jobs · /approvals", "Durable work and owner review"),
     ("", "/approve ID", "Review exact payload; never executes"),
-    ("INSPECT", "/status · /model · /mode", "Current account, runtime and policy"),
+    ("INSPECT", "/status · /model · /mode · /version", "Current account, runtime and policy"),
     ("", "/details · /sources", "Complete last receipt and evidence"),
     ("PREFERENCES", "/theme auto|light|dark|mono", "Appearance; NO_COLOR takes priority"),
     ("", "/web · /clear · /quit", "Open matching website, clear, exit"),
@@ -195,21 +194,21 @@ class Presentation:
             header.add_row(
                 mark,
                 Group(
-                    self.heading("STORYTELLING MEETS STRATEGIC WISDOM"),
+                    self.heading("INTELLIGENCE BEHIND CREATION"),
                     literal("The work behind your YouTube channel.", self.muted),
-                    literal(f"v{__version__}  /  local workspace", self.muted),
+                    literal("Local workspace", self.muted),
                 ),
             )
             # A narrow terminal gets the tagline underneath instead of a crushed column.
             if self.width < 80:
                 self.emit(mark)
-                self.emit(literal(f"Storytelling meets strategic wisdom · v{__version__}", self.muted))
+                self.emit(literal("Intelligence Behind Creation", self.muted))
             else:
                 self.emit(Padding(header, (0, 2)))
             self.emit(Text(""))
         else:
-            self.emit(Text.assemble(("CLIRA", "bold " + self.accent), (f"  v{__version__}", self.muted)))
-            self.emit(literal("Storytelling meets strategic wisdom", self.muted))
+            self.emit(self.heading("CLIRA"))
+            self.emit(literal("Intelligence Behind Creation", self.muted))
             self.emit(Text(""))
 
         if terminal.channel:
@@ -263,7 +262,9 @@ class Presentation:
         self.emit(Text(""))
 
     def onboarding(self):
-        if self.width >= 52:
+        if self.terminal.screen:
+            self.emit(Padding(self.choices(), (1, 2)))
+        elif self.width >= 52:
             self.emit(Panel(self.choices(), border_style=self.accent, padding=(1, 2), box=box.ROUNDED))
         else:
             self.emit(self.choices())

@@ -14,7 +14,7 @@ def test_full_screen_startup_multiline_and_clean_exit(tmp_path, width, height):
     probe = TerminalProbe(tmp_path, width, height)
     try:
         probe.wait("Choose 1 / 2 / 3")
-        assert "CLIRA" in probe.text
+        assert "CLIRA" in probe.text or "█" in probe.text
         probe.send("3\r")
         probe.wait("❯")
         probe.send("Show latest\x0avideos\r")
@@ -61,7 +61,7 @@ def test_long_conversation_sidebar_scroll_resize_and_input_are_independent(tmp_p
         probe.wait("Latest uploads")
         assert probe.left == portrait
         probe.resize(80, 32)
-        assert "Storytelling meets strategic wisdom" in probe.text and "█" not in probe.text
+        assert "Intelligence Behind Creation" in probe.text and "█" not in probe.text
         assert "unfinished message" in probe.text
         probe.resize(140, 48)
         assert probe.left == portrait and "unfinished message" in probe.text
@@ -199,5 +199,31 @@ def test_native_selection_is_default_and_f2_toggles_mouse_capture(tmp_path):
         probe.send("\x1bOQ")
         probe.wait("Select text")
         assert "\x1b[?1000l" in probe.raw
+    finally:
+        probe.close()
+
+
+@pytest.mark.parametrize("width", [80, 100, 120])
+def test_home_hierarchy_commands_and_version_do_not_repeat_welcome(tmp_path, width):
+    from clira import __version__
+
+    probe = TerminalProbe(tmp_path, width=width, height=48)
+    try:
+        probe.wait("Choose 1 / 2 / 3")
+        for command in ["/help", "/new", "/sessions", "/channel", "/status", "/approvals"]:
+            assert command in probe.text
+        assert "Intelligence Behind Creation" in probe.text
+        assert __version__ not in probe.text
+        if width >= 100:
+            assert re.search(r"[\u2801-\u28ff]", probe.left)
+            assert not any(c in probe.left for c in "┌┐└┘│")
+        probe.send("3\r")
+        probe.wait("❯")
+        before = probe.text.count("Welcome to Clira")
+        probe.send("/version\r")
+        probe.wait("Clira " + __version__)
+        assert probe.text.count("Welcome to Clira") <= before
+        probe.send("/help\r")
+        probe.wait("/version")
     finally:
         probe.close()

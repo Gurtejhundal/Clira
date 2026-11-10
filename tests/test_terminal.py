@@ -283,7 +283,7 @@ def test_colored_visual_startup_help_and_resize_keep_keyboard_working(tmp_path):
     capture = io.StringIO()
     child = spawn(tmp_path, 120, color=True)
     child.logfile_read = capture
-    child.expect("STORYTELLING MEETS STRATEGIC WISDOM")
+    child.expect("INTELLIGENCE BEHIND CREATION")
     child.expect("Welcome to Clira")
     child.expect("Choose 1 / 2 / 3")
     child.send("3\r")

@@ -26,7 +26,7 @@ def test_welcome_reflows_without_truncation_or_contract_leak(service, width, cha
     output = app.console.export_text()
     assert all(cell_len(line) <= min(width, 124) for line in output.splitlines())
     assert "End of single-file" not in output
-    assert "v1.0.0rc1" in output and "\x1b" not in output
+    assert "v1.0.0rc1" not in output and "\x1b" not in output
     assert bool(re.search(r"[\u2800-\u28ff]", output)) == (width >= 100)
     if channel:
         assert DEMO_CHANNEL in output and "SYNTHETIC" in output
@@ -125,7 +125,7 @@ def test_startup_preserves_approved_bold_layout(service):
     app = terminal(service, channel=DEMO_CHANNEL)
     app.view.welcome()
     output = app.console.export_text()
-    assert "█" in output and "YOUR CREATIVE INTELLIGENCE" in output
+    assert "█" in output and "INTELLIGENCE BEHIND CREATION" in output
     assert "YOUTUBE WORKSPACE" in output and "CREATOR TOOLKIT" in output
     assert all(char in output for char in "╭╮╰╯")
     assert DEMO_CHANNEL in output and "live writes disabled" in output

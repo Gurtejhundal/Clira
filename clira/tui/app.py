@@ -15,6 +15,7 @@ from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.styles import Style
 from rich.console import Console
 
+from .. import __version__
 from ..agent import Agent
 from ..config import CliraError
 from ..service import DEMO_CHANNEL
@@ -25,6 +26,7 @@ from .presentation import Presentation
 
 COMMANDS = [
     "/help",
+    "/version",
     "/setup",
     "/profile",
     "/project",
@@ -223,7 +225,9 @@ class Terminal:
         if cmd == "/quit":
             self.print("Goodbye. No background worker is started by this terminal.")
             return False
-        if cmd == "/setup":
+        if cmd == "/version":
+            self.print("Clira " + __version__)
+        elif cmd == "/setup":
             from .setup import CreatorSetup
 
             CreatorSetup(self).run(edit=True)
@@ -473,11 +477,7 @@ class Terminal:
                         + profile["answers"]["name"]
                         + ". Your creator profile is saved on this device."
                     )
-                else:
-                    self.print("Welcome to Clira. Your workspace stays in the sidebar.")
-                if self.channel:
-                    self.status()
-                else:
+                if not self.channel:
                     self.view.onboarding()
             else:
                 self.view.welcome()

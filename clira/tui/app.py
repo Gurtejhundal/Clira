@@ -9,7 +9,7 @@ from contextlib import contextmanager
 import httpx
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
-from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.history import DummyHistory, InMemoryHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.styles import Style
@@ -26,6 +26,13 @@ from .presentation import Presentation
 
 COMMANDS = [
     "/help",
+    "/setup",
+    "/profile",
+    "/project",
+    "/memory",
+    "/remember",
+    "/forget",
+    "/connections",
     "/status",
     "/channel",
     "/connect",
@@ -52,8 +59,9 @@ COMMANDS = [
 
 
 class Terminal:
-    def __init__(self, service, channel=None, resume=None, no_logo=False):
+    def __init__(self, service, channel=None, resume=None, no_logo=False, quickstart=False):
         self.service = service
+        self.quickstart = quickstart
         self.channel = channel
         self.conversation = resume
         self.last = None
@@ -92,6 +100,11 @@ class Terminal:
                 placeholder=[("class:placeholder", "Ask about your channel…  /help")],
             ).strip()
         return self.prompt.prompt(text, placeholder="").strip()
+
+    def ask_secret(self, text):
+        if self.screen:
+            return self.screen.prompt(text, is_password=True).strip()
+        return PromptSession(history=DummyHistory()).prompt(text, is_password=True).strip()
 
     def onboarding(self, show=True):
         previous_channel = self.channel
@@ -211,7 +224,59 @@ class Terminal:
         if cmd == "/quit":
             self.print("Goodbye. No background worker is started by this terminal.")
             return False
-        if cmd == "/help":
+        if cmd == "/setup":
+            from .setup import CreatorSetup
+
+            CreatorSetup(self).run(edit=True)
+        elif cmd == "/connections":
+            from .setup import CreatorSetup
+
+            CreatorSetup(self).connections()
+        elif cmd == "/project":
+            from ..creator import Creator
+            from .setup import CreatorSetup
+
+            if not Creator(self.service).profile():
+                raise CliraError("SETUP_REQUIRED", "Complete /setup first.")
+            CreatorSetup(self).project()
+        elif cmd == "/profile":
+            from ..creator import Creator
+
+            creator = Creator(self.service)
+            if arg.startswith("set "):
+                key, _, value = arg[4:].partition(" ")
+                creator.update(key, value)
+                self.print("Profile updated locally: " + key)
+            elif arg == "forget":
+                if self.ask("Type FORGET PROFILE to remove your creator profile > ") == "FORGET PROFILE":
+                    creator.forget_profile()
+                    self.print(
+                        "Creator profile removed. Projects, notes, credentials and conversation history remain separate."
+                    )
+            else:
+                self.print(
+                    json.dumps(
+                        creator.profile() or {"notice": "Use /setup to create your profile."},
+                        indent=2,
+                        ensure_ascii=False,
+                    )
+                )
+                self.print(
+                    "/profile set FIELD VALUE updates a preference; /profile forget removes the profile."
+                )
+        elif cmd == "/memory":
+            self.view.records("Your local memory", store.list(self.channel, "memory"), ["text", "source"])
+        elif cmd == "/remember":
+            from ..creator import Creator
+
+            note = Creator(self.service).remember(self.channel, arg)
+            self.print("Remembered locally: " + note["id"])
+        elif cmd == "/forget":
+            from ..creator import Creator
+
+            Creator(self.service).forget(self.channel, arg)
+            self.print("Note removed. Existing conversation history is unchanged.")
+        elif cmd == "/help":
             self.view.help()
         elif cmd in {"/status", "/model", "/mode"}:
             self.status()
@@ -382,6 +447,17 @@ class Terminal:
 
     def interact(self):
         try:
+            if not self.quickstart:
+                from ..creator import Creator
+                from .setup import CreatorSetup
+
+                creator = Creator(self.service)
+                if not creator.profile() or not self.service.store.setting("creator_setup_finished", False):
+                    CreatorSetup(self).run()
+                    if not creator.profile() or not self.service.store.setting(
+                        "creator_setup_finished", False
+                    ):
+                        return 0
             if self.channel:
                 self.service.policy.channel(self.channel)
             else:
@@ -389,7 +465,17 @@ class Terminal:
                 if saved and any(c["id"] == saved for c in self.service.channels()):
                     self.channel = saved
             if self.screen:
-                self.print("Welcome to Clira. Your workspace stays in the sidebar.")
+                from ..creator import Creator
+
+                profile = Creator(self.service).profile()
+                if profile:
+                    self.print(
+                        "Welcome, "
+                        + profile["answers"]["name"]
+                        + ". Your creator profile is saved on this device."
+                    )
+                else:
+                    self.print("Welcome to Clira. Your workspace stays in the sidebar.")
                 if self.channel:
                     self.status()
                 else:

@@ -2,6 +2,14 @@
 
 ## 1.0.0rc1 · unreleased local candidate
 
+- Personal creator setup with 19 resumable questions, explicit profile review, local memory,
+  editable preferences, optional masked Gemini/YouTube/Telegram connection setup and a personalized
+  first project. Add inspect/remember/forget commands and opt-in saved-memory context. Telegram
+  polling shares the existing agent and saved sessions after expiring single-use private pairing;
+  account approvals/execution remain local. No live provider verification is implied.
+- Restrict source distributions to product/source folders and reject generated/private entries;
+  prevent recursive inclusion of prior builds and local runtime data.
+
 - Center and lower the sidebar wordmark with top padding; left-align composer question labels
   with the answer field. Add a transcript scrollbar and mouse-wheel scrolling. Recognize reported
   Shift+Enter and Shift+Backspace via CSI-u/xterm encodings, preserving Ctrl+J, `/back` and ordinary

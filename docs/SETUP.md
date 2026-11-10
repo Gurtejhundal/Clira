@@ -57,7 +57,8 @@ not cancel a schedule that Google has already accepted.
 
 Run `uv run clira` to open the interactive terminal, or `uv run clira serve` for the local website.
 Use an absolute `CLIRA_DATA_DIR` in every shell to share data across working directories. First run
-lets you start a local launch workspace, connect an existing channel, or explore synthetic demo data.
+now walks through [personal creator setup](CREATOR_SETUP.md), local memory and optional connections
+before opening your project. `--quickstart` retains the short demo/channel menu.
 Five launch decisions produce starter drafts without Google sign-in. These are offline templates;
 open-ended writing needs an explicitly enabled model.
 

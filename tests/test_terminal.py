@@ -28,7 +28,7 @@ def spawn(tmp_path, width=80, *args, color=False):
         env.pop("NO_COLOR")
     return pexpect.spawn(
         sys.executable,
-        ["-m", "clira", "--data-dir", str(tmp_path), *args],
+        ["-m", "clira", "--quickstart", "--data-dir", str(tmp_path), *args],
         env=env,
         encoding="utf-8",
         timeout=15,

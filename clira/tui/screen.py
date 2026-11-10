@@ -20,6 +20,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl, UIContent, UICo
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.margins import ScrollbarMargin
 from prompt_toolkit.layout.menus import CompletionsMenu
+from prompt_toolkit.layout.processors import ConditionalProcessor, PasswordProcessor
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.output import ColorDepth
 from prompt_toolkit.styles import Style
@@ -69,6 +70,7 @@ class SplitScreen:
         self.lock = threading.Lock()
         self.answers = queue.Queue()
         self.waiting = False
+        self.secret = False
         self.busy = False
         self.prompt_label = "Starting Clira…"
         self.offset = 0
@@ -93,6 +95,9 @@ class SplitScreen:
             complete_while_typing=False,
             read_only=Condition(lambda: not self.waiting),
             style="class:input",
+        )
+        self.input.control.input_processors.append(
+            ConditionalProcessor(PasswordProcessor(), Condition(lambda: self.secret))
         )
         self.log = Window(
             Transcript(self),
@@ -291,9 +296,9 @@ class SplitScreen:
                 return
             value = self.input.text
             self.waiting = False
-            self.input.buffer.reset(append_to_history=True)
+            self.input.buffer.reset(append_to_history=not self.secret)
             self.offset = 0
-            self.emit(Text(self.prompt_label + " " + terminal_text(value)))
+            self.emit(Text(self.prompt_label + " " + ("[hidden]" if self.secret else terminal_text(value))))
             self.answers.put(value)
 
         @keys.add("escape", "c-h", filter=has_focus(self.input))
@@ -302,9 +307,14 @@ class SplitScreen:
                 self.input.text = "/back"
                 submit(event)
 
+        @keys.add("c-r", filter=has_focus(self.input) & Condition(lambda: self.secret))
+        @keys.add("c-s", filter=has_focus(self.input) & Condition(lambda: self.secret))
+        def no_secret_search(event):
+            return
+
         @keys.add("tab", filter=has_focus(self.input))
         def complete(event):
-            if not self.waiting:
+            if not self.waiting or self.secret:
                 return
             buffer = self.input.buffer
             if buffer.complete_state:
@@ -363,6 +373,7 @@ class SplitScreen:
             label = "".join(part[1] for part in label)
 
         def prepare():
+            self.secret = bool(kwargs.get("is_password"))
             self.prompt_label = terminal_text(label).strip()
             self.input.buffer.reset()
             self.waiting = True

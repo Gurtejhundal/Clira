@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .agent import Agent
 from .config import CliraError, Config
+from .creator import model_key
 from .service import Service
 from .storage import encode
 from .text import terminal_text
@@ -32,7 +33,7 @@ def doctor(service):
         "disk_free_bytes": shutil.disk_usage(config.data_dir).free,
         "model": config.model,
         "model_id": config.model_id,
-        "model_key_present": bool(os.getenv("GEMINI_API_KEY")),
+        "model_key_present": bool(model_key(service)),
         "model_calls_authorized": config.allow_model_calls,
         "max_model_calls_day": config.max_model_calls_day,
         "oauth_client_configured": bool(os.getenv("CLIRA_GOOGLE_CLIENT_FILE")),
@@ -58,7 +59,12 @@ def main():
     parser.add_argument("--channel")
     parser.add_argument("--resume")
     parser.add_argument("--no-logo", action="store_true")
+    parser.add_argument(
+        "--quickstart", action="store_true", help="Skip personal setup for a temporary/demo session"
+    )
     sub = parser.add_subparsers(dest="command")
+    tg = sub.add_parser("telegram", help="Run your explicitly paired personal bot")
+    tg.add_argument("action", choices=["run", "pair", "disconnect"])
     sub.add_parser("doctor")
     sub.add_parser("channels")
     serve = sub.add_parser("serve")
@@ -103,11 +109,36 @@ def main():
     kwargs = {k: v for k, v in [("mode", args.mode), ("data_dir", args.data_dir)] if v is not None}
     try:
         service = Service(Config(**kwargs))
+        from .creator import load_runtime
+
+        load_runtime(service)
         if args.command is None:
             from .tui.app import Terminal
 
-            return Terminal(service, args.channel, args.resume, args.no_logo).run()
-        if args.command == "doctor":
+            return Terminal(service, args.channel, args.resume, args.no_logo, args.quickstart).run()
+        if args.command == "telegram":
+            from .telegram import Telegram, pairing_code
+
+            if args.action == "pair":
+                print("Privately send /pair " + pairing_code(service) + " to your bot within ten minutes.")
+            elif args.action == "disconnect":
+                service.secrets.delete("telegram")
+                for key in ["telegram_owner", "telegram_pair"]:
+                    service.store.set_setting(key, {})
+                print(
+                    "Telegram credentials and pairing removed locally. Revoke the token with BotFather if needed."
+                )
+            else:
+                channel = args.channel or service.store.setting("active_workspace:" + service.config.mode)
+                if not channel:
+                    raise CliraError(
+                        "CHANNEL_REQUIRED", "Complete setup or select --channel before starting the bot."
+                    )
+                print(
+                    "Clira personal Telegram transport is running. Ctrl+C stops it; device must stay online."
+                )
+                Telegram(service, channel).run()
+        elif args.command == "doctor":
             show(doctor(service))
         elif args.command == "channels":
             show(service.channels())
@@ -145,7 +176,7 @@ def main():
             else:
                 from .tui.app import Terminal
 
-                return Terminal(service, args.channel, args.resume, args.no_logo).run()
+                return Terminal(service, args.channel, args.resume, args.no_logo, args.quickstart).run()
         elif args.command == "tool":
             raw = Path(args.json[1:]).read_text() if args.json.startswith("@") else args.json
             result = service.tool(args.channel, args.name, json.loads(raw))

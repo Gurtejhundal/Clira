@@ -15,6 +15,7 @@ from rich.text import Text
 
 from .. import __version__
 from ..contracts import TOOLS
+from ..creator import model_key
 from ..text import terminal_text
 
 WORDMARK = (
@@ -27,6 +28,9 @@ WORDMARK = (
 )
 
 HELP = [
+    ("YOUR CLIRA", "/setup · /profile · /project", "Your creator profile and next project"),
+    ("", "/memory · /remember TEXT", "Review or explicitly save a local note"),
+    ("", "/forget ID · /connections", "Remove a note or configure connections"),
     ("WORKSPACE", "/channel [ID]", "Choose a channel or local workspace"),
     ("", "/launch · /connect", "Plan locally or start read-only OAuth"),
     ("", "/back", "Return to the start menu; keep saved work"),
@@ -94,7 +98,7 @@ class Presentation:
         config = terminal.service.config
         if config.model == "offline":
             model = "Offline · limited templates"
-        elif config.allow_model_calls and os.getenv("GEMINI_API_KEY"):
+        elif config.allow_model_calls and model_key(terminal.service):
             model = config.model_id + " · enabled"
         else:
             model = "Gemini · unavailable"

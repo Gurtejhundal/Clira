@@ -36,12 +36,19 @@ and thumbnail/caption playback still need owner-authorized live verification.
 
 ```bash
 uv sync --locked --extra dev
-uv run clira                       # interactive terminal, no account or key required
+uv run clira                       # personal creator setup, then your workspace
 uv run clira --no-logo
 uv run clira serve                 # synchronized local website
 uv run clira --channel ID --resume SESSION
 uv run clira chat --channel ID --json 'Show my latest videos'
 ```
+
+First run learns your name, passions, audience, voice, goals, resources and working preferences,
+saves progress locally, asks you to review the profile, guides optional connections, then creates
+your first personal project. Returning users resume their saved workspace.
+[Full creator setup, memory and Telegram guide](docs/CREATOR_SETUP.md).
+
+![Personal creator setup: name, interests and preferences saved locally](docs/media/terminal/creator-setup.png)
 
 `./run.sh` preserves its existing website launch behavior; `uv run clira` opens the terminal.
 Terminal: the Clira sidebar stays fixed while the conversation scrolls independently.
@@ -50,7 +57,8 @@ Ctrl+R searches input history, Tab completes, and Ctrl+D exits. Mouse-wheel scro
 conversation and Page Up/Page Down browse history; Ctrl+End returns to the latest message.
 Shift shortcuts require distinct modified-key reports from the terminal; Ctrl+J and `/back` work
 when a terminal sends the same sequence for shifted and ordinary keys.
-Use `/help`, `/channel`, `/launch`, `/new`, `/sessions`, `/resume ID`, `/title NAME`, `/status`,
+Use `/setup`, `/profile`, `/project`, `/memory`, `/remember TEXT`, `/forget ID`, `/connections`,
+`/help`, `/channel`, `/launch`, `/new`, `/sessions`, `/resume ID`, `/title NAME`, `/status`,
 `/ideas`, `/calendar`, `/jobs`, `/approvals`, `/approve ID`, `/details`, `/sources`,
 `/back`, `/theme auto|light|dark|mono`, `/web`, `/clear`, `/connect`, `/model`, `/mode`, `/quit`.
 Use `/back` to return to the start menu, then `0` to return to your current workspace.

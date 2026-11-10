@@ -9,6 +9,7 @@ import httpx
 
 from .config import CliraError
 from .contracts import TOOLS
+from .creator import Creator, model_key
 from .storage import encode, now
 
 SYSTEM = """You are Clira, one YouTube channel operations assistant. Work only for the immutable
@@ -39,8 +40,9 @@ class ModelProvider(Protocol):
 
 
 class GeminiProvider:
-    def __init__(self, config, store, client=None):
+    def __init__(self, config, store, client=None, key=None):
         self.config, self.store = config, store
+        self.key = key
         self.client = client or httpx.Client(timeout=60)
 
     def generate(self, messages, tools, limits):
@@ -49,7 +51,7 @@ class GeminiProvider:
                 "MODEL_CALLS_DISABLED",
                 "Set CLIRA_ALLOW_MODEL_CALLS=1 to authorize your configured Gemini account.",
             )
-        key = os.getenv("GEMINI_API_KEY")
+        key = os.getenv("GEMINI_API_KEY") or self.key
         if not key:
             raise CliraError(
                 "MODEL_KEY_REQUIRED", "Set GEMINI_API_KEY privately in your shell. Never paste keys in chat."
@@ -241,7 +243,7 @@ class Agent:
         if channel["mode"] == "draft" and self.service.config.model == "offline":
             return self.launch_reply(channel, message, conversation_id, history)
         provider = self.provider or (
-            GeminiProvider(self.service.config, store)
+            GeminiProvider(self.service.config, store, key=model_key(self.service))
             if self.service.config.model == "gemini"
             else OfflineProvider(channel["profile"])
         )
@@ -252,6 +254,7 @@ class Agent:
             "active_channel_id": channel_id,
             "profile": channel["profile"],
             "execution_mode": self.service.config.mode,
+            "creator_memory_data": Creator(self.service).context(channel_id, message),
             "recent_conversation_untrusted": history[-8:],
             "observed_at": now(),
         }

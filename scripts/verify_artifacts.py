@@ -131,7 +131,7 @@ def main():
             # Actual installed console entrypoint under a pseudo-terminal.
             interactive = pexpect.spawn(
                 binary,
-                ["--no-logo"],
+                ["--no-logo", "--quickstart"],
                 cwd=str(case),
                 env={**env, "TERM": "xterm", "PROMPT_TOOLKIT_NO_CPR": "1"},
                 encoding="utf-8",
@@ -160,6 +160,17 @@ def main():
                 split.close()
             assert split.process.exitstatus == 0
 
+            personal = TerminalProbe(
+                case / "creator-state", python=str(venv / "bin/python"), cwd=case, quickstart=False
+            )
+            try:
+                personal.wait("What should Clira call you?")
+                personal.send("Alex\r")
+                personal.wait("What are your passions")
+            finally:
+                personal.close()
+            assert personal.process.exitstatus == 0
+
             capture = run(
                 [
                     str(venv / "bin/python"),
@@ -178,6 +189,7 @@ def main():
                         "console version",
                         "installed interactive PTY",
                         "installed persistent split screen and offline receipt",
+                        "installed resumable personal creator setup",
                         "safe non-TTY startup",
                         "doctor migration",
                         "offline chat",

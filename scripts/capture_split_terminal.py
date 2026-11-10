@@ -18,7 +18,7 @@ from rich.text import Text
 
 
 class TerminalProbe:
-    def __init__(self, data, width=140, height=48, color=False, python=None, cwd=None):
+    def __init__(self, data, width=140, height=48, color=False, python=None, cwd=None, quickstart=True):
         self.width, self.height = width, height
         self.screen = pyte.Screen(width, height)
         self.stream = pyte.Stream(self.screen)
@@ -41,7 +41,7 @@ class TerminalProbe:
             env["NO_COLOR"] = "1"
         self.process = pexpect.spawn(
             python or sys.executable,
-            ["-m", "clira", "--data-dir", str(data)],
+            ["-m", "clira", *(["--quickstart"] if quickstart else []), "--data-dir", str(data)],
             env=env,
             cwd=str(cwd) if cwd else None,
             encoding="utf-8",

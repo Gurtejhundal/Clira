@@ -5,6 +5,7 @@ import hashlib
 import json
 import shutil
 import subprocess
+import tarfile
 import tomllib
 import zipfile
 from pathlib import Path
@@ -55,9 +56,20 @@ def main():
             "clira/tui/presentation.py",
             "clira/tui/screen.py",
             "clira/tui/keys.py",
+            "clira/tui/setup.py",
+            "clira/creator.py",
+            "clira/telegram.py",
         ]:
             if name not in wheel.namelist():
                 raise RuntimeError(f"Wheel is missing a runtime asset: {name}")
+    # sdist must never recursively include prior artifacts, local stores or credentials.
+    with tarfile.open(assets[2]) as source:
+        for entry in source.getmembers():
+            path = Path(entry.name)
+            if any(part in forbidden for part in path.parts) or path.suffix in {".sqlite3", ".pyc"}:
+                raise RuntimeError(f"Generated/private entry in source distribution: {path}")
+            if path.name.startswith(("client_secret", "credentials", "token")) and path.suffix == ".json":
+                raise RuntimeError("Credential-like file in source distribution")
     checksums = "".join(hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n" for p in assets)
     (output / "SHA256SUMS.txt").write_text(checksums)
     print(

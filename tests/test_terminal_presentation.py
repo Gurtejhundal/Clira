@@ -1,0 +1,105 @@
+"""Layout invariants for the actual Rich renderer, alongside the PTY workflow tests."""
+
+import io
+import re
+
+import pytest
+from rich.cells import cell_len
+from rich.console import Console
+
+from clira.agent import Agent
+from clira.service import DEMO_CHANNEL
+from clira.tui.app import Terminal
+
+
+def terminal(service, width=120, height=48, channel=None, no_logo=False):
+    result = Terminal(service, channel, no_logo=no_logo)
+    result.console = Console(file=io.StringIO(), width=width, height=height, record=True, no_color=True)
+    return result
+
+
+@pytest.mark.parametrize("width", [40, 52, 80, 99, 100, 120, 160])
+@pytest.mark.parametrize("channel", [None, DEMO_CHANNEL])
+def test_welcome_reflows_without_truncation_or_contract_leak(service, width, channel):
+    app = terminal(service, width, channel=channel)
+    app.view.welcome()
+    output = app.console.export_text()
+    assert all(cell_len(line) <= min(width, 124) for line in output.splitlines())
+    assert "End of single-file" not in output
+    assert "v1.0.0rc1" in output and "\x1b" not in output
+    assert bool(re.search(r"[\u2800-\u28ff]", output)) == (width >= 100)
+    if channel:
+        assert DEMO_CHANNEL in output and "SYNTHETIC" in output
+        assert "live writes disabled" in output and "Offline" in output
+    else:
+        assert "Welcome to Clira." in output
+        assert "Start planning" in output and "Connect an existing" in output
+        assert "Explore synthetic demo data" in output
+
+
+@pytest.mark.parametrize("width", [40, 52, 80, 120])
+def test_short_terminal_keeps_onboarding_visible(service, width):
+    app = terminal(service, width, height=24)
+    app.view.welcome()
+    output = app.console.export_text()
+    assert len(output.splitlines()) <= 22
+    assert not re.search(r"[\u2800-\u28ff]", output)
+    assert "Start planning" in output and "Explore synthetic demo data" in output
+
+
+def test_no_logo_suppresses_wordmark_and_portrait(service):
+    from clira.tui.presentation import WORDMARK
+
+    app = terminal(service, no_logo=True)
+    app.view.welcome()
+    output = app.console.export_text()
+    assert WORDMARK[0] not in output and not re.search(r"[\u2800-\u28ff]", output)
+    assert "CLIRA" in output and "Welcome to Clira." in output
+
+
+def test_status_is_real_and_all_channel_ids_remain_copyable(service):
+    service.store.set_setting("paused", True)
+    app = terminal(service, channel=DEMO_CHANNEL)
+    session = service.store.new_session(DEMO_CHANNEL, "An owner review")
+    app.conversation = session["id"]
+    app.view.status()
+    output = app.console.export_text()
+    assert "PAUSED" in output and session["id"] in output
+    assert DEMO_CHANNEL in output and "Scopes" in output and "none" in output
+
+
+def test_answer_renders_real_receipts_and_inert_untrusted_content(service):
+    app = terminal(service, channel=DEMO_CHANNEL)
+    result = Agent(service).chat(DEMO_CHANNEL, "Show latest videos")
+    app.conversation = result["conversation_id"]
+    unsafe = "\n[owner](https://example.com)\x1b]52;c;clipboard-payload\x07\u202e"
+    app.view.answer(result["message"] + unsafe, result["receipts"], elapsed=0.2)
+    output = app.console.export_text()
+    assert "CLIRA" in output and "SYNTHETIC DEMO" in output
+    assert "list_videos" in output and "mock" in output
+    assert result["conversation_id"] in output and "1 tool receipts" in output
+    assert "clipboard-payload" not in output and "\u202e" not in output and "\x1b" not in output
+    assert len([line for line in output.splitlines() if "• " in line]) == 5
+
+
+def test_mono_render_uses_no_color_or_hyperlink_escape(service, monkeypatch):
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    app = terminal(service)
+    buffer = io.StringIO()
+    app.console = Console(file=buffer, width=120, height=48, force_terminal=True, color_system="truecolor")
+    app.theme = "mono"
+    app.apply_theme()
+    app.view.welcome()
+    app.view.answer("[A source](https://example.com)")
+    output = buffer.getvalue()
+    # Bold/dim cursor-independent styling is allowed; foreground/background color and OSC links aren't.
+    assert not re.search(r"\x1b\[[0-9;]*(?:3[0-9]|4[0-9]|9[0-7])(?:;[0-9;]*)?m", output)
+    assert "\x1b]8;" not in output
+
+
+def test_workspace_names_are_literal_text_in_frame(service):
+    service.store.add_channel("DEMO_OTHER", "[red]Viewer\x1b]52;c;hidden\x07", "demo")
+    app = terminal(service, channel="DEMO_OTHER")
+    app.view.welcome()
+    output = app.console.export_text()
+    assert "[red]Viewer" in output and "hidden" not in output

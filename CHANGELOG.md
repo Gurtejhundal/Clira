@@ -2,6 +2,9 @@
 
 ## 1.0.0rc1 · unreleased local candidate
 
+- Terminal visual pass: original Clira wordmark, responsive portrait/status composition, guided
+  onboarding, readable help/records/owner review, Markdown replies and real source receipts.
+  Remove the accidentally copied spec footer from the portrait and fix slash-command Tab completion.
 - Terminal-first prompt_toolkit client with approved Braille asset, width/no-color fallbacks,
   local launch planning, slash commands, titled saved sessions and owner confirmation.
 - Additive migration 2 preserves v0.1 conversations; terminal and website share session IDs.

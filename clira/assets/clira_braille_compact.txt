@@ -20,4 +20,3 @@
     ⢨⣶⣿⣷⣼⣿⡟⡡⠊⢀        ⢤⠘⢿⣿⣿⡌⣿⣷⢘⣹⣥⣶⣯⣄⡀
     ⢸⣿⣿⣿⡿⠋ ⠁⢠⡃         ⠹⣄⠙⢿⣇⢻⣿⣿⣿⣇⢽⣿⣿⢿⣦
      ⠉⢿⠟   ⢠⡿           ⠘⣧⠈⢻⠸⣿⣿⣿⣿⡈⡿⠁⠊⢻⣧⡀
-End of single-file Clira v1.0.0 design and implementation contract.

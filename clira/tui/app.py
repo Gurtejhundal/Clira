@@ -2,8 +2,8 @@ import difflib
 import json
 import os
 import sys
+import time
 import webbrowser
-from importlib.resources import files
 
 import httpx
 from prompt_toolkit import PromptSession
@@ -11,14 +11,15 @@ from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.output import ColorDepth
+from prompt_toolkit.styles import Style
 from rich.console import Console
 
-from .. import __version__
 from ..agent import Agent
 from ..config import CliraError
 from ..service import DEMO_CHANNEL
 from ..text import terminal_text
 from ..workspaces import launch
+from .presentation import Presentation
 
 COMMANDS = [
     "/help",
@@ -57,66 +58,34 @@ class Terminal:
         self.theme = service.store.setting("terminal_theme", "auto")
         self.prompt = None
         self.apply_theme()
+        self.view = Presentation(self)
 
     def apply_theme(self):
         self.console.no_color = "NO_COLOR" in os.environ or self.theme == "mono"
         self.console.style = {"light": "#252b24", "dark": "#f3f0e8"}.get(self.theme)
         if self.prompt:
             self.prompt.color_depth = ColorDepth.DEPTH_1_BIT if self.console.no_color else None
+            color = {"light": "#85652f", "dark": "#c5a368"}.get(self.theme, "ansiyellow")
+            self.prompt.style = Style.from_dict({"prompt": "bold " + color, "placeholder": "ansibrightblack"})
 
     def print(self, text):
         # User/model strings are never Rich markup or terminal control instructions.
         self.console.print(terminal_text(text), markup=False)
 
     def status(self):
-        c = self.service.policy.channel(self.channel) if self.channel else None
-        label = {"demo": "DEMO · SYNTHETIC", "draft": "LOCAL DRAFT · Not connected", "live": "LIVE"}
-        self.print(f"Clira {__version__} · {label.get(c['mode'], '') if c else 'No channel selected'}")
-        if c:
-            self.print(f"{c['name']}\n{c['id']}")
-        config = self.service.config
-        model = (
-            "Offline · limited templates"
-            if config.model == "offline"
-            else (
-                "Gemini · enabled"
-                if config.allow_model_calls and os.getenv("GEMINI_API_KEY")
-                else "Gemini · unavailable (enable calls and configure key privately)"
-            )
-        )
-        self.print(f"Model: {model}")
-        paused = self.service.store.setting("paused", False)
-        writes = (
-            "PAUSED"
-            if paused
-            else "owner approval required"
-            if config.enable_writes
-            else "live writes disabled"
-        )
-        self.print("Policy: " + writes)
-        if c:
-            pending = self.service.store.rows(
-                "SELECT COUNT(*) AS count FROM approvals WHERE channel_id=? AND status='PENDING'",
-                (self.channel,),
-            )[0]["count"]
-            jobs = self.service.store.rows(
-                "SELECT state,COUNT(*) AS count FROM jobs WHERE channel_id=? GROUP BY state", (self.channel,)
-            )
-            self.print(
-                f"Pending approvals: {pending} · Jobs: "
-                + (", ".join(f"{j['state']} {j['count']}" for j in jobs) or "none")
-            )
-            if c["mode"] == "live":
-                self.print("Account: " + ("connected" if c["connection"] else "Not connected"))
-        if c and self.console.width >= 80:
-            self.print(f"Scopes: {', '.join(c['connection'].get('scopes', [])) or 'none'}")
-        if self.conversation:
-            self.print(f"Session: {self.conversation}")
+        self.view.status()
 
     def ask(self, text):
-        return self.prompt.prompt(text).strip()
+        if text == "❯ ":
+            return self.prompt.prompt(
+                [("class:prompt", text)],
+                placeholder=[("class:placeholder", "Ask about your channel…  /help")],
+            ).strip()
+        return self.prompt.prompt(text, placeholder="").strip()
 
-    def onboarding(self):
+    def onboarding(self, show=True):
+        if show:
+            self.view.onboarding()
         while True:
             try:
                 if self.onboarding_choice():
@@ -126,21 +95,19 @@ class Terminal:
         self.service.store.set_setting("active_workspace:" + self.service.config.mode, self.channel)
 
     def onboarding_choice(self):
-        self.print(
-            "Welcome to Clira.\n1  Start planning a new YouTube channel\n2  Connect an existing channel\n3  Explore synthetic demo data"
-        )
         choice = self.ask("Choose 1 / 2 / 3 > ")
         if choice == "1":
-            answers = [
-                self.ask(q)
-                for q in [
-                    "Your interest > ",
-                    "Your viewer > ",
-                    "Language > ",
-                    "Time per week > ",
-                    "Format > ",
-                ]
+            questions = [
+                ("Your interest > ", "What could you keep making videos about?"),
+                ("Your viewer > ", "Who should feel this channel was made for them?"),
+                ("Language > ", "Which language will you speak to your viewers?"),
+                ("Time per week > ", "Choose a realistic amount of creator time."),
+                ("Format > ", "Shorts, longer videos, or another format you enjoy?"),
             ]
+            answers = []
+            for number, (question, hint) in enumerate(questions, 1):
+                self.view.launch_step(number, hint)
+                answers.append(self.ask(question))
             result = launch(self.service, *answers)
             self.channel = result["workspace"]["id"]
             self.print(result["plan"]["positioning"])
@@ -184,7 +151,10 @@ class Terminal:
         self.conversation = selected["id"]
         self.print(f"Resumed {selected['title']} · {self.conversation}")
         for message in selected["messages"]:
-            self.print(message["role"] + ": " + message["text"])
+            if message["role"] == "assistant":
+                self.view.answer(message["text"], message.get("receipts"))
+            else:
+                self.print("\nYOU\n" + message["text"])
 
     def command(self, line):
         cmd, _, arg = line.partition(" ")
@@ -198,10 +168,7 @@ class Terminal:
             self.print("Goodbye. No background worker is started by this terminal.")
             return False
         if cmd == "/help":
-            self.print(
-                " ".join(COMMANDS)
-                + "\nEnter sends · Ctrl+J newline · Ctrl+R history · Ctrl+D exits\n/clear clears display only. /approve never executes an action."
-            )
+            self.view.help()
         elif cmd in {"/status", "/model", "/mode"}:
             self.status()
         elif cmd == "/connect":
@@ -226,8 +193,7 @@ class Terminal:
         elif cmd == "/resume":
             self.select_session(arg or None)
         elif cmd == "/sessions":
-            for s in store.sessions(self.channel, arg):
-                self.print(f"{s['id']} · {s['title']} · {s['updated_at']}")
+            self.view.records("Saved conversations", store.sessions(self.channel, arg), ["updated_at"])
         elif cmd == "/title":
             if not arg or not self.conversation:
                 self.print("Use /title NAME in a saved session.")
@@ -235,18 +201,21 @@ class Terminal:
                 store.title_session(self.channel, self.conversation, arg)
                 self.print("Session title saved.")
         elif cmd in {"/ideas", "/calendar"}:
-            for r in store.list(self.channel, "idea" if cmd == "/ideas" else "calendar"):
-                self.print(f"{r['id']} · {r.get('title', '')} · {r.get('at', r.get('premise', ''))}")
+            self.view.records(
+                "Ideas" if cmd == "/ideas" else "Editorial calendar",
+                store.list(self.channel, "idea" if cmd == "/ideas" else "calendar"),
+                ["premise", "at", "status"],
+            )
         elif cmd == "/jobs":
-            for j in self.service.tool_list_jobs(self.channel, None)["jobs"]:
-                self.print(f"{j['id']} · {j['operation']} · {j['state']}")
+            self.view.records(
+                "Durable jobs", self.service.tool_list_jobs(self.channel, None)["jobs"], ["state"]
+            )
         elif cmd in {"/approvals", "/approve"}:
             rows = store.rows(
                 "SELECT * FROM approvals WHERE channel_id=? ORDER BY created_at DESC", (self.channel,)
             )
             if cmd == "/approvals":
-                for a in rows:
-                    self.print(f"{a['id']} · {a['operation']} · {a['status']} · {a['expires_at']}")
+                self.view.records("Owner approvals", rows, ["status", "expires_at"])
                 if not rows:
                     self.print("No approvals in this workspace.")
             else:
@@ -254,7 +223,7 @@ class Terminal:
                 if not matches:
                     raise CliraError("NOT_FOUND", "Approval not found in this workspace.")
                 c = store.channel(self.channel)
-                self.print(f"{c['name']} · {self.channel}")
+                self.view.owner_review(c, matches[0])
                 preview = {**matches[0], "payload": json.loads(matches[0]["payload"])}
                 self.print(json.dumps(preview, indent=2, ensure_ascii=False))
                 if self.ask("Type APPROVE to approve this exact payload > ") == "APPROVE":
@@ -324,12 +293,13 @@ class Terminal:
             history=InMemoryHistory(),
             multiline=True,
             key_bindings=bindings,
-            completer=WordCompleter(COMMANDS + [c["id"] for c in self.service.channels()]),
+            completer=WordCompleter(COMMANDS + [c["id"] for c in self.service.channels()], WORD=True),
             enable_history_search=True,
+            reserve_space_for_menu=4,
+            prompt_continuation="  ",
             color_depth=ColorDepth.DEPTH_1_BIT if self.console.no_color else None,
         )
-        if not self.no_logo and self.console.width >= 100:
-            self.print(files("clira").joinpath("assets/clira_braille_compact.txt").read_text())
+        self.apply_theme()
         try:
             if self.channel:
                 self.service.policy.channel(self.channel)
@@ -337,14 +307,17 @@ class Terminal:
                 saved = self.service.store.setting("active_workspace:" + self.service.config.mode)
                 if saved and any(c["id"] == saved for c in self.service.channels()):
                     self.channel = saved
-                else:
-                    self.onboarding()
-            self.status()
+            self.view.welcome()
+            if not self.channel:
+                self.onboarding(show=False)
+                self.status()
             if self.conversation:
                 self.select_session(self.conversation)
+            self.view.ready()
             interrupted = False
             while True:
                 try:
+                    self.view.composer()
                     line = self.ask("❯ ")
                     interrupted = False
                     if not line:
@@ -353,23 +326,17 @@ class Terminal:
                         if not self.command(line):
                             break
                     else:
-                        with self.console.status("Working on this request…"):
+                        started = time.perf_counter()
+                        with self.console.status(
+                            "Clira is working on this request…", spinner_style=self.view.accent
+                        ):
                             self.last = Agent(self.service).chat(self.channel, line, self.conversation)
                         self.conversation = self.last["conversation_id"]
-                        self.print(self.last["message"])
-                        if self.last["receipts"]:
-                            self.print(
-                                "Sources: "
-                                + "; ".join(
-                                    r.get("tool", "tool") + " · " + r.get("source", "unavailable")
-                                    for r in self.last["receipts"]
-                                )
-                            )
-                        self.print(
-                            f"{len(self.last['receipts'])} tool receipts · /details · session {self.conversation}"
+                        self.view.answer(
+                            self.last["message"], self.last["receipts"], time.perf_counter() - started
                         )
                 except CliraError as exc:
-                    self.print(exc.code + ": " + exc.message)
+                    self.view.error(exc.code, exc.message)
                 except KeyboardInterrupt:
                     if interrupted:
                         break

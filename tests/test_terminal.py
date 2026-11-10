@@ -1,5 +1,7 @@
+import io
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -12,18 +14,21 @@ from clira.service import DEMO_CHANNEL
 from clira.workspaces import launch
 
 
-def spawn(tmp_path, width=80, *args):
+def spawn(tmp_path, width=80, *args, color=False):
+    env = {
+        **os.environ,
+        "CLIRA_MODEL": "offline",
+        "CLIRA_MODE": "demo",
+        "NO_COLOR": "1",
+        "TERM": "xterm",
+        "PROMPT_TOOLKIT_NO_CPR": "1",
+    }
+    if color:
+        env.pop("NO_COLOR")
     return pexpect.spawn(
         sys.executable,
         ["-m", "clira", "--data-dir", str(tmp_path), *args],
-        env={
-            **os.environ,
-            "CLIRA_MODEL": "offline",
-            "CLIRA_MODE": "demo",
-            "NO_COLOR": "1",
-            "TERM": "xterm",
-            "PROMPT_TOOLKIT_NO_CPR": "1",
-        },
+        env=env,
         encoding="utf-8",
         timeout=15,
         dimensions=(45, width),
@@ -189,10 +194,12 @@ def test_asset_exactly_matches_approved_portrait():
     spec = Path("CLIRA_V1_TERMINAL_WEB_MASTER_SPEC_AND_CODEX_PROMPT.md").read_text()
     lines = spec.splitlines()
     start = next(i for i, line in enumerate(lines) if line.startswith("                 ⢀"))
+    end = next(i for i in range(start, len(lines)) if lines[i].startswith("End of single-file"))
     assert (
         files("clira").joinpath("assets/clira_braille_compact.txt").read_text()
-        == "\n".join(lines[start:]) + "\n"
+        == "\n".join(lines[start:end]) + "\n"
     )
+    assert end - start == 22
 
 
 def test_untrusted_terminal_escape_sequences_are_inert():
@@ -269,3 +276,30 @@ def test_first_run_missing_live_client_returns_to_choices(tmp_path, monkeypatch)
     child.close()
     assert child.exitstatus == 0
     assert not list((tmp_path / "secrets").glob("*.json"))
+
+
+def test_colored_visual_startup_help_and_resize_keep_keyboard_working(tmp_path):
+    capture = io.StringIO()
+    child = spawn(tmp_path, 120, color=True)
+    child.logfile_read = capture
+    child.expect_exact("██████")
+    child.expect("Welcome to Clira")
+    child.expect("Choose 1 / 2 / 3")
+    child.send("3\r")
+    child.expect("DEMO · SYNTHETIC")
+    child.expect("❯")
+    child.send("/help\r")
+    child.expect("CREATOR WORK")
+    child.expect("❯")
+    child.setwinsize(45, 52)
+    child.send("/sta")
+    child.sendcontrol("i")
+    child.send("\r")
+    child.expect("Workspace status")
+    child.expect("❯")
+    child.send("/quit\r")
+    child.expect(pexpect.EOF)
+    child.close()
+    output = capture.getvalue()
+    assert child.exitstatus == 0 and "End of single-file" not in output
+    assert re.search(r"\x1b\[[0-9;]*(?:33|38)(?:;[0-9;]*)?m", output)

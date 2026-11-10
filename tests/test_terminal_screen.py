@@ -52,6 +52,7 @@ def test_long_conversation_sidebar_scroll_resize_and_input_are_independent(tmp_p
         probe.wait("History ·")
         assert probe.left == portrait and probe.text != latest
         assert "unfinished message" in probe.text
+        probe.send("\x1bOQ")  # F2 opts into application mouse scrolling.
         probe.send("\x1b[<64;80;15M")  # mouse wheel up over the conversation
         probe.wait("History ·")
         assert probe.left == portrait
@@ -60,7 +61,7 @@ def test_long_conversation_sidebar_scroll_resize_and_input_are_independent(tmp_p
         probe.wait("Latest uploads")
         assert probe.left == portrait
         probe.resize(80, 32)
-        assert "Your Creative Intelligence" in probe.text and "█" not in probe.text
+        assert "Storytelling meets strategic wisdom" in probe.text and "█" not in probe.text
         assert "unfinished message" in probe.text
         probe.resize(140, 48)
         assert probe.left == portrait and "unfinished message" in probe.text
@@ -182,5 +183,21 @@ def test_shift_shortcuts_and_left_aligned_question(tmp_path, newline, back):
         # Ordinary Backspace still edits text; it must never trigger navigation.
         probe.send("/statux\x7fs\r")
         probe.wait("Workspace status")
+    finally:
+        probe.close()
+
+
+def test_native_selection_is_default_and_f2_toggles_mouse_capture(tmp_path):
+    probe = TerminalProbe(tmp_path)
+    try:
+        probe.wait("Choose 1 / 2 / 3")
+        assert "Select text" in probe.text
+        assert "\x1b[?1000h" not in probe.raw
+        probe.send("\x1bOQ")
+        probe.wait("Mouse scroll")
+        assert "\x1b[?1000h" in probe.raw
+        probe.send("\x1bOQ")
+        probe.wait("Select text")
+        assert "\x1b[?1000l" in probe.raw
     finally:
         probe.close()

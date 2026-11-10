@@ -51,7 +51,7 @@ def doctor(service):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="clira", description="Your Creative Intelligence · local YouTube agent"
+        prog="clira", description="Storytelling meets strategic wisdom · local YouTube agent"
     )
     parser.add_argument("--mode", choices=["demo", "live"])
     parser.add_argument("--data-dir", type=Path)

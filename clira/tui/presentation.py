@@ -195,7 +195,7 @@ class Presentation:
             header.add_row(
                 mark,
                 Group(
-                    self.heading("YOUR CREATIVE INTELLIGENCE"),
+                    self.heading("STORYTELLING MEETS STRATEGIC WISDOM"),
                     literal("The work behind your YouTube channel.", self.muted),
                     literal(f"v{__version__}  /  local workspace", self.muted),
                 ),
@@ -203,13 +203,13 @@ class Presentation:
             # A narrow terminal gets the tagline underneath instead of a crushed column.
             if self.width < 80:
                 self.emit(mark)
-                self.emit(literal(f"Your Creative Intelligence · v{__version__}", self.muted))
+                self.emit(literal(f"Storytelling meets strategic wisdom · v{__version__}", self.muted))
             else:
                 self.emit(Padding(header, (0, 2)))
             self.emit(Text(""))
         else:
             self.emit(Text.assemble(("CLIRA", "bold " + self.accent), (f"  v{__version__}", self.muted)))
-            self.emit(literal("Your Creative Intelligence", self.muted))
+            self.emit(literal("Storytelling meets strategic wisdom", self.muted))
             self.emit(Text(""))
 
         if terminal.channel:

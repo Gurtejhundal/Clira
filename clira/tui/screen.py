@@ -73,6 +73,7 @@ class SplitScreen:
         self.answers = queue.Queue()
         self.waiting = False
         self.secret = False
+        self.mouse_scroll = False
         self.busy = False
         self.prompt_label = "Starting Clira…"
         self.offset = 0
@@ -152,7 +153,7 @@ class SplitScreen:
             color_depth=lambda: (
                 ColorDepth.DEPTH_1_BIT if terminal.console.no_color else ColorDepth.DEPTH_24_BIT
             ),
-            mouse_support=True,
+            mouse_support=Condition(lambda: self.mouse_scroll),
             refresh_interval=0.15,
             before_render=self.before_render,
         )
@@ -258,26 +259,20 @@ class SplitScreen:
             add("\n".join(padding + line for line in WORDMARK), gold)
         else:
             add("CLIRA".center(44), gold)
-        add("Your Creative Intelligence".center(44), "class:muted")
+        add("Storytelling meets strategic wisdom".center(44), "class:muted")
         add(("v" + __version__).center(44), "class:muted")
         if height >= 34 and not t.no_logo:
             add("")
             add(files("clira").joinpath("assets/clira_braille_v2_compact.txt").read_text().rstrip())
         add("")
-        add("YOUR CREATOR WORKSPACE", gold)
-        add("/help     Commands")
-        add("/back     Start menu")
-        add("/sessions Saved conversations")
-        add("PgUp/PgDn Conversation history")
-        if height >= 42:
-            add("Shift+Enter New line")
-            add("Shift+Bksp  Back · /back")
-            add("Ctrl+D      Exit")
+        add("/help  Explore commands".center(44), "class:muted")
+        add("/back  Return to start".center(44), "class:muted")
+        add("F2  Copy / mouse scroll".center(44), "class:muted")
         return text
 
     def compact_title(self):
         return [
-            ("class:heading", "CLIRA  ·  Your Creative Intelligence\n"),
+            ("class:heading", "CLIRA  ·  Storytelling meets strategic wisdom\n"),
             ("class:muted", "/help commands · /back menu · PgUp/PgDn history"),
         ]
 
@@ -292,7 +287,12 @@ class SplitScreen:
             return "Clira is working…"
         if self.offset:
             return "History · PgUp/PgDn scroll · Ctrl+End returns to latest"
-        return "Wheel/PgUp history · Enter send · Shift+Enter newline · Shift+Bksp back"
+        mode = (
+            "Mouse scroll · F2 select text"
+            if self.mouse_scroll
+            else "Select text · Ctrl+Shift+C copy · F2 mouse scroll"
+        )
+        return mode + " · PgUp/PgDn history · Enter send"
 
     def scroll(self, amount):
         self.offset = max(0, min(len(self.lines) - 1, self.offset + amount))
@@ -352,6 +352,11 @@ class SplitScreen:
         def newline(event):
             if self.waiting:
                 event.current_buffer.insert_text("\n")
+
+        @keys.add("f2")
+        def toggle_mouse(event):
+            self.mouse_scroll = not self.mouse_scroll
+            self.invalidate()
 
         @keys.add("pageup")
         def previous(event):

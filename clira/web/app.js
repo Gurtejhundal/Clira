@@ -279,7 +279,7 @@ function bindForm(id, handler) {
 async function init() {
   session=await api('/api/session');
   $('brandName').firstChild.textContent=session.name;
-  document.title=session.name+' · Your Creative Intelligence';
+  document.title=session.name+' · Storytelling meets strategic wisdom';
   $('modeBadge').textContent=session.mode==='demo'?'SYNTHETIC DEMO':'CONNECTED MODE';
   $('modelBadge').textContent=session.model==='offline'?'Offline router':(session.model_calls_enabled?'Gemini':'Gemini disabled');
   $('notice').textContent=session.mode==='demo'?'You’re exploring synthetic demo data. No real channel is connected and no Google operations will occur.':`Live channel mode · ${session.writes_enabled?'Approved writes enabled':'Advisor mode — account writes disabled'}`;

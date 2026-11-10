@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/clira-banner.svg" alt="Clira — Your Creative Intelligence" width="100%">
+  <img src="docs/media/clira-banner.svg" alt="Clira — Storytelling meets strategic wisdom" width="100%">
 </p>
 
 <p align="center">

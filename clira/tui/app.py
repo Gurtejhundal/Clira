@@ -10,6 +10,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.output import ColorDepth
 from rich.console import Console
 
 from .. import __version__
@@ -54,9 +55,14 @@ class Terminal:
         self.no_logo = no_logo
         self.console = Console(no_color="NO_COLOR" in os.environ, highlight=False)
         self.theme = service.store.setting("terminal_theme", "auto")
-        if self.theme in {"light", "dark"}:
-            self.console.style = "#252b24" if self.theme == "light" else "#f3f0e8"
         self.prompt = None
+        self.apply_theme()
+
+    def apply_theme(self):
+        self.console.no_color = "NO_COLOR" in os.environ or self.theme == "mono"
+        self.console.style = {"light": "#252b24", "dark": "#f3f0e8"}.get(self.theme)
+        if self.prompt:
+            self.prompt.color_depth = ColorDepth.DEPTH_1_BIT if self.console.no_color else None
 
     def print(self, text):
         # User/model strings are never Rich markup or terminal control instructions.
@@ -111,6 +117,15 @@ class Terminal:
         return self.prompt.prompt(text).strip()
 
     def onboarding(self):
+        while True:
+            try:
+                if self.onboarding_choice():
+                    break
+            except CliraError as exc:
+                self.print(exc.code + ": " + exc.message)
+        self.service.store.set_setting("active_workspace:" + self.service.config.mode, self.channel)
+
+    def onboarding_choice(self):
         self.print(
             "Welcome to Clira.\n1  Start planning a new YouTube channel\n2  Connect an existing channel\n3  Explore synthetic demo data"
         )
@@ -131,24 +146,23 @@ class Terminal:
             self.print(result["plan"]["positioning"])
             self.print("Saved 3 starter ideas and a draft calendar. No YouTube account created.")
         elif choice == "2":
-            self.connect()
-            return self.onboarding() if not self.channel else None
+            return self.connect()
         elif choice == "3":
             if self.service.config.mode != "demo":
                 self.print("Use clira --mode demo to explore synthetic data.")
-                return self.onboarding()
+                return False
             self.channel = DEMO_CHANNEL
         else:
             self.print("Choose one of the three paths.")
-            return self.onboarding()
-        self.service.store.set_setting("active_workspace:" + self.service.config.mode, self.channel)
+            return False
+        return True
 
     def connect(self):
         if self.service.config.mode != "live":
             self.print(
                 "Read-only OAuth: run clira --mode live connect. Configure CLIRA_GOOGLE_CLIENT_FILE privately first."
             )
-            return
+            return False
         from ..youtube import connect
 
         result = connect(self.service.config, self.service.store, self.service.secrets, "read", None)
@@ -157,6 +171,7 @@ class Terminal:
         self.conversation = None
         self.service.store.set_setting("active_workspace:" + self.service.config.mode, self.channel)
         # OAuth includes explicit immutable-ID confirmation; never guess among returned accounts.
+        return True
 
     def select_session(self, session_id=None):
         rows = self.service.store.sessions(self.channel)
@@ -250,12 +265,12 @@ class Terminal:
                 else:
                     self.print("No approval granted.")
         elif cmd == "/theme":
-            if arg not in {"auto", "light", "dark"}:
-                self.print("Use /theme auto|light|dark")
+            if arg not in {"auto", "light", "dark", "mono"}:
+                self.print("Use /theme auto|light|dark|mono")
             else:
                 self.theme = arg
                 store.set_setting("terminal_theme", arg)
-                self.console.style = None if arg == "auto" else ("#252b24" if arg == "light" else "#f3f0e8")
+                self.apply_theme()
                 self.print("Theme saved: " + arg)
         elif cmd in {"/details", "/sources"}:
             self.print(json.dumps(self.last or {}, indent=2, ensure_ascii=False))
@@ -311,7 +326,7 @@ class Terminal:
             key_bindings=bindings,
             completer=WordCompleter(COMMANDS + [c["id"] for c in self.service.channels()]),
             enable_history_search=True,
-            color_depth=None if "NO_COLOR" not in os.environ else "DEPTH_1_BIT",
+            color_depth=ColorDepth.DEPTH_1_BIT if self.console.no_color else None,
         )
         if not self.no_logo and self.console.width >= 100:
             self.print(files("clira").joinpath("assets/clira_braille_compact.txt").read_text())

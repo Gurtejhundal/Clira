@@ -12,10 +12,10 @@ DEMO_CHANNEL_TECH
 Model: Offline · limited templates
 Policy: live writes disabled
 Pending approvals: 0 · Jobs: none
+❯❯ /theme mono
+Theme saved: mono
 ❯❯ /new
-New session: chat_b7a9d690eaac4a919fa0ffc8cc37ae00
-❯❯ /title Candidate prototype
-Session title saved.
+New session: chat_e1f171becb314725b5b1210199d21b69
 ❯❯ Show my latest videos
 ⠋ Working on this request…
 SYNTHETIC DEMO · Latest uploads — lifetime views:
@@ -26,7 +26,7 @@ SYNTHETIC DEMO · Latest uploads — lifetime views:
 • How maps find the fastest route: 2,900 views
 Sources: list_videos · mock
 1 tool receipts · /details · session
-chat_b7a9d690eaac4a919fa0ffc8cc37ae00
+chat_e1f171becb314725b5b1210199d21b69
 ❯❯ /approvals
 No approvals in this workspace.
 ❯❯ /quit

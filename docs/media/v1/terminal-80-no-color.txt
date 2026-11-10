@@ -1,6 +1,11 @@
 ACTUAL PTY CAPTURE · DEMO/SYNTHETIC · 80 columns · NO_COLOR=1
 Cursor-control sequences removed for this text transcript.
 
+Welcome to Clira.
+1  Start planning a new YouTube channel
+2  Connect an existing channel
+3  Explore synthetic demo data
+Choose 1 / 2 / 3 >Choose 1 / 2 / 3 > 3
 Clira 1.0.0rc1 · DEMO · SYNTHETIC
 Inside the everyday · Demo
 DEMO_CHANNEL_TECH
@@ -8,10 +13,10 @@ Model: Offline · limited templates
 Policy: live writes disabled
 Pending approvals: 0 · Jobs: none
 Scopes: none
+❯❯ /theme mono
+Theme saved: mono
 ❯❯ /new
-New session: chat_4f7cbcb66aee41bbb344d697944fcf8e
-❯❯ /title Candidate prototype
-Session title saved.
+New session: chat_3d5e1fa9248d4988b4eb7b7edf4f5a9f
 ❯❯ Show my latest videos
 ⠋ Working on this request…
 SYNTHETIC DEMO · Latest uploads — lifetime views:
@@ -21,7 +26,7 @@ SYNTHETIC DEMO · Latest uploads — lifetime views:
 • The hidden cost of notifications: 3,800 views
 • How maps find the fastest route: 2,900 views
 Sources: list_videos · mock
-1 tool receipts · /details · session chat_4f7cbcb66aee41bbb344d697944fcf8e
+1 tool receipts · /details · session chat_3d5e1fa9248d4988b4eb7b7edf4f5a9f
 ❯❯ /approvals
 No approvals in this workspace.
 ❯❯ /quit

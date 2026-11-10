@@ -70,6 +70,8 @@ The current flow expires if authorization/confirmation is not completed; retry f
 Use Saved conversations to resume/rename/search. The website shows the implemented terminal resume
 command. `/web` in the terminal checks the matching store's loopback server before opening its session.
 `/clear` clears display only. Ctrl+J inserts a newline; Enter sends. NO_COLOR and --no-logo are supported.
+Use `/theme auto|light|dark|mono`; `NO_COLOR` overrides color choices. Incomplete launch decisions or
+a missing OAuth client return to the first-run choices so you can continue locally.
 No terminal history file containing secrets is created; saved conversational text stays in SQLite.
 
 For real packaging files and separate upload approvals see [Packaging](PACKAGING.md).

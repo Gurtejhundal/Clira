@@ -76,8 +76,10 @@ class Package(Strict):
     @field_validator("tags")
     @classmethod
     def tag_length(cls, value):
-        if sum(len(t) + 1 for t in value) > 450:
-            raise ValueError("Combined tags must be under 450 characters")
+        # YouTube counts commas and implicit quotation marks around tags with spaces.
+        length = sum(len(t) + (2 if " " in t else 0) for t in value) + max(0, len(value) - 1)
+        if any(not t.strip() for t in value) or length > 450:
+            raise ValueError("Use nonempty tags, at most 450 characters including commas and quotes")
         return value
 
 

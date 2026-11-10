@@ -11,6 +11,8 @@
 - Separate approved official thumbnail/caption upload adapters; uncertain outcomes stop for review.
 - Owner-initiated read-only website OAuth with exact immutable channel review, reusing existing flow.
 - CI no longer creates tags or GitHub releases. No stable v1 release or live success claim.
+- Follow-up audit: persisted monochrome terminal theme, recoverable first-run input/OAuth errors,
+  correct MIME after SRT/VTT conversion, and tag limits including YouTube quote/separator accounting.
 
 
 ## 0.1.0 — 2026-11-09

@@ -30,7 +30,7 @@ def spawn(tmp_path, width=80, *args):
     )
 
 
-@pytest.mark.parametrize("width", [52, 80, 120])
+@pytest.mark.parametrize("width", [40, 52, 80, 120])
 def test_terminal_start_and_resume(tmp_path, width):
     child = spawn(tmp_path, width)
     child.expect("Choose 1 / 2 / 3")
@@ -38,7 +38,7 @@ def test_terminal_start_and_resume(tmp_path, width):
     child.expect("DEMO · SYNTHETIC")
     child.expect("❯")
     child.send("/new\r")
-    child.expect(r"New session: (chat_[a-f0-9]+)")
+    child.expect(r"New session:\s+(chat_[a-f0-9]{32})")
     session_id = child.match.group(1)
     child.expect("❯")
     child.send("/title Owner review\r")
@@ -202,3 +202,70 @@ def test_untrusted_terminal_escape_sequences_are_inert():
     safe = terminal_text(dangerous)
     assert "\x1b" not in safe and "\x9b" not in safe and "\u202e" not in safe
     assert "Y2xpcGJvYXJk" not in safe and "Viewer" in safe
+
+
+def test_terminal_mono_is_persisted_and_no_color_overrides_theme(service, monkeypatch):
+    from types import SimpleNamespace
+
+    from prompt_toolkit.output import ColorDepth
+
+    from clira.tui.app import Terminal
+
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    terminal = Terminal(service, DEMO_CHANNEL, no_logo=True)
+    terminal.print = lambda text: None
+    terminal.prompt = SimpleNamespace(color_depth=None)
+    terminal.command("/theme mono")
+    assert terminal.console.no_color and terminal.console.style is None
+    assert terminal.prompt.color_depth == ColorDepth.DEPTH_1_BIT
+    assert Terminal(service).theme == "mono" and Terminal(service).console.no_color
+    terminal.command("/theme dark")
+    assert not terminal.console.no_color and terminal.prompt.color_depth is None
+    monkeypatch.setenv("NO_COLOR", "1")
+    terminal.command("/theme light")
+    assert terminal.console.no_color and terminal.prompt.color_depth == ColorDepth.DEPTH_1_BIT
+
+
+def test_first_run_invalid_launch_recovers_in_same_terminal(tmp_path):
+    child = spawn(tmp_path, 80, "--no-logo")
+    child.expect("Choose 1 / 2 / 3")
+    child.send("1\r")
+    for prompt in ["Your interest", "Your viewer", "Language", "Time per week", "Format"]:
+        child.expect(prompt)
+        child.send("\r")
+    child.expect("LAUNCH_INPUT")
+    child.expect("Choose 1 / 2 / 3")
+    child.send("3\r")
+    child.expect("❯")
+    child.send("/theme mono\r")
+    child.expect("Theme saved: mono")
+    child.expect("❯")
+    child.sendcontrol("d")
+    child.expect(pexpect.EOF)
+    child.close()
+    assert child.exitstatus == 0
+
+
+def test_invalid_onboarding_does_not_recurse(service):
+    from clira.tui.app import Terminal
+
+    terminal = Terminal(service)
+    answers = iter(["invalid"] * 1100 + ["3"])
+    terminal.ask = lambda question: next(answers)
+    terminal.print = lambda text: None
+    terminal.onboarding()
+    assert terminal.channel == DEMO_CHANNEL
+
+
+def test_first_run_missing_live_client_returns_to_choices(tmp_path, monkeypatch):
+    monkeypatch.delenv("CLIRA_GOOGLE_CLIENT_FILE", raising=False)
+    child = spawn(tmp_path, 80, "--mode", "live", "--no-logo")
+    child.expect("Choose 1 / 2 / 3")
+    child.send("2\r")
+    child.expect("CLIENT_REQUIRED")
+    child.expect("Choose 1 / 2 / 3")
+    child.sendcontrol("d")
+    child.expect(pexpect.EOF)
+    child.close()
+    assert child.exitstatus == 0
+    assert not list((tmp_path / "secrets").glob("*.json"))

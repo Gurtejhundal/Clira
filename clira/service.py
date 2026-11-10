@@ -299,7 +299,7 @@ class Service:
                 **data,
                 "type": "captions",
                 "language": record["language"],
-                "mime": record["mime"],
+                "mime": "text/vtt" if data["format"] == "vtt" else "application/x-subrip",
                 "video_asset_id": record.get("video_asset_id"),
                 "edited_from": record["id"],
             },

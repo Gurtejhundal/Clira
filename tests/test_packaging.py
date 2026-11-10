@@ -157,6 +157,41 @@ def test_chapters_and_metadata_rules(service):
         assert not service.tool(DEMO_CHANNEL, "package_video", {**base, **extra})["ok"]
 
 
+@pytest.mark.parametrize("target_format", ["srt", "vtt"])
+def test_caption_format_edit_preview_has_correct_mime(service, target_format):
+    original = imported(service, "captions")
+    vtt = "WEBVTT\n\n00:00.000 --> 00:00.800\nAn edited original line.\n"
+    srt = "1\n00:00:00,000 --> 00:00:00,800\nAn edited original line.\n"
+
+    def edit(record, text):
+        result = service.tool(DEMO_CHANNEL, "edit_captions", {"package_asset_id": record["id"], "text": text})
+        assert result["ok"], result
+        return result["data"]
+
+    # Exercise both SRT -> VTT and VTT -> SRT, preserving the original asset.
+    previous = original if target_format == "vtt" else edit(original, vtt)
+    edited = edit(previous, vtt if target_format == "vtt" else srt)
+    mime = "text/vtt" if target_format == "vtt" else "application/x-subrip"
+    assert edited["format"] == target_format and edited["mime"] == mime
+    assert Path(edited["path"]).suffix == "." + target_format
+    assert not edited["creative_reviewed"] and edited["id"] != previous["id"]
+    client = TestClient(create_app(service))
+    response = client.get(f"/api/preview/{DEMO_CHANNEL}/{edited['id']}")
+    assert response.status_code == 200
+    assert response.headers["content-type"].split(";")[0] == mime
+    assert response.text == edited["text"]
+    assert Path(original["path"]).read_text() == original["text"]
+
+
+def test_tag_limit_counts_youtube_quotes_and_separators(service):
+    base = {"title": "A factual title", "made_for_kids": False, "synthetic_media": False}
+    # Old accounting accepted these 400 characters, but YouTube counts 499 with quotes.
+    rejected = service.tool(DEMO_CHANNEL, "package_video", {**base, "tags": ["foo bar"] * 50})
+    assert not rejected["ok"]
+    assert service.tool(DEMO_CHANNEL, "package_video", {**base, "tags": ["foo bar"] * 45})["ok"]
+    assert not service.tool(DEMO_CHANNEL, "package_video", {**base, "tags": [" "]})["ok"]
+
+
 def test_import_rejects_untrusted_paths_bytes_and_attestation(service, tmp_path):
     outside = tmp_path / "outside.png"
     Image.new("RGB", (1280, 720)).save(outside)

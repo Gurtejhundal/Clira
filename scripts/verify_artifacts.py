@@ -1,6 +1,7 @@
 """Clean install/runtime checks for local candidate artifacts; never publish anything."""
 
 import argparse
+import hashlib
 import json
 import os
 import socket
@@ -36,10 +37,17 @@ def main():
     version = args.version
     wheel = artifacts / f"clira-{version}-py3-none-any.whl"
     source = artifacts / f"Clira-{version}-source.zip"
-    if not wheel.is_file() or not source.is_file():
+    sdist = artifacts / f"clira-{version}.tar.gz"
+    if not all(path.is_file() for path in [wheel, source, sdist]):
         raise RuntimeError(
-            "Expected versioned wheel/source ZIP missing; build the requested candidate first."
+            "Expected versioned wheel/source ZIP/sdist missing; build the requested candidate first."
         )
+    checksums = dict(
+        reversed(line.split("  ", 1)) for line in (artifacts / "SHA256SUMS.txt").read_text().splitlines()
+    )
+    for path in [wheel, source, sdist]:
+        if checksums.get(path.name) != hashlib.sha256(path.read_bytes()).hexdigest():
+            raise RuntimeError(f"Artifact checksum mismatch: {path.name}")
     results = []
     with tempfile.TemporaryDirectory(prefix="clira-clean-install-") as directory:
         root = Path(directory)
@@ -56,12 +64,11 @@ def main():
             NO_COLOR="1",
             UV_LINK_MODE="copy",
         )
-        for kind in ["wheel", "source"]:
+        for kind, install in [("wheel", wheel), ("source", source), ("sdist", sdist)]:
             case = root / kind
             case.mkdir()
             venv = case / "venv"
             run(["uv", "venv", "--python", "3.12", str(venv)], case, env)
-            install = wheel
             if kind == "source":
                 with zipfile.ZipFile(source) as archive:
                     if any(
@@ -152,6 +159,7 @@ def main():
                     "kind": kind,
                     "version": version,
                     "checks": [
+                        "artifact checksum",
                         "console version",
                         "installed interactive PTY",
                         "safe non-TTY startup",

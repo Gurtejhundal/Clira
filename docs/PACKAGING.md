@@ -61,6 +61,12 @@ Official docs rechecked during implementation on 9 November 2026:
 - [manual chapters](https://support.google.com/youtube/answer/9884579?hl=en): first at zero, three or
   more ascending timestamps, minimum ten-second chapters. Platform feature eligibility still applies.
 
+Rechecked on 10 November: [video metadata](https://developers.google.com/youtube/data/reference/rest/v3/videos)
+allows 500 tag characters, counting commas and implicit quotes around tags containing spaces. Clira
+keeps its stricter 450-character app budget, now including those quotes/separators, and rejects empty
+tags. Caption edits that change SRT/VTT format update the file extension and preview MIME type together;
+they still create a new file that needs fresh owner review.
+
 Thumbnail and caption adapters use official upload endpoints. Tests inspect actual HTTP wire bodies
 through mock transports. An accepted API response is labelled **accepted**, never proof that the image
 matches or captions play correctly. Owner playback/visual review and live account verification remain

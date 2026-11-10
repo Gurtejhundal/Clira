@@ -25,6 +25,11 @@ Cursor-control sequences removed for this text transcript.
      ⠉⢿⠟   ⢠⡿           ⠘⣧⠈⢻⠸⣿⣿⣿⣿⡈⡿⠁⠊⢻⣧⡀
 End of single-file Clira v1.0.0 design and implementation contract.
 
+Welcome to Clira.
+1  Start planning a new YouTube channel
+2  Connect an existing channel
+3  Explore synthetic demo data
+Choose 1 / 2 / 3 >Choose 1 / 2 / 3 > 3
 Clira 1.0.0rc1 · DEMO · SYNTHETIC
 Inside the everyday · Demo
 DEMO_CHANNEL_TECH
@@ -32,10 +37,10 @@ Model: Offline · limited templates
 Policy: live writes disabled
 Pending approvals: 0 · Jobs: none
 Scopes: none
+❯❯ /theme mono
+Theme saved: mono
 ❯❯ /new
-New session: chat_ad04f2f763004cb3be292b279fdf191d
-❯❯ /title Candidate prototype
-Session title saved.
+New session: chat_352622e1658545d8b2d1b873e457370e
 ❯❯ Show my latest videos
 ⠋ Working on this request…
 SYNTHETIC DEMO · Latest uploads — lifetime views:
@@ -45,7 +50,7 @@ SYNTHETIC DEMO · Latest uploads — lifetime views:
 • The hidden cost of notifications: 3,800 views
 • How maps find the fastest route: 2,900 views
 Sources: list_videos · mock
-1 tool receipts · /details · session chat_ad04f2f763004cb3be292b279fdf191d
+1 tool receipts · /details · session chat_352622e1658545d8b2d1b873e457370e
 ❯❯ /approvals
 No approvals in this workspace.
 ❯❯ /quit

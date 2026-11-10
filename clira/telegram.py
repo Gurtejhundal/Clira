@@ -2,6 +2,7 @@
 
 import hashlib
 import hmac
+import json
 import secrets
 import time
 
@@ -10,6 +11,7 @@ import httpx
 from .agent import Agent
 from .config import CliraError
 from .creator import Creator
+from .storage import encode
 
 
 def pairing_code(service):
@@ -44,13 +46,47 @@ class Telegram:
                 "Telegram request failed. Check your bot connection; no automatic replay was attempted.",
             ) from None
 
+    def claim_update(self, update_id):
+        if not isinstance(update_id, int):
+            return False
+        with self.service.store.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT value FROM settings WHERE key='telegram_offset'").fetchone()
+            if row and update_id < json.loads(row["value"]):
+                return False
+            db.execute(
+                "INSERT OR REPLACE INTO settings VALUES(?,?)", ("telegram_offset", encode(update_id + 1))
+            )
+        return True
+
+    def claim_pair(self, chat_id, user_id, code):
+        with self.service.store.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+
+            def read(key):
+                row = db.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+                return json.loads(row["value"]) if row else {}
+
+            if read("telegram_owner"):
+                return False
+            pairing = read("telegram_pair")
+            given = hashlib.sha256(code.encode()).hexdigest()
+            if time.time() > pairing.get("expires", 0) or not hmac.compare_digest(
+                given, pairing.get("digest", "")
+            ):
+                return False
+            db.execute(
+                "INSERT OR REPLACE INTO settings VALUES(?,?)",
+                ("telegram_owner", encode({"chat_id": chat_id, "user_id": user_id})),
+            )
+            db.execute("INSERT OR REPLACE INTO settings VALUES(?,?)", ("telegram_pair", "{}"))
+        return True
+
     def handle(self, update):
         store = self.service.store
-        update_id = update.get("update_id")
-        if not isinstance(update_id, int) or update_id < store.setting("telegram_offset", 0):
+        # Claim before work; concurrent pollers and restarts cannot execute the same update twice.
+        if not self.claim_update(update.get("update_id")):
             return None
-        # Mark before work: uncertain/failed work must not be repeated silently after restart.
-        store.set_setting("telegram_offset", update_id + 1)
         message = update.get("message", {})
         chat, sender = message.get("chat", {}), message.get("from", {})
         text = message.get("text", "")
@@ -61,14 +97,8 @@ class Telegram:
         if not isinstance(chat_id, int) or not isinstance(user_id, int):
             return None
         if text.startswith("/pair ") and not owner:
-            pairing = store.setting("telegram_pair", {})
-            given = hashlib.sha256(text[6:].strip().encode()).hexdigest()
-            if time.time() > pairing.get("expires", 0) or not hmac.compare_digest(
-                given, pairing.get("digest", "")
-            ):
+            if not self.claim_pair(chat_id, user_id, text[6:].strip()):
                 return None
-            store.set_setting("telegram_owner", {"chat_id": chat_id, "user_id": user_id})
-            store.set_setting("telegram_pair", {})
             return (
                 chat_id,
                 "Paired with your local Clira. /help for commands. Channel writes still need local owner review.",

@@ -54,6 +54,10 @@ explicitly enabled cloud model.
 
 ## Credentials and connections
 
+Both dotted Gemini authorization keys and legacy key syntax are accepted. A connection typo offers
+retry/cancel while preserving your profile. Environment credentials take precedence over saved keys;
+setup discloses an override without printing either credential.
+
 Keys are entered in a masked field, excluded from terminal input history and transcript, and saved
 in owner-only `secrets/` files (0600, directory 0700). Credentials never enter the creator profile,
 notes or model prompt. Do not paste credentials into ordinary chat. Common key/token formats are

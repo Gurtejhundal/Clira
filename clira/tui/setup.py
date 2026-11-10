@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 from ..config import CliraError
-from ..creator import QUESTIONS, Creator
+from ..creator import QUESTIONS, Creator, valid_model_key
 from ..storage import encode
 from ..workspaces import launch
 from .presentation import literal
@@ -71,6 +71,16 @@ class CreatorSetup:
                 step = int(decision) - 1
 
     def connections(self):
+        while True:
+            try:
+                return self._connections()
+            except CliraError as exc:
+                self.t.view.error(exc.code, exc.message)
+                self.t.print(
+                    "Your saved profile is safe. Retry connections, or /cancel to leave them for later."
+                )
+
+    def _connections(self):
         t, service = self.t, self.t.service
         t.print("CONNECTIONS · Set up now or leave any connection for later.")
         t.print(
@@ -84,10 +94,17 @@ class CreatorSetup:
             if key in {"/cancel", "/back"}:
                 return False
             if key:
-                if not re.fullmatch(r"[A-Za-z0-9_-]{20,200}", key):
+                if not valid_model_key(key):
                     raise CliraError("KEY_FORMAT", "Key format is invalid. Nothing was saved.")
                 service.secrets.put("gemini", {"api_key": key})
+            import os
+
             from ..creator import model_key
+
+            if key and os.getenv("GEMINI_API_KEY") and key != os.environ["GEMINI_API_KEY"]:
+                t.print(
+                    "GEMINI_API_KEY in your environment overrides the saved key. Unset it to use the new saved key."
+                )
 
             if not model_key(service):
                 raise CliraError("MODEL_KEY_REQUIRED", "A Gemini key is needed. You can continue offline.")
@@ -161,7 +178,7 @@ class CreatorSetup:
 
     def project(self):
         t = self.t
-        choice = self.choice("START: 1 first project / 2 channel menu", {"1", "2"}, "1")
+        choice = self.choice("START: 1 first project / 2 keep or choose a channel", {"1", "2"}, "1")
         if choice is None:
             return None
         if choice != "1":

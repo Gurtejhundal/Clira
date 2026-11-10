@@ -81,11 +81,30 @@ class GeminiProvider:
                 "MODEL_API_ERROR",
                 f"Gemini returned HTTP {response.status_code}; check model, key and billing.",
             )
-        candidates = response.json().get("candidates", [])
-        if not candidates or not candidates[0].get("content", {}).get("parts"):
+        try:
+            payload = response.json()
+            if not isinstance(payload, dict):
+                raise TypeError()
+            candidates = payload.get("candidates", [])
+            if not isinstance(candidates, list) or (candidates and not isinstance(candidates[0], dict)):
+                raise ValueError()
+        except (ValueError, TypeError):
+            raise CliraError(
+                "MODEL_SCHEMA", "Gemini returned an invalid response. No provider payload was logged."
+            ) from None
+        if not candidates:
+            raise CliraError("MODEL_NO_RESULT", "The model returned no usable response.")
+        content = candidates[0].get("content")
+        if (
+            not isinstance(content, dict)
+            or not isinstance(content.get("parts"), list)
+            or any(not isinstance(part, dict) for part in content["parts"])
+        ):
+            raise CliraError("MODEL_SCHEMA", "Gemini returned an invalid content shape.")
+        if not content["parts"]:
             raise CliraError("MODEL_NO_RESULT", "The model returned no usable response.")
         # Preserve the whole model content, including thought signatures and function-call IDs.
-        return ModelTurn(candidates[0]["content"])
+        return ModelTurn(content)
 
 
 class OfflineProvider:
@@ -267,10 +286,18 @@ class Agent:
             )
             content = turn.content
             parts = content.get("parts", [])
-            if not isinstance(parts, list) or len(parts) > 30:
+            if (
+                not isinstance(parts, list)
+                or len(parts) > 30
+                or any(not isinstance(part, dict) for part in parts)
+            ):
                 raise CliraError("MODEL_SCHEMA", "Model returned an invalid content shape.")
             messages.append(content)
             calls = [part["functionCall"] for part in parts if "functionCall" in part]
+            if any(not isinstance(call, dict) for call in calls) or any(
+                "text" in part and not isinstance(part["text"], str) for part in parts
+            ):
+                raise CliraError("MODEL_SCHEMA", "Model returned invalid text or function-call data.")
             if not calls:
                 answer = "\n".join(
                     part["text"] for part in parts if "text" in part and not part.get("thought")
@@ -289,7 +316,10 @@ class Agent:
                     tool_count += 1
                     result = self.service.tool(channel_id, call["name"], call.get("args", {}), actor="agent")
                 receipts.append(result)
-                response = {"name": call.get("name", "invalid"), "response": result}
+                response = {
+                    "name": call.get("name") if isinstance(call.get("name"), str) else "invalid",
+                    "response": result,
+                }
                 if call.get("id"):
                     response["id"] = call["id"]
                 replies.append({"functionResponse": response})

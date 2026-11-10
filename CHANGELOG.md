@@ -2,6 +2,10 @@
 
 ## 1.0.0rc1 · unreleased local candidate
 
+- Review follow-up: accept dotted Gemini auth keys, recover connection setup after errors,
+  atomically claim Telegram updates and pairing codes, and reject malformed model responses with
+  redacted domain errors. Preserve the existing visual layout and account-write policy.
+
 - Personal creator setup with 19 resumable questions, explicit profile review, local memory,
   editable preferences, optional masked Gemini/YouTube/Telegram connection setup and a personalized
   first project. Add inspect/remember/forget commands and opt-in saved-memory context. Telegram

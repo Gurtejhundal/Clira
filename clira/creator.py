@@ -55,7 +55,9 @@ QUESTIONS = [
 def clean_fact(value):
     if not isinstance(value, str) or len(value) > 500 or not value.strip():
         raise CliraError("PROFILE_INPUT", "Use 1–500 characters. No credentials in profile or memory.")
-    if re.search(r"AIza[\w-]{15,}|\b\d{6,}:[\w-]{20,}|-----BEGIN .*PRIVATE KEY|\bBearer\s+\S+", value):
+    if re.search(
+        r"(?:AIza|AQ\.)[\w-]{15,}|\b\d{6,}:[\w-]{20,}|-----BEGIN .*PRIVATE KEY|\bBearer\s+\S+", value
+    ):
         raise CliraError(
             "PROFILE_SECRET", "Use the masked connection step for credentials, not profile or memory."
         )
@@ -171,3 +173,8 @@ def load_runtime(service):
     ]:
         if field in saved and env not in os.environ:
             setattr(service.config, field, saved[field])
+
+
+def valid_model_key(value):
+    # Keys are opaque. Accept dotted authorization keys as well as legacy API keys.
+    return isinstance(value, str) and bool(re.fullmatch(r"[A-Za-z0-9._-]{20,512}", value))

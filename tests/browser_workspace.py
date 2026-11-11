@@ -103,10 +103,10 @@ def main():
                 # Reading up during a delayed reply must not be interrupted by completion/focus.
                 send_held("Show my latest videos")
                 page.wait_for_function("() => !scrollingChat && !chatScrollFrame")
-                page.locator("#main").evaluate("n=>n.scrollTop=0")
+                page.locator("#chatTranscript").evaluate("n=>n.scrollTop=0")
                 page.wait_for_function("() => !followChat")
                 finish_held()
-                assert page.locator("#main").evaluate("n=>n.scrollTop") < 10
+                assert page.locator("#chatTranscript").evaluate("n=>n.scrollTop") < 10
                 page.locator("#jumpToLatest").click()
                 page.wait_for_function("() => atChatBottom()")
 
@@ -131,7 +131,9 @@ def main():
                 history_id = page.evaluate("conversationId")
                 assert page.locator("#sessionList button[aria-current=true]").count() == 1
                 page.locator("#sessionSearch").fill("no such conversation")
-                assert page.locator("#sessionList button").count() == 0
+                page.wait_for_function(
+                    "() => document.querySelectorAll('#sessionList [data-session-id]').length===0"
+                )
                 page.locator("#sessionSearch").fill("")
                 page.locator("#sidebarNewChat").click()
                 page.wait_for_function("() => !busy && !document.querySelector('#chatWelcome').hidden")

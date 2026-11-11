@@ -10,9 +10,8 @@
 #characterFallback[hidden] { display:none; }
 #characterFallback img { display:block; width:100%; height:100%; object-fit:contain; }
 .character svg,#characterFallback img { filter:grayscale(1); }
-.character-caption { margin-top:7px; min-height:31px; line-height:1.5; text-align:center; }
+.character-caption { margin-top:7px; min-height:16px; line-height:1.5; text-align:center; }
 #characterStatus { display:block; font-size:10px; color:var(--muted); }
-.character-hint { display:block; font-size:9px; color:var(--muted); opacity:.8; }
 .character .character-head { transform-origin:760px 890px; }
 .character .character-body { transform-origin:760px 1200px; }
 .character .expression-face,.character .character-blink { visibility:hidden; }

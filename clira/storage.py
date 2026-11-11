@@ -4,7 +4,7 @@ import re
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from .config import CliraError
 
@@ -37,6 +37,7 @@ CREATE INDEX IF NOT EXISTS records_channel_kind ON records(channel_id,kind);
 CREATE TABLE IF NOT EXISTS conversations(
  id TEXT PRIMARY KEY, channel_id TEXT NOT NULL REFERENCES channels(id), messages TEXT NOT NULL,
  updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS conversations_channel_updated ON conversations(channel_id,updated_at DESC);
 CREATE TABLE IF NOT EXISTS approvals(
  id TEXT PRIMARY KEY, channel_id TEXT NOT NULL REFERENCES channels(id), operation TEXT NOT NULL,
  payload TEXT NOT NULL, payload_hash TEXT NOT NULL, status TEXT NOT NULL,
@@ -186,18 +187,53 @@ class Store:
     def sessions(self, channel_id, search=""):
         self.channel(channel_id)
         rows = self.rows(
-            "SELECT c.*,m.title,m.created_at,m.accessed_at,m.activity FROM conversations c "
-            "LEFT JOIN session_meta m ON m.id=c.id WHERE c.channel_id=? "
-            "ORDER BY c.updated_at DESC",
+            "SELECT c.*,m.title,m.created_at,m.accessed_at,m.activity,p.value AS preferences "
+            "FROM conversations c LEFT JOIN session_meta m ON m.id=c.id "
+            "LEFT JOIN settings p ON p.key='session:'||c.id WHERE c.channel_id=? "
+            "AND COALESCE(json_extract(p.value,'$.archived'),0)=0 "
+            "AND COALESCE(json_extract(p.value,'$.trashed'),0)=0 ORDER BY c.updated_at DESC",
             (channel_id,),
         )
-        return [
-            {**r, "messages": json.loads(r["messages"])}
-            for r in rows
-            if search.casefold() in (r.get("title") or "").casefold()
-        ][:100]
+        result = []
+        for row in rows:
+            preferences = json.loads(row.pop("preferences") or "{}")
+            if search.casefold() in (row.get("title") or "").casefold():
+                result.append({**row, **preferences, "messages": json.loads(row["messages"])})
+        return result[:100]
 
-    def session(self, channel_id, conversation_id):
+    def session_index(self, channel_id, search="", folder="active", offset=0, limit=50):
+        """Small, paginated history rows; never load every transcript into the sidebar."""
+        self.channel(channel_id)
+        where = "c.channel_id=?"
+        params = [channel_id]
+        if folder == "trash":
+            where += " AND COALESCE(json_extract(p.value,'$.trashed'),0)=1"
+        else:
+            where += " AND COALESCE(json_extract(p.value,'$.trashed'),0)=0"
+            where += " AND COALESCE(json_extract(p.value,'$.archived'),0)=" + (
+                "1" if folder == "archived" else "0"
+            )
+        if search:
+            # instr treats search text literally, including % and _, unlike LIKE.
+            where += " AND instr(lower(m.title),lower(?))>0"
+            params.append(search)
+        source = (
+            " FROM conversations c JOIN session_meta m ON m.id=c.id "
+            "LEFT JOIN settings p ON p.key='session:'||c.id WHERE " + where
+        )
+        total = self.rows("SELECT COUNT(*) AS count" + source, params)[0]["count"]
+        rows = self.rows(
+            "SELECT c.id,c.channel_id,c.updated_at,m.title,m.created_at,m.activity,"
+            "COALESCE(json_extract(p.value,'$.pinned'),0) AS pinned,"
+            "COALESCE(json_extract(p.value,'$.archived'),0) AS archived,"
+            "COALESCE(json_extract(p.value,'$.trashed'),0) AS trashed"
+            + source
+            + " ORDER BY pinned DESC,c.updated_at DESC,c.id LIMIT ? OFFSET ?",
+            [*params, limit, offset],
+        )
+        return {"items": rows, "total": total, "has_more": offset + len(rows) < total}
+
+    def session(self, channel_id, conversation_id, include_trashed=False):
         self.channel(channel_id)
         rows = self.rows(
             "SELECT c.*,m.title,m.created_at,m.accessed_at,m.activity FROM conversations c "
@@ -206,11 +242,53 @@ class Store:
         )
         if not rows:
             raise CliraError("NOT_FOUND", "Session not found in this workspace.")
+        preferences = self.setting("session:" + conversation_id, {})
+        if preferences.get("trashed") and not include_trashed:
+            raise CliraError("SESSION_TRASHED", "Restore this conversation from Trash before using it.")
         self.execute(
             "UPDATE session_meta SET accessed_at=? WHERE id=? AND activity!='running'",
             (now(), conversation_id),
         )
-        return {**rows[0], "messages": json.loads(rows[0]["messages"])}
+        return {**rows[0], **preferences, "messages": json.loads(rows[0]["messages"])}
+
+    def manage_session(self, channel_id, conversation_id, action):
+        if action not in {"pin", "unpin", "archive", "trash", "restore"}:
+            raise CliraError("SESSION_ACTION", "Unknown conversation action.")
+        self.channel(channel_id)
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute(
+                "SELECT m.activity,m.accessed_at FROM conversations c JOIN session_meta m ON m.id=c.id "
+                "WHERE c.channel_id=? AND c.id=?",
+                (channel_id, conversation_id),
+            ).fetchone()
+            if not row:
+                raise CliraError("NOT_FOUND", "Session not found in this workspace.")
+            cutoff = (datetime.now(UTC) - timedelta(minutes=10)).isoformat()
+            if row["activity"] == "running" and row["accessed_at"] >= cutoff:
+                raise CliraError("SESSION_BUSY", "Wait for this conversation's active request to finish.")
+            key = "session:" + conversation_id
+            old = db.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+            preferences = json.loads(old["value"]) if old else {}
+            if preferences.get("trashed") and action != "restore":
+                raise CliraError("SESSION_TRASHED", "Restore this conversation first.")
+            if action in {"pin", "unpin"}:
+                preferences["pinned"] = action == "pin"
+            elif action in {"archive", "trash"}:
+                preferences[{"archive": "archived", "trash": "trashed"}[action]] = True
+                preferences["pinned"] = False
+            else:
+                preferences.update(archived=False, trashed=False)
+            db.execute(
+                "INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (key, encode(preferences)),
+            )
+            db.execute(
+                "INSERT INTO audit_events(id,channel_id,actor,action,object_id,decision,metadata,at) "
+                "VALUES(?,?,'owner','conversation.manage',?,?,'{}',?)",
+                (uid("audit"), channel_id, conversation_id, action, now()),
+            )
+        return self.session(channel_id, conversation_id, include_trashed=True)
 
     def new_session(self, channel_id, title="Untitled conversation"):
         self.channel(channel_id)
@@ -225,6 +303,9 @@ class Store:
 
     def title_session(self, channel_id, conversation_id, title):
         self.session(channel_id, conversation_id)
+        title = title.strip()
+        if not title:
+            raise CliraError("SESSION_TITLE", "Enter a conversation title.")
         self.execute("UPDATE session_meta SET title=? WHERE id=?", (title[:120], conversation_id))
         return self.session(channel_id, conversation_id)
 

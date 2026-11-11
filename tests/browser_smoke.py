@@ -134,6 +134,7 @@ def main():
                 page.locator("#message").press("Enter")
                 assert page.locator("#view-settings").is_visible()
                 page.locator("nav button[data-view=chat]").click()
+                page.locator("#chatDetails").evaluate("n=>n.open=true")
                 page.locator(".snapshot summary").click()
                 page.get_by_text("33,400", exact=True).wait_for()
                 assert not page.evaluate("document.documentElement.scrollWidth > innerWidth")

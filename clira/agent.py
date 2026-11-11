@@ -243,15 +243,21 @@ class Agent:
         cutoff = (datetime.now(UTC) - timedelta(minutes=10)).isoformat()
         claimed = store.execute(
             "UPDATE session_meta SET activity='running',accessed_at=? WHERE id=? "
-            "AND (activity!='running' OR accessed_at<?)",
-            (now(), conversation_id, cutoff),
+            "AND (activity!='running' OR accessed_at<?) "
+            "AND NOT EXISTS (SELECT 1 FROM settings WHERE key=? AND json_extract(value,'$.trashed')=1)",
+            (now(), conversation_id, cutoff, "session:" + conversation_id),
         )
         if not claimed:
+            if store.setting("session:" + conversation_id, {}).get("trashed"):
+                raise CliraError("SESSION_TRASHED", "Restore this conversation from Trash before using it.")
             raise CliraError(
                 "SESSION_BUSY",
                 "This session already has a running request. After an interrupted process, its lease expires in ten minutes.",
             )
         try:
+            preferences = store.setting("session:" + conversation_id, {})
+            if preferences.get("archived"):
+                store.set_setting("session:" + conversation_id, {**preferences, "archived": False})
             result = self._chat(channel_id, message, conversation_id)
         except BaseException:
             store.execute(

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Simplify chat into right-aligned user bubbles and left-aligned Clira replies; remove repeated
+  message rules and Copy labels, collapse conversation details, and place the composer outside the
+  independently scrollable transcript. Remove the companion's Tap to say hello caption.
+- Make history compact and paginated with pinned/date groups, server-side search and accessible
+  per-chat menus for rename, pin, archive, local export and recoverable delete/restore. Preserve
+  channel isolation, running-request locks, transcripts and account audit records. Verify 112-chat
+  behavior, independent wheel scrolling, short desktop heights and mobile layouts.
+
 - Show an animated, accessible thinking indicator during chat requests, with distinct attachment
   and video-package preparation labels and cleanup on success or failure. Follow new messages and
   replies automatically; preserve reading position when scrolling up and offer a Latest message action.

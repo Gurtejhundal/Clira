@@ -188,6 +188,11 @@ class SessionRequest(Strict):
     title: str = Field(default="Untitled conversation", min_length=1, max_length=120)
 
 
+class SessionAction(Strict):
+    channel_id: str
+    action: Literal["pin", "unpin", "archive", "trash", "restore"]
+
+
 class CopyWorkspace(Strict):
     workspace_id: str
     channel_id: str

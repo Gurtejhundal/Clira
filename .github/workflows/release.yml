@@ -47,6 +47,7 @@ jobs:
           uv run --locked playwright install --with-deps chromium
           uv run --locked python tests/browser_smoke.py --output work/ci-browser
           uv run --locked python tests/browser_workspace.py work/ci-workspace
+          uv run --locked python tests/browser_chat_history.py work/ci-chat-history
 
       - name: Build and verify clean candidate installs (no publishing)
         run: |

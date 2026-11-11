@@ -1,9 +1,10 @@
 import json
 import secrets
 from pathlib import Path
+from typing import Literal
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -17,6 +18,7 @@ from .contracts import (
     ExecuteJob,
     LaunchRequest,
     Profile,
+    SessionAction,
     SessionRequest,
     ToolRequest,
     tool_contracts,
@@ -222,8 +224,17 @@ def create_app(service=None):
         return {"paused": False}
 
     @app.get("/api/conversations/{channel_id}")
-    def conversations(channel_id: str):
+    def conversations(
+        channel_id: str,
+        summary: bool = False,
+        search: str = "",
+        folder: Literal["active", "archived", "trash"] = "active",
+        offset: int = Query(default=0, ge=0),
+        limit: int = Query(default=50, ge=1, le=100),
+    ):
         service.policy.channel(channel_id)
+        if summary:
+            return service.store.session_index(channel_id, search, folder, offset, limit)
         return service.store.sessions(channel_id)
 
     @app.post("/api/conversations")
@@ -232,9 +243,14 @@ def create_app(service=None):
         return service.store.new_session(body.channel_id, body.title)
 
     @app.get("/api/conversations/{channel_id}/{conversation_id}")
-    def conversation(channel_id: str, conversation_id: str):
+    def conversation(channel_id: str, conversation_id: str, include_trashed: bool = False):
         service.policy.channel(channel_id)
-        return service.store.session(channel_id, conversation_id)
+        return service.store.session(channel_id, conversation_id, include_trashed=include_trashed)
+
+    @app.post("/api/conversations/{conversation_id}/manage")
+    def manage_conversation(conversation_id: str, body: SessionAction):
+        service.policy.channel(body.channel_id)
+        return service.store.manage_session(body.channel_id, conversation_id, body.action)
 
     @app.put("/api/conversations/{conversation_id}")
     def title_conversation(conversation_id: str, body: SessionRequest):

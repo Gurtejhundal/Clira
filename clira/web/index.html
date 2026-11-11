@@ -17,7 +17,7 @@
 ██║     ██║     ██║██╔══██╗██╔══██║
 ╚██████╗███████╗██║██║  ██║██║  ██║
  ╚═════╝╚══════╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝</pre><small>Intelligence Behind Creation</small></a>
-    <div class="character" id="cliraCharacter" data-state="idle" data-motion="off"><button type="button" id="characterInteract" aria-label="Say hello to Clira" aria-describedby="characterStatus"><span id="characterArtwork" aria-hidden="true"></span><span class="portrait" id="characterFallback"><img src="/static/assets/clira-portrait.png" width="1254" height="1254" alt="" decoding="async"></span></button><div class="character-caption"><span id="characterStatus">Clira is here</span><span class="character-hint">Tap to say hello</span></div></div>
+    <div class="character" id="cliraCharacter" data-state="idle" data-motion="off"><button type="button" id="characterInteract" aria-label="Say hello to Clira" aria-describedby="characterStatus"><span id="characterArtwork" aria-hidden="true"></span><span class="portrait" id="characterFallback"><img src="/static/assets/clira-portrait.png" width="1254" height="1254" alt="" decoding="async"></span></button><div class="character-caption"><span id="characterStatus">Clira is here</span></div></div>
   </div>
   <section id="sidebarWorkspace" aria-label="Workspace explorer">
   <div class="sidebar-section">WORKSPACE</div>
@@ -43,8 +43,9 @@
   <div id="sidebar-history" role="tabpanel" aria-labelledby="sidebar-tab-history" hidden>
     <div class="sidebar-panel-heading"><h2>Chat history</h2><button id="sidebarNewChat" type="button" class="quiet">+ New chat</button></div>
     <div id="sessionPanel">
-      <label for="sessionSearch">Search conversations</label><input id="sessionSearch" type="search" placeholder="Find a conversation" autocomplete="off">
+      <div class="history-filters"><label class="sr-only" for="sessionSearch">Search conversations</label><input id="sessionSearch" type="search" placeholder="Search chats" autocomplete="off"><label class="sr-only" for="historyFolder">History folder</label><select id="historyFolder"><option value="active">Recents</option><option value="archived">Archived</option><option value="trash">Trash</option></select></div>
       <div id="sessionList"></div>
+      <button id="historyMore" type="button" class="quiet" hidden>Show more</button>
     </div>
   </div>
   <div id="sidebar-projects" role="tabpanel" aria-labelledby="sidebar-tab-projects" hidden>
@@ -61,15 +62,17 @@
   <details class="sidebar-shortcuts"><summary>Keyboard shortcuts</summary><dl><dt>Alt+1…8</dt><dd>Switch workspace view</dd><dt>Alt+[ / ]</dt><dd>Previous / next sidebar panel</dd><dt>← / →</dt><dd>Switch focused sidebar tab</dd></dl><p>Two-finger horizontal swipes inside this explorer switch its panels. Vertical scrolling and pinch zoom stay native.</p></details>
   <span id="navigationStatus" class="sr-only" role="status" aria-live="polite"></span>
   </section>
-  <div class="channel-context"><label class="channel-label" for="channelSelect">WORKSPACE</label>
+  <div class="channel-context"><label class="channel-label" for="channelSelect">ACTIVE CHANNEL</label>
   <select id="channelSelect" aria-label="Active channel"></select><code id="channelId"></code></div>
-  <div class="sidebar-foot">Local workspace<button id="pauseAll" class="quiet">Pause all writes</button></div>
+  <div class="sidebar-foot"><button id="pauseAll" class="quiet">Pause all writes</button></div>
 </aside>
 <div class="shell">
   <header><div><span class="eyebrow" id="viewLabel">CLIRA / CHAT</span><p id="viewCrumb">Your channel, in good hands.</p></div><div class="top-status"><span id="requestState" class="request-state" aria-hidden="true" hidden></span><span id="modeBadge" class="badge">Loading</span><span id="modelBadge" class="badge neutral">Offline</span><button id="pauseTop" class="quiet">Pause writes</button></div></header>
   <div id="notice" role="status"></div>
   <main id="main" tabindex="-1">
     <section id="view-chat" class="view">
+      <div id="chatTranscript" tabindex="0" aria-label="Conversation transcript">
+      <div class="chat-heading"><h2 id="sessionTitle">New conversation</h2><button id="newChat" class="quiet">+ New chat</button></div>
       <div class="page-heading" id="chatWelcome"><div><span class="eyebrow">CLIRA IS READY</span><h1>What are we creating?</h1><p>Attach a video and say “upload”, or start with an idea.</p></div></div>
       <details id="onboarding" class="panel"><summary>Start a channel · Connect existing · Explore demo</summary>
         <p>Plan locally without Google sign-in, connect your verified channel, or explore synthetic examples.</p>
@@ -80,15 +83,16 @@
         </form>
         <p id="launchResult"></p>
       </details>
-      <details class="snapshot"><summary>Channel snapshot</summary><div class="metrics" id="metrics"><article><span>Channel performance</span><strong>—</strong><small>Refresh to read dated metrics</small></article></div></details>
-      <div class="chat-heading"><h2>CONVERSATION</h2><button id="newChat" class="quiet">/new · New conversation</button></div>
-      <div class="session-context"><span id="sessionTitle">New conversation</span><button id="renameSession" class="quiet">Rename</button><details class="resume-details"><summary>Session details</summary><code id="terminalResume"></code></details></div>
+      <details id="chatDetails" class="chat-context"><summary>Conversation details</summary><div class="session-context"><button id="renameSession" class="quiet">Rename conversation</button><details class="resume-details"><summary>Resume in terminal</summary><code id="terminalResume"></code></details></div><details class="snapshot"><summary>Channel snapshot</summary><div class="metrics" id="metrics"><article><span>Channel performance</span><strong>—</strong><small>Refresh to read dated metrics</small></article></div></details></details>
       <div class="suggestions"><button data-prompt="How did my channel perform over the last 28 days?">Read my performance <span>↗</span></button><button data-prompt="Suggest three new topic ideas based on my recent uploads and channel profile.">Find my next three ideas <span>↗</span></button><button data-prompt="Show my latest five uploads and their lifetime views.">Review recent uploads <span>↗</span></button></div>
       <div id="messages" aria-live="polite" aria-label="Conversation"></div>
       <div id="chatActivity" class="chat-activity" role="status" aria-live="polite" aria-atomic="true" hidden><span class="activity-spinner" aria-hidden="true"></span><div><strong id="chatActivityLabel">Clira is thinking…</strong><span id="chatActivityDetail">Waiting for a response. You can keep writing.</span></div></div>
+      </div>
       <button id="jumpToLatest" type="button" class="jump-to-latest" hidden>↓ Latest message</button>
+      <div id="chatDock">
       <form id="chatForm" class="composer"><div class="composer-title"><span>MESSAGE CLIRA</span><button id="cursorToggle" type="button" class="quiet" aria-pressed="true" title="Toggle block cursor (Insert)">Block cursor · Ins</button></div><div class="prompt-line"><span class="prompt-symbol" aria-hidden="true">❯</span><div class="input-surface"><label class="sr-only" for="message">Message to Clira</label><textarea id="message" rows="2" placeholder="Ask Clira, or attach a video…" required maxlength="12000" spellcheck="false" aria-describedby="inputHelp"></textarea><span id="blockCursor" aria-hidden="true"></span></div></div><div class="composer-actions"><span id="composerHint">Draft freely. You approve account actions.</span><label class="attach-label">Attach MP4<input id="chatVideo" type="file" accept="video/mp4,.mp4"></label><button type="submit" id="sendButton">Send message</button></div></form><div class="input-help" id="inputHelp">Enter send · Shift+Enter new line · Insert cursor style</div>
       <p class="fineprint" id="modeExplanation"></p>
+      </div>
     </section>
     <section id="view-library" class="view" hidden><div class="section-heading"><div><span class="eyebrow">THE WORK YOU'VE PUT OUT</span><h1>Video library</h1></div><button id="refreshVideos">Refresh from source ↻</button></div><div id="videos" class="cards"></div><h2>Private upload receipts</h2><div id="uploadedVideos" class="cards"></div></section>
     <section id="view-ideas" class="view" hidden><div class="section-heading"><div><span class="eyebrow">FROM WHAT IF TO WHAT'S NEXT</span><h1>Ideas & calendar</h1></div><button id="suggestIdeas">Suggest three ideas ✧</button></div><div id="ideas" class="cards"></div><details class="panel"><summary>Add your own idea</summary><form id="ideaForm" class="form-grid"><label>Working title<input name="title" required maxlength="150"></label><label>Audience promise<textarea name="premise" required></textarea></label><label>Format<select name="format"><option value="short">Short</option><option value="long">Long form</option><option value="music">Music</option></select></label><button>Save idea</button></form></details><div class="panel"><h2>Editorial calendar</h2><p class="muted">Planning dates only. Public scheduling requires its own approval.</p><div id="calendar"></div><form id="calendarForm" class="form-grid"><label>Idea<select id="calendarIdea" name="idea_id" required></select></label><label>Planning time (your device timezone)<input name="at" type="datetime-local" required></label><button>Add to calendar</button></form></div><h2>Script briefs</h2><div id="briefs" class="cards"></div></section>
@@ -115,6 +119,9 @@ export CLIRA_MAX_MODEL_CALLS_DAY=50</pre><p>A request cap is enforced; it is not
   <footer><span>CLIRA · Intelligence Behind Creation</span><span>Local workspace · Your final say</span></footer>
 </div>
 <div id="toast" role="alert" hidden></div>
+<div id="chatMenu" class="chat-menu" role="menu" aria-label="Conversation actions" popover="auto"></div>
+<dialog id="renameChatDialog" aria-labelledby="renameChatTitle"><form id="renameChatForm"><h2 id="renameChatTitle">Rename chat</h2><label for="chatTitleInput">Chat title</label><input id="chatTitleInput" required maxlength="120" autocomplete="off"><div class="dialog-actions"><button id="cancelRenameChat" type="button" class="secondary">Cancel</button><button id="saveChatTitle" type="submit">Save</button></div></form></dialog>
+<dialog id="deleteChatDialog" aria-labelledby="deleteChatTitle"><h2 id="deleteChatTitle">Delete chat?</h2><p id="deleteChatName"></p><p>This chat moves to Trash. You can restore it later.</p><div class="dialog-actions"><button id="cancelDeleteChat" type="button" class="secondary">Cancel</button><button id="confirmDeleteChat" type="button" class="danger-button">Move to Trash</button></div></dialog>
 <dialog id="approvalDialog"><form method="dialog"><h2 id="dialogTitle">Review action</h2><p id="dialogChannel"></p><pre id="dialogPayload"></pre><label class="checkbox"><input id="confirmApproval" type="checkbox" required>I approve exactly this channel, content, and account action.</label><label>Type APPROVE<input id="approvalText" required pattern="APPROVE" autocomplete="off"></label><div class="dialog-actions"><button value="cancel" formnovalidate class="secondary">Cancel</button><button id="confirmButton" value="approve">Approve exact action</button></div></form></dialog>
 </body>
 </html>

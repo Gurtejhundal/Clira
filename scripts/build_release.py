@@ -3,7 +3,6 @@
 import argparse
 import hashlib
 import json
-import shutil
 import subprocess
 import tarfile
 import tomllib
@@ -40,12 +39,6 @@ def main():
             z.write(ROOT / path, Path(f"Clira-{version}") / path)
     subprocess.run(["uv", "build", "--out-dir", str(output)], cwd=ROOT, check=True)
     assets = [archive, output / f"clira-{version}-py3-none-any.whl", output / f"clira-{version}.tar.gz"]
-    # Keep old public preview videos in source history; never relabel them as current RC footage.
-    capture = ROOT / "docs/media/v1/Clira-terminal-rc.txt"
-    if capture.is_file():
-        destination = output / capture.name
-        shutil.copyfile(capture, destination)
-        assets.append(destination)
     with zipfile.ZipFile(assets[1]) as wheel:
         for name in [
             "clira/web/index.html",

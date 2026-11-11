@@ -1,0 +1,82 @@
+name: Publish Clira release candidate
+
+on:
+  # This workflow-file push is the owner's explicitly requested initial prerelease.
+  # It does not publish from ordinary code pushes or the verification workflow.
+  push:
+    branches: [main]
+    paths: [.github/workflows/prerelease.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clira-authorized-prerelease-1.0.0rc1
+  cancel-in-progress: false
+
+jobs:
+  publish-candidate:
+    if: github.repository == 'Gurtejhundal/Clira'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    env:
+      CLIRA_MODE: demo
+      CLIRA_MODEL: offline
+      CLIRA_ALLOW_MODEL_CALLS: '0'
+      CLIRA_ENABLE_WRITES: '0'
+      RELEASE_TAG: v1.0.0-rc.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.6'
+          python-version: '3.12'
+          enable-cache: true
+      - name: Install validation tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          uv sync --locked --extra dev
+          uv run --locked playwright install --with-deps chromium
+      - name: Check candidate version and source
+        run: |
+          uv run --locked python -c "import tomllib; from pathlib import Path; assert tomllib.loads(Path('pyproject.toml').read_text())['project']['version'] == '1.0.0rc1'"
+          uv run --locked ruff check clira tests scripts
+          uv run --locked ruff format --check clira tests scripts
+          node --check clira/web/app.js
+          node --check clira/web/character.js
+          bash -n run.sh
+          uv run --locked pytest -q
+      - name: Validate current website and chat-upload simulation
+        run: |
+          uv run --locked python tests/browser_smoke.py --output work/prerelease-browser
+          uv run --locked python tests/browser_upload_flow.py work/prerelease-upload
+          uv run --locked python tests/browser_character.py work/prerelease-character
+      - name: Build and verify independent clean installs
+        run: |
+          uv run --locked python scripts/build_release.py --output work/prerelease-artifacts
+          uv run --locked python scripts/verify_artifacts.py --artifacts work/prerelease-artifacts --report work/prerelease-artifacts/install-verification.json
+      - name: Publish the explicitly requested prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'This candidate already exists. Existing releases and tags are never replaced.'
+            exit 0
+          fi
+          gh release create "$RELEASE_TAG" \
+            --target "$GITHUB_SHA" \
+            --title 'Clira 1.0.0rc1 — Intelligence Behind Creation' \
+            --prerelease \
+            --notes-file docs/releases/1.0.0rc1.md \
+            work/prerelease-artifacts/Clira-1.0.0rc1-source.zip \
+            work/prerelease-artifacts/clira-1.0.0rc1-py3-none-any.whl \
+            work/prerelease-artifacts/clira-1.0.0rc1.tar.gz \
+            work/prerelease-artifacts/SHA256SUMS.txt \
+            work/prerelease-artifacts/install-verification.json

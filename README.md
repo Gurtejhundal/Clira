@@ -12,6 +12,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Gurtejhundal/Clira/releases/tag/v1.0.0-rc.1">Download prerelease</a> ·
   <a href="#get-started">Get started</a> ·
   <a href="#give-clira-a-video">Upload workflow</a> ·
   <a href="#a-character-with-personality">Meet Clira</a> ·
@@ -26,8 +27,9 @@ Its everyday interface is a web app with a terminal-inspired design: antique-gol
 monospace text, a block cursor, and an expressive monochrome character. All eight workspace views
 remain available through the command navigation. You can select and copy replies normally.
 
-**Current development version: `1.0.0rc1`.** Install the current code from `main` using the steps below.
-This is a release candidate, not a published stable v1.0.0 release.
+**Latest prerelease: [1.0.0rc1](https://github.com/Gurtejhundal/Clira/releases/tag/v1.0.0-rc.1).**
+Download the source ZIP, wheel or source distribution, with checksums and clean-install verification.
+This is a release candidate; stable v1.0.0 has not been published.
 
 ## See the current workspace
 
@@ -97,6 +99,16 @@ examples. It does not show an account upload. [Static portrait](docs/media/chara
 ## Get started
 
 You need **Python 3.12+**, [uv](https://docs.astral.sh/uv/), and **ffmpeg/ffprobe** for video validation.
+
+For a versioned installation, download the wheel from the
+[release page](https://github.com/Gurtejhundal/Clira/releases/tag/v1.0.0-rc.1) and run:
+
+```bash
+uv tool install ./clira-1.0.0rc1-py3-none-any.whl
+clira --mode demo serve
+```
+
+For the latest source on `main`:
 
 ```bash
 git clone https://github.com/Gurtejhundal/Clira.git

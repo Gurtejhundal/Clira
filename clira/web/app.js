@@ -5,6 +5,8 @@ let characterRequestId=0;
 let session, state, channelId, conversationId = null, activeView = 'chat', busy = false, attachedVideo = null;
 const views = ['chat', 'library', 'ideas', 'production', 'approvals', 'community', 'operations', 'settings'];
 const crumbs = {chat:'Your channel, in good hands.',library:'Every story has a home.',ideas:'Make space for what comes next.',production:'From a finished file to a reviewed upload.',approvals:'Nothing consequential without your say.',community:'Stay close to your audience.',operations:'See what happened. Know what comes next.',settings:'A workspace that knows your channel.'};
+const sidebarPanels = ['views', 'history', 'projects', 'controls'];
+let activeSidebar = 'views', savedSessions = [], followChat = true, chatScrollFrame = 0, scrollingChat = false, changingChannel = false;
 
 function el(tag, cls, value) {
   const node = document.createElement(tag);
@@ -70,12 +72,51 @@ function details(label, data) {
 }
 function dateLabel(value) { return value ? new Date(value).toLocaleString(undefined, {dateStyle:'medium',timeStyle:'short'}) : '—'; }
 function showView(view) {
+  if(!views.includes(view))return;
+  const changed=activeView!==view;
   activeView = view;
   for (const v of views) $('view-' + v).hidden = v !== view || (!channelId && v !== 'settings');
   $('emptyWorkspace').hidden = Boolean(channelId) || view === 'settings';
-  document.querySelectorAll('nav button').forEach(b => {b.classList.toggle('active', b.dataset.view === view); b.setAttribute('aria-current', b.dataset.view === view ? 'page' : 'false');});
+  document.querySelectorAll('nav button[data-view]').forEach(b => {b.classList.toggle('active', b.dataset.view === view); b.setAttribute('aria-current', b.dataset.view === view ? 'page' : 'false');});
   $('viewCrumb').textContent = crumbs[view];
   $('viewLabel').textContent = 'CLIRA / ' + view.toUpperCase();
+  if(changed){
+    if(view==='chat')scrollChatToBottom();
+    else $('main').scrollTop=0;
+  }
+  updateLatestButton();
+}
+function chatScroller() {return matchMedia('(max-width: 820px)').matches?document.scrollingElement:$('main');}
+function atChatBottom() {const area=chatScroller();return area.scrollHeight-area.clientHeight-area.scrollTop<100;}
+function updateLatestButton() {$('jumpToLatest').hidden=activeView!=='chat'||followChat||!$('messages').children.length;}
+function scrollChatToBottom(force=false) {
+  if(force)followChat=true;
+  if(activeView!=='chat'||!followChat||(!force&&getSelection()?.toString()))return;
+  cancelAnimationFrame(chatScrollFrame);
+  chatScrollFrame=requestAnimationFrame(()=>{
+    chatScrollFrame=0;
+    if(activeView!=='chat'||!followChat)return;
+    scrollingChat=true;
+    const area=chatScroller();area.scrollTo({top:area.scrollHeight,behavior:'instant'});
+    updateLatestButton();
+    requestAnimationFrame(()=>{scrollingChat=false;});
+  });
+}
+function setChatActivity(label=null,detail='Waiting for a response. You can keep writing.') {
+  $('chatActivity').hidden=!label;
+  $('messages').setAttribute('aria-busy',String(Boolean(label)));
+  $('requestState').hidden=!label;
+  $('requestState').textContent=label||'';
+  if(label){$('chatActivityLabel').textContent=label;$('chatActivityDetail').textContent=detail;scrollChatToBottom();}
+}
+function syncConversationControls() {
+  const locked=busy||changingChannel;
+  for(const id of ['sendButton','newChat','sidebarNewChat'])$(id).disabled=locked||!channelId;
+  $('sidebarNewWorkspace').disabled=locked;
+  $('channelSelect').disabled=locked;
+  $('renameSession').disabled=locked||!conversationId;
+  $('sessionSearch').disabled=locked;
+  document.querySelectorAll('#sessionList button,#workspaceList button').forEach(b=>b.disabled=locked);
 }
 function addMessage(role, text, receipts) {
   const draft = receipts?.find(r=>r.tool==='prepare_video_upload' && r.ok)?.data;
@@ -93,44 +134,43 @@ function addMessage(role, text, receipts) {
   if (receipts?.length) m.append(details(`${receipts.length} tool receipts · sources & outcomes`, receipts));
   $('messages').append(m);
   syncWelcome();
+  scrollChatToBottom();
   if(draft) api('/api/upload-drafts/'+encodeURIComponent(draft.channel_id)+'/'+encodeURIComponent(draft.id)).then(current=>{if(m.isConnected)renderUploadPreview(m,current);}).catch(error=>toast(error.message,true));
 
 }
 async function sendMessage(text) {
-  if (busy || !channelId) return;
+  if (busy || changingChannel || !channelId) return;
   busy = true;
-  $('sendButton').disabled = true;
-  $('channelSelect').disabled = true;
-  $('newChat').disabled = true;
-  $('renameSession').disabled=true;$('sessionSearch').disabled=true;
-  document.querySelectorAll('#sessionList button').forEach(b=>b.disabled=true);
-  $('sendButton').textContent = 'Working…';
+  syncConversationControls();
+  $('sendButton').textContent = 'Thinking…';
   const submittedVideo=attachedVideo;
   const requestText=submittedVideo?'/upload '+submittedVideo.path+'\n'+text:text;
   addMessage('user', submittedVideo?'Upload '+submittedVideo.name+' · '+text:text);
   attachedVideo=null;$('composerHint').textContent='Draft freely. You approve account actions.';
 
   $('message').value = '';
+  $('message').style.height='auto';
   updateBlockCursor();
+  setChatActivity(submittedVideo?'Clira is preparing your video…':'Clira is thinking…',submittedVideo?'Checking the file and drafting its package. Nothing is uploaded until you approve.':undefined);
+  scrollChatToBottom(true);
   try {
     const result = await api('/api/chat', {channel_id: channelId, message: requestText, conversation_id: conversationId});
     conversationId = result.conversation_id;
-    updateSessionContext(); await loadSessions();
+    setChatActivity();
     addMessage('assistant', result.message, result.receipts);
     characterEvent('reply');
+    await loadSessions();updateSessionContext();
     await refresh();
   } catch (error) {
+    setChatActivity();
     addMessage('assistant', 'The request could not finish. ' + error.message);
     toast(error.message, true);
   } finally {
     busy = false;
-    $('renameSession').disabled=false;$('sessionSearch').disabled=false;
-    document.querySelectorAll('#sessionList button').forEach(b=>b.disabled=false);
-    $('sendButton').disabled = false;
-    $('channelSelect').disabled = false;
-    $('newChat').disabled = false;
+    setChatActivity();
+    syncConversationControls();
     $('sendButton').textContent = 'Send message';
-    $('message').focus();
+    if(activeView==='chat'&&followChat&&!getSelection()?.toString())$('message').focus({preventScroll:true});
   }
 }
 function renderMetrics() {
@@ -174,6 +214,7 @@ function renderIdeas() {
   const container = clear('ideas'); clear('calendarIdea');
   for (const idea of state.records.idea) {
     const c = card(idea.title,idea.format,idea.premise);
+    c.id='idea-'+idea.id;c.tabIndex=-1;
     c.append(el('small','',idea.evidence_status || 'Editorial hypothesis'));
     c.append(button('Develop with Clira ↗',async () => {showView('chat'); $('message').value = `Develop a script and a production brief for idea ${idea.id}. Save it with write_script and identify any claims needing source checks.`; $('message').focus();},'secondary'));
     container.append(c);
@@ -281,14 +322,17 @@ async function refresh() {
   const target=channelId; const loaded=await api('/api/state/'+encodeURIComponent(target));if(target!==channelId)return;state=loaded;
   $('notice').textContent=state.channel.mode==='draft'?'LOCAL DRAFT · No YouTube account connected. Plans remain local.':session.mode==='demo'?'DEMO · SYNTHETIC · No real channel operations occur.':`Live mode · ${session.writes_enabled?'Approved writes enabled':'Account writes disabled'}`;
   if(state.records.launch.length){const plan=state.records.launch[0];$('launchResult').textContent=plan.positioning+'\n\nName ideas: '+plan.name_suggestions.join(' · ')+'\n\nDescription: '+plan.description+'\n\nBrand direction: '+plan.brand_direction+'\n\n'+plan.evidence_status+'\n'+plan.channel_creation;}else $('launchResult').textContent='';
-  renderMetrics(); renderVideos(); renderIdeas(); renderProduction(); renderApprovals(); renderCommunity(); renderOperations(); renderSettings();
+  renderMetrics(); renderVideos(); renderIdeas(); renderProduction(); renderApprovals(); renderCommunity(); renderOperations(); renderSettings();renderSidebarData();
 }
 async function changeChannel() {
+  if(busy||changingChannel)return;
+  changingChannel=true;syncConversationControls();
   characterEvent('context');
   $('channelSelect').disabled=true;
   try {
   attachedVideo=null;
   channelId=$('channelSelect').value || null;
+  state=null;savedSessions=[];renderSessions();renderSidebarData();
   $('onboarding').open=!session.channels.length;
   $('channelId').textContent=channelId || 'No connected channels';
   conversationId=null; clear('messages');
@@ -304,7 +348,7 @@ async function changeChannel() {
   if(state?.channel?.mode==='draft') $('modeBadge').textContent='LOCAL DRAFT · NOT CONNECTED';
   else $('modeBadge').textContent=session.mode==='demo'?'DEMO · SYNTHETIC':'LIVE · OWNER ACCOUNT';
   showView(activeView);
-  } finally {$('channelSelect').disabled=busy;}
+  } finally {changingChannel=false;syncConversationControls();}
 }
 function bindForm(id, handler) {
   $(id).addEventListener('submit',async event=>{
@@ -325,16 +369,19 @@ async function init() {
   if(session.paused){$('pauseAll').textContent='Resume approved writes';$('pauseTop').textContent='Resume writes';}
   initV1();
   initTerminalExperience();
+  initWorkspaceExplorer();
   for(const c of session.channels){const option=el('option','',c.name);option.value=c.id;$('channelSelect').append(option);}
   if(!session.channels.length){const option=el('option','','No channels connected');option.value='';$('channelSelect').append(option);}
-  document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+  document.querySelectorAll('nav button[data-view]').forEach((b,index)=>{b.setAttribute('aria-keyshortcuts','Alt+'+(index+1));b.title='Alt+'+(index+1);b.addEventListener('click',()=>showView(b.dataset.view));});
   $('channelSelect').addEventListener('change',()=>changeChannel().catch(e=>toast(e.message,true)));
-  $('newChat').addEventListener('click',async()=>{try{
-    const result=await api('/api/conversations',{channel_id:channelId});conversationId=result.id;clear('messages');characterEvent('conversation');updateSessionContext(result);await loadSessions();$('message').focus();
-  }catch(e){toast(e.message,true);}});
+  $('newChat').addEventListener('click',async()=>{
+    if(busy||changingChannel||!channelId)return;
+    try{busy=true;syncConversationControls();
+    const result=await api('/api/conversations',{channel_id:channelId});conversationId=result.id;clear('messages');characterEvent('conversation');updateSessionContext(result);showView('chat');await loadSessions();scrollChatToBottom(true);$('message').focus({preventScroll:true});
+  }catch(e){toast(e.message,true);}finally{busy=false;syncConversationControls();}});
   $('chatVideo').addEventListener('change',async()=>{
     const file=$('chatVideo').files[0];if(!file||busy||!channelId)return;
-    const target=channelId;busy=true;$('sendButton').disabled=true;$('channelSelect').disabled=true;
+    const target=channelId;busy=true;syncConversationControls();setChatActivity('Attaching your video…','Importing and checking the MP4 on this device.');scrollChatToBottom(true);
     try{
       if(!file.name.toLowerCase().endsWith('.mp4')||file.size>256*1024*1024)throw new Error('Choose an MP4 up to 256 MiB.');
       const response=await fetch('/api/chat-video/'+encodeURIComponent(target),{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Clira-Token':session.token},body:file});
@@ -344,7 +391,7 @@ async function init() {
       characterEvent('attached');
       $('composerHint').textContent=file.name+' attached. Sampled frames will be sent to your configured AI provider when you send.';
       if(!$('message').value.trim())$('message').value='Upload this video';$('message').focus();
-    }catch(error){toast(error.message,true);}finally{busy=false;$('sendButton').disabled=false;$('channelSelect').disabled=false;$('chatVideo').value='';}
+    }catch(error){toast(error.message,true);}finally{busy=false;setChatActivity();syncConversationControls();$('chatVideo').value='';}
   });
   $('chatForm').addEventListener('submit',event=>{event.preventDefault();const text=$('message').value.trim();if(text&&!busy){if(!attachedVideo&&navigateCommand(text)){$('message').value='';updateBlockCursor();}else sendMessage(text);}});
   $('message').addEventListener('input',()=>{characterEvent('typing',{active:Boolean($('message').value.trim())});$('message').style.height='auto';$('message').style.height=Math.min($('message').scrollHeight,320)+'px';});
@@ -354,7 +401,7 @@ async function init() {
   $('refreshVideos').addEventListener('click',async()=>{try{await tool('list_videos',{count:20});toast('Owned videos refreshed.');}catch(e){toast(e.message,true);}});
   $('refreshComments').addEventListener('click',async()=>{try{await tool('list_comments',{count:20});}catch(e){toast(e.message,true);}});
   $('refreshState').addEventListener('click',()=>refresh().catch(e=>toast(e.message,true)));
-  const togglePause=async()=>{try{const action=session.paused?'unpause':'pause';session.paused=(await api('/api/'+action,{})).paused;$('pauseAll').textContent=session.paused?'Resume approved writes':'Pause all writes';$('pauseTop').textContent=session.paused?'Resume writes':'Pause writes';toast(session.paused?'External writes paused.':'Approved writes may resume.');}catch(e){toast(e.message,true);}};
+  const togglePause=async()=>{try{const action=session.paused?'unpause':'pause';session.paused=(await api('/api/'+action,{})).paused;$('pauseAll').textContent=session.paused?'Resume approved writes':'Pause all writes';$('pauseTop').textContent=session.paused?'Resume writes':'Pause writes';renderSidebarData();toast(session.paused?'External writes paused.':'Approved writes may resume.');}catch(e){toast(e.message,true);}};
   $('pauseAll').addEventListener('click',togglePause);$('pauseTop').addEventListener('click',togglePause);
   bindForm('ideaForm',async values=>{await tool('save_idea',{...values,sources:[]});toast('Idea saved.');});
   bindForm('calendarForm',async values=>{await tool('calendar_add',{idea_id:values.idea_id,at:new Date(values.at).toISOString()});toast('Editorial plan added. No publication scheduled.');});
@@ -378,31 +425,38 @@ function updateSessionContext(record) {
   const url=new URL(location.href);if(channelId)url.searchParams.set('channel',channelId);
   if(conversationId)url.searchParams.set('session',conversationId);else url.searchParams.delete('session');
   history.replaceState(null,'',url);
-  $('sessionTitle').textContent=record?.title||(conversationId?'Current conversation':'New conversation');
+  $('sessionTitle').textContent=record?.title||savedSessions.find(s=>s.id===conversationId)?.title||(conversationId?'Current conversation':'New conversation');
   $('renameSession').disabled=busy||!conversationId;
   $('terminalResume').textContent=conversationId?`clira --mode ${session.mode} --channel ${channelId} --resume ${conversationId}`:'';
   syncWelcome();
+  renderSessions();
 }
 async function resumeSession(id) {
   if(busy)return;
-  busy=true;$('sendButton').disabled=true;$('newChat').disabled=true;$('channelSelect').disabled=true;
+  busy=true;syncConversationControls();
   try {
     const record=await api(`/api/conversations/${encodeURIComponent(channelId)}/${encodeURIComponent(id)}`);
     conversationId=record.id;clear('messages');
     for(const m of record.messages)addMessage(m.role==='user'?'user':'assistant',m.text,m.receipts);
     updateSessionContext(record);
-  } finally {busy=false;$('sendButton').disabled=false;$('newChat').disabled=false;$('channelSelect').disabled=false;$('renameSession').disabled=!conversationId;}
+    scrollChatToBottom(true);
+  } finally {busy=false;syncConversationControls();}
 }
 async function loadSessions() {
   if(!channelId)return;
   const current=channelId;
   const records=await api('/api/conversations/'+encodeURIComponent(current));
   if(current!==channelId)return;
-  const search=$('sessionSearch').value.toLocaleLowerCase();const list=clear('sessionList');
-  for(const r of records.filter(r=>(r.title||'').toLocaleLowerCase().includes(search))) {
-    const b=button(`${r.title||'Untitled'} · ${dateLabel(r.updated_at)} · ${r.id}`,async()=>{await resumeSession(r.id);showView('chat');},'secondary');b.disabled=busy;list.append(b);
+  savedSessions=records;renderSessions();
+}
+function renderSessions() {
+  const search=$('sessionSearch').value.toLocaleLowerCase(),list=clear('sessionList');
+  for(const r of savedSessions.filter(r=>(r.title||'').toLocaleLowerCase().includes(search))) {
+    const b=button('',async()=>{await resumeSession(r.id);showView('chat');scrollChatToBottom(true);},'sidebar-item');
+    b.append(el('strong','',r.title||'Untitled'),el('small','',dateLabel(r.updated_at)));
+    b.dataset.sessionId=r.id;b.title=r.id;b.setAttribute('aria-current',r.id===conversationId?'true':'false');b.disabled=busy||changingChannel;list.append(b);
   }
-  if(!list.children.length)empty(list,'No matching conversations.');
+  if(!list.children.length)empty(list,search?'No matching conversations.':'Your conversations will appear here.');
 }
 function parseChapters(text) {
   if(!text.trim())return [];
@@ -476,7 +530,7 @@ function initV1() {
   const savedTheme=localStorage.getItem('clira-theme');const theme=['auto','light','dark'].includes(savedTheme)?savedTheme:'dark';$('themeSelect').value=theme;
   const apply=()=>{const value=$('themeSelect').value;document.documentElement.dataset.theme=value==='auto'?(media.matches?'dark':'light'):value;};apply();media.addEventListener('change',apply);
   $('themeSelect').addEventListener('change',()=>{localStorage.setItem('clira-theme',$('themeSelect').value);apply();});
-  $('sessionSearch').addEventListener('input',()=>loadSessions().catch(e=>toast(e.message,true)));
+  $('sessionSearch').addEventListener('input',renderSessions);
   $('renameSession').addEventListener('click',async()=>{
     if(!conversationId)return toast('Send a message or create a session first.');
     const title=window.prompt('Conversation title');if(!title?.trim())return;
@@ -575,10 +629,119 @@ function navigateCommand(text) {
   const destinations={'/chat':'chat','/videos':'library','/library':'library','/ideas':'ideas','/production':'production','/approvals':'approvals','/community':'community','/operations':'operations','/status':'operations','/settings':'settings'};
   if(destinations[command]){showView(destinations[command]);return true;}
   if(command==='/new'){$('newChat').click();return true;}
-  if(command==='/sessions'){$('sessionPanel').open=true;$('sessionSearch').focus();return true;}
+  if(command==='/sessions'){showSidebarPanel('history');$('sessionSearch').focus();return true;}
+  if(command==='/projects'){showSidebarPanel('projects',true);return true;}
+  if(command==='/controls'){showSidebarPanel('controls',true);return true;}
   if(command==='/channel'){$('channelSelect').focus();return true;}
-  if(command==='/help'){toast('Workspace commands: /new · /sessions · /channel · /chat · /videos · /ideas · /production · /approvals · /community · /status · /settings. Attach an MP4 to prepare its upload in chat.');return true;}
+  if(command==='/help'){toast('Workspace commands: /new · /sessions · /projects · /controls · /channel · /chat · /videos · /ideas · /production · /approvals · /community · /status · /settings. Alt+1–8 opens a view; Alt+[ / ] switches sidebar panels.');return true;}
   return false;
+}
+function showSidebarPanel(panel,focus=false) {
+  if(!sidebarPanels.includes(panel))return;
+  activeSidebar=panel;
+  for(const name of sidebarPanels){
+    const selected=name===panel,tab=$('sidebar-tab-'+name);
+    tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;
+    $('sidebar-'+name).hidden=!selected;
+  }
+  if(focus)$('sidebar-tab-'+panel).focus({preventScroll:true});
+  $('navigationStatus').textContent=$('sidebar-tab-'+panel).textContent+' panel';
+}
+function stepSidebar(direction,focus=false) {
+  showSidebarPanel(sidebarPanels[(sidebarPanels.indexOf(activeSidebar)+direction+sidebarPanels.length)%sidebarPanels.length],focus);
+}
+function renderSidebarData() {
+  const workspaces=clear('workspaceList'),projects=clear('projectList'),parameters=clear('workspaceParameters');
+  for(const workspace of session.channels){
+    const b=button('',async()=>{$('channelSelect').value=workspace.id;await changeChannel();},'sidebar-item');
+    b.append(el('strong','',workspace.name),el('small','',workspace.mode==='draft'?'Local draft':workspace.mode==='demo'?'Synthetic demo':workspace.connected?'Connected channel':'Not connected'));
+    b.setAttribute('aria-current',workspace.id===channelId?'true':'false');b.dataset.workspaceId=workspace.id;b.disabled=busy||changingChannel;workspaces.append(b);
+  }
+  if(!workspaces.children.length)empty(workspaces,'Create a local workspace to begin.');
+  for(const idea of state?.records?.idea||[]){
+    const b=button('',async()=>{
+      showView('ideas');const target=$('idea-'+idea.id);
+      target?.scrollIntoView({block:'center',behavior:'instant'});target?.focus({preventScroll:true});
+    },'sidebar-item');
+    b.append(el('strong','',idea.title),el('small','',idea.format+' · Saved idea'));b.dataset.ideaId=idea.id;projects.append(b);
+  }
+  if(!projects.children.length)empty(projects,channelId?'Save a video idea to start a project.':'Select a workspace to see its ideas.');
+  const profile=state?.channel?.profile||{};
+  const values=[
+    ['Channel',state?.channel?.name||'No workspace selected'],
+    ['Mode',state?.channel?.mode==='draft'?'Local draft':session.mode==='demo'?'Synthetic demo':'Live'],
+    ['Model',session.model==='offline'?'Offline router':session.model_calls_enabled?'Gemini · enabled':'Gemini · disabled'],
+    ['Account writes',session.paused?'Paused':session.writes_enabled?'Exact approval required':'Disabled'],
+    ['Pending approvals',String((state?.approvals||[]).filter(a=>a.status==='PENDING').length)],
+    ['Jobs',String(state?.jobs?.length||0)],
+    ['Niche',profile.niche||'Not set'],['Voice',profile.voice||'Not set'],
+    ['Language',profile.language||'Not set'],['Timezone',profile.timezone||'Not set'],
+  ];
+  for(const [label,value]of values)parameters.append(el('dt','',label),el('dd','',value));
+}
+function initWorkspaceExplorer() {
+  for(const panel of sidebarPanels){
+    const tab=$('sidebar-tab-'+panel);
+    tab.addEventListener('click',()=>showSidebarPanel(panel));
+    tab.addEventListener('keydown',event=>{
+      if(event.altKey||event.ctrlKey||event.metaKey||event.shiftKey)return;
+      if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
+        event.preventDefault();
+        if(event.key==='Home'||event.key==='End')showSidebarPanel(sidebarPanels[event.key==='Home'?0:3],true);
+        else stepSidebar(event.key==='ArrowRight'?1:-1,true);
+      }
+    });
+  }
+  $('sidebarNewChat').addEventListener('click',()=>$('newChat').click());
+  $('sidebarNewWorkspace').addEventListener('click',()=>{if(busy||changingChannel)return;showView('chat');$('view-chat').hidden=false;$('emptyWorkspace').hidden=true;$('startLaunch').click();$('launchForm').scrollIntoView({block:'center'});});
+  $('sidebarAllIdeas').addEventListener('click',()=>showView('ideas'));
+  $('sidebarSettings').addEventListener('click',()=>showView('settings'));
+  document.addEventListener('keydown',event=>{
+    if(!event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||event.isComposing||event.defaultPrevented||document.querySelector('dialog[open]'))return;
+    const match=event.code.match(/^Digit([1-8])$/);
+    if(match){event.preventDefault();showView(views[Number(match[1])-1]);$('navigationStatus').textContent=$('viewLabel').textContent;}
+    else if(event.code==='BracketLeft'||event.code==='BracketRight'){event.preventDefault();stepSidebar(event.code==='BracketRight'?1:-1,true);}
+  });
+  const explorer=$('sidebarWorkspace');
+  const ignoreGesture=event=>Boolean(event.target.closest('input,textarea,select,pre,.table-scroll,[contenteditable=true]')||document.querySelector('dialog[open]')||getSelection()?.toString());
+  // Browsers expose horizontal trackpad movement as wheel events, not a finger count.
+  let wheelX=0,wheelLast=0,wheelLocked=false;
+  explorer.addEventListener('wheel',event=>{
+    if(event.ctrlKey||event.metaKey||ignoreGesture(event))return;
+    const factor=event.deltaMode===1?16:event.deltaMode===2?explorer.clientWidth:1;
+    const x=event.deltaX*factor,y=event.deltaY*factor,now=performance.now();
+    if(Math.abs(x)<5||Math.abs(x)<Math.abs(y)*1.8){wheelX=0;return;}
+    if(now-wheelLast>220){wheelX=0;wheelLocked=false;}
+    wheelLast=now;
+    event.preventDefault();
+    if(wheelLocked)return;
+    if(Math.sign(wheelX)!==Math.sign(x))wheelX=0;
+    wheelX+=x;
+    if(Math.abs(wheelX)>=90){stepSidebar(wheelX>0?1:-1);wheelLocked=true;}
+  },{passive:false});
+  let touchGesture=null;
+  const touchCenter=touches=>({x:(touches[0].clientX+touches[1].clientX)/2,y:(touches[0].clientY+touches[1].clientY)/2,distance:Math.hypot(touches[0].clientX-touches[1].clientX,touches[0].clientY-touches[1].clientY)});
+  explorer.addEventListener('touchstart',event=>{touchGesture=event.touches.length===2&&!ignoreGesture(event)?{...touchCenter(event.touches),done:false}:null;},{passive:true});
+  explorer.addEventListener('touchmove',event=>{
+    if(!touchGesture||event.touches.length!==2||ignoreGesture(event))return;
+    const point=touchCenter(event.touches),dx=point.x-touchGesture.x,dy=point.y-touchGesture.y;
+    if(Math.abs(point.distance-touchGesture.distance)>Math.max(20,touchGesture.distance*.18)||Math.abs(dy)>30&&Math.abs(dy)>Math.abs(dx)){touchGesture=null;return;}
+    if(Math.abs(dx)>15&&Math.abs(dx)>Math.abs(dy)*1.8){
+      event.preventDefault();
+      if(!touchGesture.done&&Math.abs(dx)>65){stepSidebar(dx<0?1:-1);touchGesture.done=true;}
+    }
+  },{passive:false});
+  for(const name of ['touchend','touchcancel'])explorer.addEventListener(name,()=>{touchGesture=null;},{passive:true});
+  const stopFollowing=()=>{followChat=false;cancelAnimationFrame(chatScrollFrame);chatScrollFrame=0;scrollingChat=false;updateLatestButton();};
+  const onScroll=()=>{if(activeView==='chat'&&!scrollingChat&&!chatScrollFrame){followChat=atChatBottom();updateLatestButton();}};
+  $('main').addEventListener('wheel',event=>{if(activeView==='chat'&&event.deltaY<0&&!event.ctrlKey)stopFollowing();},{passive:true});
+  $('main').addEventListener('touchstart',event=>{if(activeView==='chat'&&event.touches.length===1)stopFollowing();},{passive:true});
+  $('main').addEventListener('pointerdown',event=>{if(activeView==='chat'&&event.target===$('main'))stopFollowing();});
+  document.addEventListener('keydown',event=>{if(activeView==='chat'&&['PageUp','Home','ArrowUp'].includes(event.key)&&!event.target.closest('input,textarea,select,[contenteditable=true]'))stopFollowing();});
+  $('main').addEventListener('scroll',onScroll,{passive:true});window.addEventListener('scroll',onScroll,{passive:true});
+  $('jumpToLatest').addEventListener('click',()=>scrollChatToBottom(true));
+  new ResizeObserver(()=>scrollChatToBottom()).observe($('messages'));
+  window.addEventListener('resize',()=>scrollChatToBottom());
 }
 let cursorMirror, blockCursor=true, composing=false;
 function updateBlockCursor() {

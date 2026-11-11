@@ -281,8 +281,8 @@ def main():
                 assert not page.evaluate("document.documentElement.scrollWidth > innerWidth")
                 page.screenshot(path=str(args.output / "clira-mobile.png"), full_page=True)
                 # Shared session search/resume and cross-surface content survive a browser reload.
-                page.locator("#sessionPanel summary").click()
-                page.locator("#sessionList button", has_text=shared_id).click()
+                page.locator("#sidebar-tab-history").click()
+                page.locator(f'#sessionList button[data-session-id="{shared_id}"]').click()
                 page.wait_for_function("() => !busy")
                 page.locator("#message").fill("Show my latest videos again")
                 page.locator("#message").press("Enter")
@@ -292,6 +292,7 @@ def main():
                 page.reload(wait_until="networkidle")
                 page.locator("#terminalResume", has_text=shared_id).wait_for(state="attached")
                 assert shared_id in page.locator("#terminalResume").text_content()
+                page.locator("#sidebar-tab-views").click()
                 shared = httpx.get(url + "/api/conversations/DEMO_CHANNEL_TECH/" + shared_id).json()
                 assert any(m["text"] == "Show my latest videos again" for m in shared["messages"])
                 (args.output / "shared-session.json").write_text(json.dumps(shared, indent=2))

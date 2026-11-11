@@ -1,6 +1,15 @@
 # Changelog
 
-## 1.0.0rc1 · unreleased local candidate
+## Unreleased
+
+- Show an animated, accessible thinking indicator during chat requests, with distinct attachment
+  and video-package preparation labels and cleanup on success or failure. Follow new messages and
+  replies automatically; preserve reading position when scrolling up and offer a Latest message action.
+- Replace the commands-only sidebar with Views, History, Projects and Controls panels using existing
+  conversations, workspaces, saved ideas and profile state. Add view shortcuts, accessible tab keys,
+  two-finger horizontal sidebar gestures, and reduced-motion/responsive browser regression checks.
+
+## 1.0.0rc1 · 2026-11-11 · prerelease
 
 - Refresh the README around the faithful live character, with real reaction and workspace GIFs,
   transparent and black-background borderless logos, a small favicon and the current tagline.

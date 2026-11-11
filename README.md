@@ -25,7 +25,10 @@ one place. Your conversations, creator preferences and channel context stay conn
 
 Its everyday interface is a web app with a terminal-inspired design: antique-gold frames, readable
 monospace text, a block cursor, and an expressive monochrome character. All eight workspace views
-remain available through the command navigation. You can select and copy replies normally.
+remain available through the command navigation. The sidebar also opens saved chats, channel/video
+projects and workspace controls, with keyboard shortcuts and horizontal two-finger gestures.
+Visible thinking feedback and automatic conversation scrolling keep requests easy to follow.
+You can select and copy replies normally.
 
 **Latest prerelease: [1.0.0rc1](https://github.com/Gurtejhundal/Clira/releases/tag/v1.0.0-rc.1).**
 Download the source ZIP, wheel or source distribution, with checksums and clean-install verification.

@@ -12,9 +12,13 @@ started before this change, then reload the browser to load the new code.
   approved original PNG remains the website fallback; the terminal keeps its Braille portrait. The tagline is **Intelligence Behind
   Creation**. No startup version badge. See [LIVE_CHARACTER.md](LIVE_CHARACTER.md).
 - Monospace typography throughout, square controls, quiet source/state labels and gold focus rings.
-- All eight navigation controls sit directly under the portrait: chat, videos, ideas, production,
-  approvals, community, operations and settings. On narrow screens the navigation wraps into two
-  columns rather than hiding controls in a horizontally scrolling strip.
+- A four-panel explorer sits under the portrait: **Views, History, Projects and Controls**.
+  Views retains all eight navigation controls: chat, videos, ideas, production, approvals, community,
+  operations and settings. On narrow screens those controls wrap into two columns.
+- History searches and resumes actual channel-scoped conversations, marks the current chat, and
+  creates new conversations. Projects switches existing channel/local workspaces and opens saved
+  video ideas; ideas are labeled as ideas, not a separate new project database. Controls shows the
+  selected channel, mode, provider enablement, write policy, jobs, approvals and saved profile values.
 - Desktop conversation scrolls inside its frame. On mobile the document scrolls naturally, with no
   input overlay covering the upload review. Portrait sizes change without cropping the artwork.
 - The welcome and starter prompts appear for an empty conversation. Replies and resumed conversations
@@ -33,9 +37,32 @@ Replies support headings, bold text, inline/fenced code, lists, tables and HTTP(
 The renderer builds text nodes and allowlisted elements; model HTML is displayed as text.
 Every message has a Copy button. Native drag selection and the browser's copy shortcut also work.
 
-Type `/new`, `/sessions`, `/channel` or `/help` for workspace shortcuts. `/chat`, `/videos`, `/ideas`,
+Submitting a message immediately shows **Clira is thinking…** with a small antique-gold spinner in
+the conversation and a quiet header status. Video attachment and package preparation have their own
+truthful pending labels. No tool progress or percentage is invented. Success and failure both clear
+the indicator. The system reduced-motion preference stops rotation while keeping the status visible.
+
+Each submitted message scrolls to the latest content, including the pending indicator. Replies and
+late-loading preview content continue following while you remain at the bottom. Scroll up to read
+without being pulled away; **Latest message** returns to the bottom. Desktop scrolling stays inside
+the conversation frame; mobile uses the document. New/resumed conversations open at their latest content.
+
+Type `/new`, `/sessions`, `/projects`, `/controls`, `/channel` or `/help` for workspace shortcuts. `/chat`, `/videos`, `/ideas`,
 `/production`, `/approvals`, `/community`, `/operations` (or `/status`) and `/settings` open the
 corresponding view. Other messages, including `/upload PATH`, retain the existing agent path.
+
+| Shortcut | Action |
+| --- | --- |
+| Alt+1 through Alt+8 | Chat, videos, ideas, production, approvals, community, operations, settings |
+| Alt+[ / Alt+] | Previous / next sidebar panel |
+| Left / Right on a sidebar tab | Previous / next tab, with focus following |
+| Home / End on a sidebar tab | First / last tab |
+
+A two-finger **horizontal** swipe inside the sidebar explorer switches its panels. Trackpads expose
+this as horizontal wheel movement; touchscreens use an actual two-touch gesture. One gesture advances
+one panel. Vertical scrolling, single-finger movement, pinch zoom, text selection, editable fields and
+approval dialogs are excluded. Swipes elsewhere on the page retain browser behavior. Keyboard shortcuts
+do not act through an open approval dialog. Discover these controls under **Keyboard shortcuts**.
 
 ## Upload from the conversation
 
@@ -53,3 +80,9 @@ Shift+Enter, Insert and slash navigation. `tests/browser_upload_flow.py` plays t
 attachment, edits its preview and completes a private-upload simulation. Both use isolated demo data
 with model calls and live writes disabled. A simulated upload does not prove the new flow against a
 real Google account.
+
+`tests/browser_workspace.py OUTPUT_DIRECTORY` holds real demo chat requests at the browser boundary
+to test delayed success/failure feedback, automatic scroll and reading-up behavior. It also verifies
+history/search/resume, real idea and profile data, all explorer panels at the seven widths in both
+themes, keyboard navigation, gesture-event exclusions and reduced motion. Physical trackpad/touchscreen
+hardware remains a separate manual check; synthetic browser events verify the handlers.

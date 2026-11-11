@@ -19,7 +19,16 @@
  ╚═════╝╚══════╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝</pre><small>Intelligence Behind Creation</small></a>
     <div class="character" id="cliraCharacter" data-state="idle" data-motion="off"><button type="button" id="characterInteract" aria-label="Say hello to Clira" aria-describedby="characterStatus"><span id="characterArtwork" aria-hidden="true"></span><span class="portrait" id="characterFallback"><img src="/static/assets/clira-portrait.png" width="1254" height="1254" alt="" decoding="async"></span></button><div class="character-caption"><span id="characterStatus">Clira is here</span><span class="character-hint">Tap to say hello</span></div></div>
   </div>
-  <div class="sidebar-section">WORKSPACE COMMANDS</div>
+  <section id="sidebarWorkspace" aria-label="Workspace explorer">
+  <div class="sidebar-section">WORKSPACE</div>
+  <div class="sidebar-tabs" role="tablist" aria-label="Sidebar panels" aria-describedby="sidebarGestureHint">
+    <button id="sidebar-tab-views" type="button" role="tab" aria-controls="sidebar-views" aria-selected="true" tabindex="0" data-sidebar="views">Views</button>
+    <button id="sidebar-tab-history" type="button" role="tab" aria-controls="sidebar-history" aria-selected="false" tabindex="-1" data-sidebar="history">History</button>
+    <button id="sidebar-tab-projects" type="button" role="tab" aria-controls="sidebar-projects" aria-selected="false" tabindex="-1" data-sidebar="projects">Projects</button>
+    <button id="sidebar-tab-controls" type="button" role="tab" aria-controls="sidebar-controls" aria-selected="false" tabindex="-1" data-sidebar="controls">Controls</button>
+  </div>
+  <p id="sidebarGestureHint" class="sidebar-hint">Two-finger swipe here · Alt+[ / ]</p>
+  <div id="sidebar-views" role="tabpanel" aria-labelledby="sidebar-tab-views">
   <nav aria-label="Main navigation">
     <button data-view="chat" class="active"><span>/chat</span> Talk to Clira</button>
     <button data-view="library"><span>/videos</span> Video library</button>
@@ -30,12 +39,34 @@
     <button data-view="operations"><span>/operations</span> Operations</button>
     <button data-view="settings"><span>/settings</span> Settings</button>
   </nav>
+  </div>
+  <div id="sidebar-history" role="tabpanel" aria-labelledby="sidebar-tab-history" hidden>
+    <div class="sidebar-panel-heading"><h2>Chat history</h2><button id="sidebarNewChat" type="button" class="quiet">+ New chat</button></div>
+    <div id="sessionPanel">
+      <label for="sessionSearch">Search conversations</label><input id="sessionSearch" type="search" placeholder="Find a conversation" autocomplete="off">
+      <div id="sessionList"></div>
+    </div>
+  </div>
+  <div id="sidebar-projects" role="tabpanel" aria-labelledby="sidebar-tab-projects" hidden>
+    <div class="sidebar-panel-heading"><h2>Projects</h2><button id="sidebarNewWorkspace" type="button" class="quiet">+ Workspace</button></div>
+    <p class="sidebar-caption">Channel workspaces</p><div id="workspaceList" class="sidebar-list"></div>
+    <p class="sidebar-caption">Saved video ideas · active workspace</p><div id="projectList" class="sidebar-list"></div>
+    <button id="sidebarAllIdeas" type="button" class="quiet">Open ideas &amp; calendar</button>
+  </div>
+  <div id="sidebar-controls" role="tabpanel" aria-labelledby="sidebar-tab-controls" hidden>
+    <div class="sidebar-panel-heading"><h2>Workspace controls</h2></div>
+    <dl id="workspaceParameters" class="workspace-parameters"></dl>
+    <button id="sidebarSettings" type="button" class="secondary">Open settings</button>
+  </div>
+  <details class="sidebar-shortcuts"><summary>Keyboard shortcuts</summary><dl><dt>Alt+1…8</dt><dd>Switch workspace view</dd><dt>Alt+[ / ]</dt><dd>Previous / next sidebar panel</dd><dt>← / →</dt><dd>Switch focused sidebar tab</dd></dl><p>Two-finger horizontal swipes inside this explorer switch its panels. Vertical scrolling and pinch zoom stay native.</p></details>
+  <span id="navigationStatus" class="sr-only" role="status" aria-live="polite"></span>
+  </section>
   <div class="channel-context"><label class="channel-label" for="channelSelect">WORKSPACE</label>
   <select id="channelSelect" aria-label="Active channel"></select><code id="channelId"></code></div>
   <div class="sidebar-foot">Local workspace<button id="pauseAll" class="quiet">Pause all writes</button></div>
 </aside>
 <div class="shell">
-  <header><div><span class="eyebrow" id="viewLabel">CLIRA / CHAT</span><p id="viewCrumb">Your channel, in good hands.</p></div><div class="top-status"><span id="modeBadge" class="badge">Loading</span><span id="modelBadge" class="badge neutral">Offline</span><button id="pauseTop" class="quiet">Pause writes</button></div></header>
+  <header><div><span class="eyebrow" id="viewLabel">CLIRA / CHAT</span><p id="viewCrumb">Your channel, in good hands.</p></div><div class="top-status"><span id="requestState" class="request-state" aria-hidden="true" hidden></span><span id="modeBadge" class="badge">Loading</span><span id="modelBadge" class="badge neutral">Offline</span><button id="pauseTop" class="quiet">Pause writes</button></div></header>
   <div id="notice" role="status"></div>
   <main id="main" tabindex="-1">
     <section id="view-chat" class="view">
@@ -51,13 +82,11 @@
       </details>
       <details class="snapshot"><summary>Channel snapshot</summary><div class="metrics" id="metrics"><article><span>Channel performance</span><strong>—</strong><small>Refresh to read dated metrics</small></article></div></details>
       <div class="chat-heading"><h2>CONVERSATION</h2><button id="newChat" class="quiet">/new · New conversation</button></div>
-      <details class="panel" id="sessionPanel"><summary>Saved conversations</summary>
-        <label>Search titles<input id="sessionSearch" type="search" placeholder="Find a conversation"></label>
-        <div id="sessionList"></div>
-      </details>
       <div class="session-context"><span id="sessionTitle">New conversation</span><button id="renameSession" class="quiet">Rename</button><details class="resume-details"><summary>Session details</summary><code id="terminalResume"></code></details></div>
       <div class="suggestions"><button data-prompt="How did my channel perform over the last 28 days?">Read my performance <span>↗</span></button><button data-prompt="Suggest three new topic ideas based on my recent uploads and channel profile.">Find my next three ideas <span>↗</span></button><button data-prompt="Show my latest five uploads and their lifetime views.">Review recent uploads <span>↗</span></button></div>
       <div id="messages" aria-live="polite" aria-label="Conversation"></div>
+      <div id="chatActivity" class="chat-activity" role="status" aria-live="polite" aria-atomic="true" hidden><span class="activity-spinner" aria-hidden="true"></span><div><strong id="chatActivityLabel">Clira is thinking…</strong><span id="chatActivityDetail">Waiting for a response. You can keep writing.</span></div></div>
+      <button id="jumpToLatest" type="button" class="jump-to-latest" hidden>↓ Latest message</button>
       <form id="chatForm" class="composer"><div class="composer-title"><span>MESSAGE CLIRA</span><button id="cursorToggle" type="button" class="quiet" aria-pressed="true" title="Toggle block cursor (Insert)">Block cursor · Ins</button></div><div class="prompt-line"><span class="prompt-symbol" aria-hidden="true">❯</span><div class="input-surface"><label class="sr-only" for="message">Message to Clira</label><textarea id="message" rows="2" placeholder="Ask Clira, or attach a video…" required maxlength="12000" spellcheck="false" aria-describedby="inputHelp"></textarea><span id="blockCursor" aria-hidden="true"></span></div></div><div class="composer-actions"><span id="composerHint">Draft freely. You approve account actions.</span><label class="attach-label">Attach MP4<input id="chatVideo" type="file" accept="video/mp4,.mp4"></label><button type="submit" id="sendButton">Send message</button></div></form><div class="input-help" id="inputHelp">Enter send · Shift+Enter new line · Insert cursor style</div>
       <p class="fineprint" id="modeExplanation"></p>
     </section>

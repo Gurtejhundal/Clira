@@ -69,6 +69,31 @@ small, .fineprint, .muted { color: var(--muted); font-size: 12px; }
 .portrait { color: var(--ink); }
 .portrait pre { font: 8px/10px "DejaVu Sans Mono", monospace; letter-spacing: 0; }
 .sidebar-section { color: var(--gold); font-size: 11px; margin: 23px 9px 9px; }
+#sidebarWorkspace { min-width: 0; }
+.sidebar-tabs { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-bottom: 1px solid var(--frame); gap: 2px; }
+.sidebar-tabs button { min-width: 0; min-height: 40px; padding: 7px 2px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font-size: 11px; font-weight: 400; }
+.sidebar-tabs button[aria-selected=true] { border-bottom-color: var(--gold); color: var(--gold); background: var(--hover); }
+.sidebar-tabs button:hover { color: var(--gold); }
+.sidebar-hint { margin: 7px 0 14px; color: var(--muted); font-size: 10px; }
+[id^=sidebar-][role=tabpanel] { min-width: 0; max-height: 420px; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; }
+.sidebar-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.sidebar-panel-heading h2 { margin: 0; color: var(--ink); font-size: 12px; }
+.sidebar-panel-heading .quiet { font-size: 11px; min-height: 38px; }
+.sidebar-caption { font-size: 10px; color: var(--muted); margin: 12px 0 6px; }
+.sidebar-list { display: grid; gap: 4px; }
+button.sidebar-item { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; min-height: 48px; padding: 9px; background: transparent; border-color: transparent; text-align: left; font-weight: 400; color: var(--ink); }
+button.sidebar-item[aria-current=true] { border-color: var(--frame); background: var(--hover); }
+.sidebar-item strong { font-size: 12px; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
+.sidebar-item small { font-size: 10px; color: var(--muted); }
+.workspace-parameters { display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); gap: 10px 12px; font-size: 11px; margin: 4px 0 16px; }
+.workspace-parameters dt { color: var(--muted); }
+.workspace-parameters dd { margin: 0; overflow-wrap: anywhere; }
+.sidebar-shortcuts { margin-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+.sidebar-shortcuts summary { min-height: 40px; }
+.sidebar-shortcuts dl { display: grid; grid-template-columns: 85px 1fr; gap: 8px; }
+.sidebar-shortcuts dt { color: var(--gold); }
+.sidebar-shortcuts dd { margin: 0; }
+.sidebar-shortcuts p { margin: 10px 0; }
 nav { display: flex; flex-direction: column; gap: 2px; }
 nav button { display: flex; align-items: center; gap: 6px; width: 100%; padding: 7px 9px; background: transparent; border-color: transparent; min-height: 35px; text-align: left; font-size: 12px; font-weight: 400; color: var(--muted); }
 nav button span { min-width: 91px; color: var(--gold); font-size: 12px; }
@@ -104,10 +129,8 @@ main { padding: 24px; flex: 1; min-height: 0; overflow-y: auto; scrollbar-width:
 .metrics strong { display: block; color: var(--ink); font-size: 19px; font-weight: 500; margin: 4px 0; }
 .chat-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; border-bottom: 1px solid var(--frame); }
 .chat-heading h2 { margin: 0; font-size: 12px; }
-#sessionPanel { padding: 0; border: 0; margin: 0; font-size: 12px; }
-#sessionPanel > summary { font-size: 12px; color: var(--muted); }
-#sessionList { display: grid; gap: 8px; margin: 12px 0; }
-#sessionList button { text-align: left; font-size: 12px; font-weight: 400; overflow-wrap: anywhere; }
+#sessionPanel { font-size: 12px; }
+#sessionList { display: grid; gap: 4px; margin: 12px 0; }
 .session-context { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--muted); margin-bottom: 17px; }
 #sessionTitle { overflow-wrap: anywhere; }
 .resume-details { width: 100%; }
@@ -117,6 +140,13 @@ main { padding: 24px; flex: 1; min-height: 0; overflow-y: auto; scrollbar-width:
 .suggestions button { font-size: 11px; font-weight: 400; background: transparent; border-color: var(--line); text-align: left; }
 .suggestions button span { color: var(--gold); }
 #messages { flex: 1; }
+.chat-activity { display: flex; align-items: center; gap: 12px; padding: 18px 2px 22px; color: var(--muted); font-size: 12px; }
+.chat-activity strong { display: block; color: var(--gold); font-weight: 500; margin-bottom: 4px; }
+.chat-activity span:not(.activity-spinner) { font-size: 11px; }
+.activity-spinner { flex: none; width: 15px; height: 15px; border: 2px solid var(--line); border-top-color: var(--gold); border-right-color: var(--gold); border-radius: 50%; animation: activity-spin .85s linear infinite; }
+.request-state { color: var(--gold); font-size: 11px; }
+.jump-to-latest { position: fixed; right: 45px; bottom: 245px; z-index: 6; padding: 7px 12px; font-size: 11px; background: var(--panel); box-shadow: 0 3px 12px #0004; }
+@keyframes activity-spin { to { transform: rotate(360deg); } }
 .message { padding: 18px 0 22px; margin-bottom: 14px; border: 0; border-bottom: 1px solid var(--line); background: transparent; min-width: 0; }
 .message .speaker { color: var(--gold); font-size: 12px; text-transform: uppercase; display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
 .message .speaker::after { content: ""; height: 1px; background: var(--line); flex: 1; }
@@ -225,6 +255,10 @@ dialog::backdrop { background: #000b; }
   .brand small { font-size: 11px; margin: 15px 0 0; }
   .portrait pre { font-size: 6px; line-height: 6px; }
   .sidebar-section { margin: 17px 0 8px; }
+  .sidebar-tabs button { min-height: 44px; }
+  .sidebar-panel-heading .quiet { min-height: 44px; }
+  .sidebar-item { min-height: 44px; }
+  .jump-to-latest { bottom: 18px; right: 23px; min-height: 44px; }
   nav { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px; }
   nav button { min-height: 44px; font-size: 11px; }
   nav button span { min-width: 90px; }
@@ -273,6 +307,7 @@ dialog::backdrop { background: #000b; }
   .input-surface.block-cursor:focus-within #blockCursor { animation: blink 1.1s step-end infinite; }
   @keyframes blink { 50% { opacity: 0; } }
 }
+@media (prefers-reduced-motion: reduce) { .activity-spinner { animation: none; } }
 @media (prefers-contrast: more) {
   :root { --muted: #d2d3cc; --line: #858678; --frame: #c5a368; }
   :root[data-theme=light] { --muted: #34392f; --line: #62675c; }
